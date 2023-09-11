@@ -1,0 +1,12 @@
+﻿---
+BasedOnStyle: Chromium
+AccessModifierOffset: '-4'
+BreakBeforeBraces: Stroustrup
+ColumnLimit: '100'
+IndentWidth: '4'
+Language: Cpp
+Standard: Cpp11
+TabWidth: '4'
+UseTab: Always
+
+...
