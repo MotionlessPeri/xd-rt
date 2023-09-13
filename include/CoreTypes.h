@@ -7,18 +7,34 @@
 #include "MathType.h"
 namespace xd {
 class HitRecord;
+
 class Camera;
 class PerspCamera;
 class OrthoCamera;
+
 class Ray;
+
 class Model;
-class Primitive;
 class TriangleMesh;
 class Triangle;
+
+class HitAccel;
+class BVHNode;
+class NoAccel;
+
+class Primitive;
+
+class AABB;
+
 class Material;
+class MatteMaterial;
+
 class Light;
+class PointLight;
+
 class Scene;
 class HitSolver;
+
 class BRDF;
 class Lambertian;
 template <typename ReturnType, typename SampleType>

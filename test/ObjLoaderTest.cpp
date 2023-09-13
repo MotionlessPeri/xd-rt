@@ -27,13 +27,13 @@ TEST(ObjLoaderTestSuite, loadTest)
 TEST(ObjLoaderTestSuite, meshHitTest)
 {
 	ObjLoader loader;
-	auto mesh = loader.load(R"(D:\qem-test.obj)");
-
+	auto meshWithNoAccel = loader.load(R"(D:\qem-test.obj)");
+	auto meshWithBVHAccel = loader.load(R"(D:\qem-test.obj)", {HitAccelMethod::BVH});
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 1000u;
 	const Vector3f center{0, 0, -2};
 	const Vector3f origin{0, 0, 0};
-	const float rightNorm = 3.f;
+	const float rightNorm = 1.5f;
 	const Vector3f right{rightNorm, 0, 0};
 	const Vector3f up{0, rightNorm / width * height, 0};
 
@@ -45,17 +45,38 @@ TEST(ObjLoaderTestSuite, meshHitTest)
 
 	const auto samples = sampler->generateSamples();
 
+	auto start = std::chrono::steady_clock::now();
 	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
 					  [&](const tbb::blocked_range<size_t>& r) {
 						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
 							  const auto& sample = samples[sampleIdx];
 							  auto ray = cam->generateRay(sample);
 							  HitRecord rec;
-							  if (mesh->hit(ray, rec)) {
+							  if (meshWithNoAccel->hit(ray, rec)) {
 								  film->addSample({rec.uv.x(), rec.uv.y(), 1}, sample);
 							  }
 						  }
 					  });
-	const std::string hdrPath = R"(D:\obj_load_and_hit.hdr)";
-	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+	auto end = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsedSeconds{end - start};
+	std::cout << "NoAccel mesh cost " << elapsedSeconds.count() << " seconds.\n";
+	EXPECT_NO_THROW(film->saveToFile(R"(D:\obj_load_and_hit_no_accel.hdr)"););
+
+	film->clear();
+	start = std::chrono::steady_clock::now();
+	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
+					  [&](const tbb::blocked_range<size_t>& r) {
+						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
+							  const auto& sample = samples[sampleIdx];
+							  auto ray = cam->generateRay(sample);
+							  HitRecord rec;
+							  if (meshWithBVHAccel->hit(ray, rec)) {
+								  film->addSample({(float)rec.debug, 0, 0}, sample);
+							  }
+						  }
+					  });
+	end = std::chrono::steady_clock::now();
+	elapsedSeconds = end - start;
+	std::cout << "BVH Accel mesh cost " << elapsedSeconds.count() << " seconds.\n";
+	EXPECT_NO_THROW(film->saveToFile(R"(D:\obj_load_and_hit_bvh_accel.hdr)"););
 }

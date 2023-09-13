@@ -1,6 +1,7 @@
 //
 // Created by Frank on 2023/8/19.
 //
+
 #include "Model.h"
 #include "gtest/gtest.h"
 using namespace xd;
@@ -55,4 +56,38 @@ TEST(ModelHitTestSuite, SphereHitTest)
 	HitRecord hit4;
 	auto b4 = sphere->hit(ray4, hit4);
 	EXPECT_FALSE(b4);
+}
+
+#include <oneapi/tbb.h>
+#include "CameraFactory.h"
+TEST(ModelHitTestSuite, SphereHitTest2)
+{
+	const float radius = 400;
+	const Vector3f center{0, 0, 0};
+	Sphere sphere{center, radius};
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 800u;
+	const Vector3f pos{0, 0, -radius};
+	const Vector3f right{500, 0, 0};
+	const Vector3f up{0, 400, 0};
+
+	auto cam = CameraFactory::createOrthoCamera(pos, center, up.normalized(), right.norm(),
+												up.norm(), width, height);
+	auto film = cam->getFilm();
+	auto sampler = std::make_shared<SimpleSampler>(width, height);
+	const auto samples = sampler->generateSamples();
+
+	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
+					  [&](const tbb::blocked_range<size_t>& r) {
+						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
+							  const auto& sample = samples[sampleIdx];
+							  auto ray = cam->generateRay(sample);
+							  HitRecord rec;
+							  if (sphere.hit(ray, rec)) {
+								  film->addSample({rec.uv.x(), rec.uv.y(), 1}, sample);
+							  }
+						  }
+					  });
+	const std::string hdrPath = R"(D:\sphere_hit_uv.hdr)";
+	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }

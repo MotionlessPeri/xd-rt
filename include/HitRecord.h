@@ -24,7 +24,7 @@ struct HitRecord {
 		localToWorld << dpdu.normalized(), dpdv.normalized(), n;
 		return localToWorld;
 	}
-	uint32_t debug;
+	uint32_t debug = 0;
 };
 }  // namespace xd
 #endif	// XD_RT_HITRECORD_H

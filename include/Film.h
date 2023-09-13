@@ -52,6 +52,8 @@ public:
 	 */
 	void saveToFile(const std::string& fileName);
 
+	void clear();
+
 protected:
 	Vector3f getTopLeft() const;
 

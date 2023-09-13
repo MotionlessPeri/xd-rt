@@ -3,6 +3,8 @@
 //
 #include "AABB.h"
 using namespace xd;
+AABB::AABB() : minPoint(FLT_MAX, FLT_MAX, FLT_MAX), maxPoint(-FLT_MAX, -FLT_MAX, -FLT_MAX) {}
+
 AABB::AABB(const Vector3f& minPoint, const Vector3f& maxPoint)
 	: minPoint(minPoint), maxPoint(maxPoint)
 {
@@ -10,7 +12,7 @@ AABB::AABB(const Vector3f& minPoint, const Vector3f& maxPoint)
 
 AABB AABB::merge(const AABB& rhs) const
 {
-	return AABB(minPoint.cwiseMin(rhs.getMinPoint()), maxPoint.cwiseMin(rhs.getMaxPoint()));
+	return AABB(minPoint.cwiseMin(rhs.getMinPoint()), maxPoint.cwiseMax(rhs.getMaxPoint()));
 }
 bool AABB::isInside(const Vector3f& point) const
 {
@@ -21,13 +23,30 @@ bool AABB::isIntersected(const AABB& rhs) const
 	return isInside(rhs.minPoint) || isInside(rhs.maxPoint) || rhs.isInside(minPoint) ||
 		   rhs.isInside(maxPoint);
 }
+void AABB::addPoint(const Vector3f& point)
+{
+	if (isInside(point))
+		return;
+	minPoint = minPoint.cwiseMin(point);
+	maxPoint = maxPoint.cwiseMax(point);
+}
+bool AABB::isValid() const
+{
+	return minPoint.cwiseLessOrEqual(maxPoint).all();
+}
+
 bool AABB::hit(const Ray& ray, HitRecord& rec) const
 {
 	auto hitRes = hitWithParams(ray);
+	const auto tHit = hitRes.tMin > 0 ? hitRes.tMin : hitRes.tMax;
+	bool hit = false;
 	if (hitRes.hit) {
-		rec.tHit = hitRes.tMin > 0 ? hitRes.tMin : hitRes.tMax;
+		if (tHit < rec.tHit) {
+			hit = true;
+			rec.tHit = tHit;
+		}
 	}
-	return hitRes.hit;
+	return hit;
 }
 AABB::HitResult AABB::hitWithParams(const Ray& ray) const
 {
@@ -51,4 +70,12 @@ AABB::HitResult AABB::hitWithParams(const Ray& ray) const
 	}
 	hit = hit && (tMin < tMax && tMax > 0);
 	return {hit, tMin, tMax};
+}
+bool AABB::operator==(const AABB& rhs) const
+{
+	return minPoint.isApprox(rhs.minPoint) && maxPoint.isApprox(rhs.maxPoint);
+}
+bool AABB::operator!=(const AABB& rhs) const
+{
+	return !(rhs == *this);
 }

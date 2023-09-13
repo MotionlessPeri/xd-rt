@@ -81,3 +81,8 @@ void Film::saveToFile(const std::string& fileName)
 	}
 	return;
 }
+
+void Film::clear()
+{
+	std::fill(image.begin(), image.end(), 0.f);
+}

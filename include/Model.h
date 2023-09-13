@@ -16,6 +16,7 @@ public:
 	Model() = default;
 	virtual ~Model() = default;
 	virtual float getArea() const = 0;
+	virtual AABB getAABB() const = 0;
 
 protected:
 };
@@ -27,6 +28,7 @@ public:
 	Vector2f generateUV(const Vector3f& point) const;
 	std::tuple<Vector3f, Vector3f, Vector3f> generateDifferentials(const Vector3f& point) const;
 	float getArea() const override;
+	AABB getAABB() const override;
 
 protected:
 	/**

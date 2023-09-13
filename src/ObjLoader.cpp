@@ -154,6 +154,6 @@ std::shared_ptr<TriangleMesh> ObjLoader::load(const std::string& path,
 		}
 	}
 	auto res = std::make_shared<TriangleMesh>(meshPos, meshUV, meshNormal, meshTangent,
-											  meshBiTangent, meshIndices);
+											  meshBiTangent, meshIndices, options.method);
 	return res;
 }

@@ -10,16 +10,11 @@ TriangleMesh::TriangleMesh(const std::vector<Vector3f>& positions,
 						   const std::vector<Vector3f>& normals,
 						   const std::vector<Vector3f>& tangents,
 						   const std::vector<Vector3f>& biTangents,
-						   const std::vector<uint32_t>& indices)
+						   const std::vector<uint32_t>& indices,
+						   HitAccelMethod method)
 	: positions(positions), uvs(uvs), normals(normals), tangents(tangents), biTangents(biTangents)
 {
-	const auto indiceCount = indices.size();
-	for (auto i = 0u; i < indiceCount; i += 3) {
-		// NOTE: we may need a runtime determined fixed-capacity container for triangles.
-		// Thus, we can delete both copy and move ctors of Triangle
-		// And require users to get reference
-		triangles.emplace_back(this, indices[i], indices[i + 1], indices[i + 2]);
-	}
+	init(indices, method);
 }
 
 TriangleMesh::TriangleMesh(std::vector<Vector3f>&& positions,
@@ -27,16 +22,11 @@ TriangleMesh::TriangleMesh(std::vector<Vector3f>&& positions,
 						   std::vector<Vector3f>&& normals,
 						   std::vector<Vector3f>&& tangents,
 						   std::vector<Vector3f>&& biTangents,
-						   std::vector<uint32_t>&& indices)
+						   std::vector<uint32_t>&& indices,
+						   HitAccelMethod method)
 	: positions(positions), uvs(uvs), normals(normals), tangents(tangents), biTangents(biTangents)
 {
-	const auto indiceCount = indices.size();
-	for (auto i = 0u; i < indiceCount; i += 3) {
-		// NOTE: we may need a runtime determined fixed-capacity container for triangles.
-		// Thus, we can delete both copy and move ctors of Triangle
-		// And require users to get reference
-		triangles.emplace_back(this, indices[i], indices[i + 1], indices[i + 2]);
-	}
+	init(indices, method);
 }
 
 bool TriangleMesh::hasUV() const
@@ -59,16 +49,7 @@ bool TriangleMesh::hit(const Ray& ray, HitRecord& rec) const
 {
 	// naive method here
 	// we may need a TriangleMeshHitSolver class for robustness
-	bool isHit = false;
-	uint32_t index = 0;
-	for (const auto& triangle : triangles) {
-		if (triangle.hit(ray, rec)) {
-			isHit = true;
-			rec.debug = index;
-		}
-		++index;
-	}
-	return isHit;
+	return hitAccel->hit(ray, rec);
 }
 const std::vector<Vector3f>& TriangleMesh::getPositions() const
 {
@@ -97,6 +78,41 @@ float TriangleMesh::getArea() const
 		res += triangle.getArea();
 	}
 	return res;
+}
+AABB TriangleMesh::getAABB() const
+{
+	return aabb;
+}
+void TriangleMesh::init(const std::vector<uint32_t>& indices, HitAccelMethod method)
+{
+	initTriangles(indices);
+	initAccel(method);
+}
+void TriangleMesh::initTriangles(const std::vector<uint32_t>& indices)
+{
+	const auto indiceCount = indices.size();
+	triangles.reserve(indiceCount);
+	for (auto i = 0u; i < indiceCount; i += 3) {
+		// NOTE: we may need a runtime determined fixed-capacity container for triangles.
+		// Thus, we can delete both copy and move ctors of Triangle
+		// And require users to get reference
+		triangles.emplace_back(this, indices[i], indices[i + 1], indices[i + 2]);
+		aabb.merge(triangles.back().getAABB());
+	}
+}
+void TriangleMesh::initAccel(HitAccelMethod method)
+{
+	std::vector<const Model*> trianglePtrs(triangles.size());
+	std::transform(triangles.begin(), triangles.end(), trianglePtrs.begin(),
+				   [](const Triangle& tri) { return &tri; });
+	switch (method) {
+		case HitAccelMethod::NO_ACCEL:
+			hitAccel = std::make_unique<NoAccel>(trianglePtrs);
+			break;
+		case HitAccelMethod::BVH:
+			hitAccel = std::make_unique<BVHNode>(trianglePtrs);
+			break;
+	}
 }
 
 Triangle::Triangle(const TriangleMesh* mesh, uint32_t i0, uint32_t i1, uint32_t i2)
@@ -139,6 +155,9 @@ void Triangle::calAccParams()
 	ABDotAC = AB.dot(AC);
 	N = AB.cross(AC);
 	area = N.norm() / 2.f;
+	for (const auto& pos : positions) {
+		aabb.addPoint(pos);
+	}
 
 	Matrix2f L;
 	Eigen::MatrixXf R(3, 2);

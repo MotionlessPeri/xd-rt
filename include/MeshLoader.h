@@ -6,8 +6,11 @@
 #define XD_RT_MESHLOADER_H
 #include <string>
 #include "CoreTypes.h"
+#include "Enums.h"
 namespace xd {
-struct LoadMeshOptions {};
+struct LoadMeshOptions {
+	HitAccelMethod method;
+};
 class MeshLoader {
 public:
 	virtual ~MeshLoader() = default;

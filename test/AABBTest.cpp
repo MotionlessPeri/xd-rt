@@ -102,3 +102,31 @@ TEST(AABBTestSuite, isIntersectedTest)
 	const AABB aabb5{min5, max5};
 	EXPECT_TRUE(aabb0.isIntersected(aabb5));
 }
+
+TEST(AABBTestSuite, addPointTest)
+{
+	AABB aabb;
+	EXPECT_FALSE(aabb.isValid());
+	const Vector3f maxVec{FLT_MAX, FLT_MAX, FLT_MAX};
+	const Vector3f minVec = -maxVec;
+	EXPECT_TRUE(aabb.getMinPoint().isApprox(maxVec));
+	EXPECT_TRUE(aabb.getMaxPoint().isApprox(minVec));
+
+	const Vector3f p0{-1, 1, 2};
+	aabb.addPoint(p0);
+	EXPECT_TRUE(aabb.isValid());
+	EXPECT_TRUE(aabb.getMinPoint().isApprox(p0));
+	EXPECT_TRUE(aabb.getMaxPoint().isApprox(p0));
+
+	const Vector3f p1{2, -3, -4};
+	aabb.addPoint(p1);
+	const Vector3f expectedMax{2, 1, 2};
+	const Vector3f expectedMin{-1, -3, -4};
+	EXPECT_TRUE(aabb.getMinPoint().isApprox(expectedMin));
+	EXPECT_TRUE(aabb.getMaxPoint().isApprox(expectedMax));
+
+	const Vector3f in{0, 0, 0};
+	aabb.addPoint(in);
+	EXPECT_TRUE(aabb.getMinPoint().isApprox(expectedMin));
+	EXPECT_TRUE(aabb.getMaxPoint().isApprox(expectedMax));
+}

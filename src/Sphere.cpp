@@ -1,6 +1,7 @@
 //
 // Created by Frank on 2023/8/19.
 //
+#include "AABB.h"
 #include "MathUtil.h"
 #include "Model.h"
 using namespace xd;
@@ -61,11 +62,18 @@ Vector2f Sphere::generateUV(const Vector3f& point) const
 std::pair<float, float> Sphere::getThetaPhi(const Vector3f& point) const
 {
 	const Vector3f cp = point - center;
-	const float phi = std::atan2(cp.y(), cp.x());
+	float phi = std::atan2(cp.y(), cp.x());
+	if (phi < 0)
+		phi = TWO_PI + phi;
 	const float theta = std::acos(cp.z() / radius);
 	return {theta, phi};
 }
 float Sphere::getArea() const
 {
 	return 4 * PI * radius * radius;
+}
+AABB Sphere::getAABB() const
+{
+	const Vector3f offset{radius, radius, radius};
+	return {center - offset, center + offset};
 }

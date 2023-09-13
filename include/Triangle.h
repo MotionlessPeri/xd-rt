@@ -6,6 +6,10 @@
 #define XD_RT_TRIANGLE_H
 #include <array>
 #include <vector>
+#include "AABB.h"
+#include "CoreTypes.h"
+#include "Enums.h"
+#include "HitAccel.h"
 #include "MathType.h"
 #include "Model.h"
 namespace xd {
@@ -20,13 +24,15 @@ public:
 				 const std::vector<Vector3f>& normals,
 				 const std::vector<Vector3f>& tangents,
 				 const std::vector<Vector3f>& biTangents,
-				 const std::vector<uint32_t>& indices);
+				 const std::vector<uint32_t>& indices,
+				 HitAccelMethod method = HitAccelMethod::NO_ACCEL);
 	TriangleMesh(std::vector<Vector3f>&& positions,
 				 std::vector<Vector2f>&& uvs,
 				 std::vector<Vector3f>&& normals,
 				 std::vector<Vector3f>&& tangents,
 				 std::vector<Vector3f>&& biTangents,
-				 std::vector<uint32_t>&& indices);
+				 std::vector<uint32_t>&& indices,
+				 HitAccelMethod method = HitAccelMethod::NO_ACCEL);
 	bool hasUV() const;
 	bool hasNormal() const;
 	bool hasTangent() const;
@@ -39,14 +45,20 @@ public:
 	const std::vector<Vector3f>& getTangents() const;
 	const std::vector<Vector3f>& getBiTangents() const;
 	float getArea() const override;
+	AABB getAABB() const override;
 
 protected:
+	void init(const std::vector<uint32_t>& indices, HitAccelMethod method);
+	void initTriangles(const std::vector<uint32_t>& indices);
+	void initAccel(HitAccelMethod method);
 	std::vector<Vector3f> positions;
 	std::vector<Vector2f> uvs;
 	std::vector<Vector3f> normals;
 	std::vector<Vector3f> tangents;
 	std::vector<Vector3f> biTangents;
 	std::vector<Triangle> triangles;
+	AABB aabb;
+	std::unique_ptr<HitAccel> hitAccel;
 };
 class Triangle : public Model {
 public:
@@ -60,6 +72,7 @@ public:
 	std::array<Vector3f, 3> getTangentsUnchecked() const;
 	std::array<Vector3f, 3> getBiTangentsUnchecked() const;
 	float getArea() const override;
+	AABB getAABB() const override { return aabb; }
 
 protected:
 	void calAccParams();
@@ -75,6 +88,7 @@ protected:
 	Vector3f N;
 	Vector3f dpdu, dpdv;
 	float area;
+	AABB aabb;
 };
 };		// namespace xd
 #endif	// XD_RT_TRIANGLE_H
