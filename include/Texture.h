@@ -5,6 +5,7 @@
 #ifndef XD_RT_TEXTURE_H
 #define XD_RT_TEXTURE_H
 #include "CoreTypes.h"
+#include "MathUtil.h"
 namespace xd {
 template <typename ReturnType, typename SampleType>
 class Texture {
@@ -22,5 +23,26 @@ protected:
 	ReturnType c;
 };
 
+template <typename ReturnType>
+class SphereTexture : public Texture3D<ReturnType> {
+public:
+	SphereTexture(const std::vector<ReturnType>& data, uint32_t width, uint32_t height)
+		: data(data), width(width), height(height)
+	{
+	}
+	ReturnType sample(const Vector3f& sample) override
+	{
+		const auto uv = getSphereUV(sample);
+		const uint32_t row = uv.x() * height;
+		const uint32_t col = uv.y() * width;
+		const uint32_t index = row * width + col;
+		return data[index];
+	}
+
+protected:
+	std::vector<ReturnType> data;
+	uint32_t width;
+	uint32_t height;
+};
 }  // namespace xd
 #endif	// XD_RT_TEXTURE_H

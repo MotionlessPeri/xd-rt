@@ -18,11 +18,6 @@ public:
 	virtual bool isDeltaDirection() const = 0;
 };
 
-class NonDeltaPositionLightInterface {
-public:
-	virtual ~NonDeltaPositionLightInterface() = default;
-	virtual std::vector<Ray> getShadowRays(const Vector3f& point, uint32_t numSamples) = 0;
-};
 class PointLight : public Light {
 public:
 	PointLight(const Vector3f& position, const ColorRGB& intensity);
@@ -35,5 +30,6 @@ protected:
 	Vector3f position;
 	ColorRGB intensity;
 };
+class DomeLight : public Light {};
 }  // namespace xd
 #endif	// XD_RT_LIGHT_H

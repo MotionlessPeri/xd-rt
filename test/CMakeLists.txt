@@ -9,7 +9,8 @@ find_package(TBB REQUIRED)
 add_executable(xd_rt_test SamplerTest.cpp FilmTest.cpp CameraTest.cpp ModelHitTest.cpp VisibilityTest.cpp DistributionTest.cpp LightTest.cpp MaterialTest.cpp TextureTest.cpp HitRecordTest.cpp TriangleTest.cpp
         ObjLoaderTest.cpp
         AABBTest.cpp
-        BVHTest.cpp)
+        BVHTest.cpp
+        DomeTest.cpp)
 target_link_libraries(xd_rt_test xd_rt)
 target_link_libraries(xd_rt_test gtest gtest_main)
 target_link_libraries(xd_rt_test TBB::tbb)

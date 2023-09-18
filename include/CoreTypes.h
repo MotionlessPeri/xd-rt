@@ -42,6 +42,9 @@ class Texture;
 template <typename ReturnType>
 using Texture2D = Texture<ReturnType, Vector2f>;
 
+template <typename ReturnType>
+using Texture3D = Texture<ReturnType, Vector3f>;
+
 template <typename SampleType>
 using TextureF = Texture<float, SampleType>;
 

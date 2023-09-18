@@ -19,5 +19,6 @@ typedef Vector3f ColorRGB;
 constexpr float PI = 3.14159265f;
 constexpr float TWO_PI = 2 * PI;
 constexpr float INV_PI = 1.f / PI;
+constexpr float INV_TWO_PI = 1.f / TWO_PI;
 }  // namespace xd
 #endif	// XD_RT_MATHTYPE_H

@@ -47,6 +47,9 @@ static std::array<ObjFaceIndex, 3> parseFace(const std::string& aStr)
 	// Extract three face corners (one triangle)
 	while ((pos <= strEnd) && (aStr[pos] != ' ') && (aStr[pos] != '\t')) {
 		// Extract three /-separated strings (v/vt/vn)
+		if (i >= 3) {
+			throw std::runtime_error("Only triangle obj file is supported for now.");
+		}
 		std::string v_s[3];
 		int j = 0;
 		while ((pos <= strEnd) && (aStr[pos] != ' ') && (aStr[pos] != '\t') && (j < 3)) {

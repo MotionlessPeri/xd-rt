@@ -45,5 +45,25 @@ T interpolateWithBaryCoords(const std::array<T, 3>& inputs, const Vector3f& bary
 {
 	return baryCoord.x() * inputs[0] + baryCoord.y() * inputs[1] + baryCoord.z() * inputs[2];
 }
+
+/**
+ * given a direction, return [theta, phi] where theta is the angle with z axis and
+ * phi is the angle with x axis
+ * @param dir the direction on the surface
+ * @return [theta, phi]
+ */
+inline std::pair<float, float> getSphereThetaPhi(const Vector3f& dir)
+{
+	float phi = std::atan2(dir.y(), dir.x());
+	if (phi < 0)
+		phi = TWO_PI + phi;
+	const float theta = std::acos(dir.z());
+	return {theta, phi};
+}
+inline Vector2f getSphereUV(const Vector3f& dir)
+{
+	const auto [theta, phi] = getSphereThetaPhi(dir);
+	return {theta * INV_PI, phi * INV_TWO_PI};
+}
 }  // namespace xd
 #endif	// XD_RT_MATHUTIL_H
