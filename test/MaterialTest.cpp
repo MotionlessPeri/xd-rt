@@ -80,11 +80,12 @@ TEST(MaterialTestSuite, LambertianTest)
 
 				for (const auto light : lights) {
 					HitRecord dummy;
-					const auto shadowRay = light->getShadowRay(hitPoint, dummy);
+					const Ray shadowRay{hitPoint, light->getDirection(hitPoint, dummy)};
 					const float cosTheta = std::fabs(n.dot(shadowRay.d));
 
 					if (!hitSolver->solve(shadowRay, dummy)) {
-						const ColorRGB projectedRadiance = light->getIntensity(hitPoint) * cosTheta;
+						const ColorRGB projectedRadiance =
+							light->getIntensity(shadowRay.d) * cosTheta;
 						const Vector3f brdf = material->getBRDF(rec, shadowRay.d, -ray.d);
 						const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
 						film->addSample(SAMPLE_WEIGHT * Lo.cwiseProduct(weight), sample);
@@ -115,7 +116,7 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 	auto redMatte = std::make_shared<MatteMaterial>(Vector3f{1, 0, 0});
 	auto greenMatte = std::make_shared<MatteMaterial>(Vector3f{0, 1, 0});
 	auto whiteMatte = std::make_shared<MatteMaterial>(Vector3f{1, 1, 1});
-	const auto spec = std::make_shared<SpecularReflection>();
+	const auto spec = std::make_shared<SpecularReflectionMaterial>();
 	auto prim1 = std::make_shared<Primitive>(redSphere, whiteMatte);
 	auto prim2 = std::make_shared<Primitive>(greenSphere, spec);
 
@@ -162,7 +163,7 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 	auto sampler = std::make_shared<SimpleSampler>(width, height);
 
 	const auto samples = sampler->generateSamples();
-	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
+	constexpr uint32_t SAMPLE_PER_PIXEL = 2u;
 	constexpr float SAMPLE_WEIGHT = 1.f / (float)SAMPLE_PER_PIXEL;
 	const auto work = [&](const tbb::blocked_range<size_t>& r) {
 		for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
@@ -185,10 +186,11 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 
 				for (const auto light : lights) {
 					HitRecord dummy;
-					const auto shadowRay = light->getShadowRay(hitPoint, dummy);
+					const Ray shadowRay{hitPoint, light->getDirection(hitPoint, dummy)};
 					const float cosTheta = std::clamp(n.dot(shadowRay.d), 0.f, 1.f);
 					if (!hitSolver->solve(shadowRay, dummy)) {
-						const ColorRGB projectedRadiance = light->getIntensity(hitPoint) * cosTheta;
+						const ColorRGB projectedRadiance =
+							light->getIntensity(shadowRay.d) * cosTheta;
 						const Vector3f brdf = material->getBRDF(rec, shadowRay.d, -ray.d);
 						const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
 						film->addSample(SAMPLE_WEIGHT * Lo.cwiseProduct(weight), sample);

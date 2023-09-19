@@ -5,9 +5,9 @@
 #include "Material.h"
 #include "MathUtil.h"
 using namespace xd;
-Vector3f SpecularReflection::getBRDF(const HitRecord& hitRecord,
-									 const Vector3f& wi,
-									 const Vector3f& wo) const
+Vector3f SpecularReflectionMaterial::getBRDF(const HitRecord& hitRecord,
+											 const Vector3f& wi,
+											 const Vector3f& wo) const
 {
 	const auto N = hitRecord.n;
 	constexpr float eps = 1e-5;
@@ -17,7 +17,8 @@ Vector3f SpecularReflection::getBRDF(const HitRecord& hitRecord,
 	else
 		return {0, 0, 0};
 }
-Vector3f SpecularReflection::getDirection(const HitRecord& hitRecord, const Vector3f& wo) const
+Vector3f SpecularReflectionMaterial::getDirection(const HitRecord& hitRecord,
+												  const Vector3f& wo) const
 {
 	return reflected(wo, hitRecord.n);
 }

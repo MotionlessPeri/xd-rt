@@ -40,8 +40,9 @@ protected:
 	std::shared_ptr<Texture2DC> color;
 };
 
-class SpecularReflection : public Material {
+class SpecularReflectionMaterial : public Material {
 public:
+	SpecularReflectionMaterial() = default;
 	Vector3f getBRDF(const HitRecord& hitRecord,
 					 const Vector3f& wi,
 					 const Vector3f& wo) const override;

@@ -14,16 +14,19 @@ set(INCLUDE_FILES
         include/Hitable.h
         include/AABB.h
         include/HitAccel.h
-        include/Enums.h)
+        include/Enums.h
+        include/TextureFactory.h)
 set(SRC_FILES
         src/Ray.cpp
         src/Film.cpp src/SimpleSampler.cpp src/Camera.cpp src/Sphere.cpp src/CameraFactory.cpp src/HitSolver.cpp src/Scene.cpp src/Primitive.cpp src/UniformHemisphere.cpp src/PointLight.cpp src/Lambertian.cpp src/MatteMaterial.cpp src/Triangle.cpp
         src/ObjLoader.cpp
         src/AABB.cpp
         src/BVHNode.cpp
-        include/NoAccel.cpp
-        src/SpecularReflection.cpp
-        src/Box.cpp)
+        src/NoAccel.cpp
+        src/SpecularReflectionMaterial.cpp
+        src/Box.cpp
+        src/TextureFactory.cpp
+        src/DomeLight.cpp)
 add_executable(xd_rt_playground main.cpp)
 add_library(xd_rt STATIC ${INCLUDE_FILES} ${SRC_FILES})
 

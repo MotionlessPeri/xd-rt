@@ -17,10 +17,9 @@ TEST(TextureTestSuite, ConstantTextureSampleTest)
 	EXPECT_TRUE(cParam.isApprox(textureC->sample(samplePos)));
 }
 
-#include "Model.h"
-#define STB_IMAGE_IMPLEMENTATION
 #include <oneapi/tbb.h>
 #include "CameraFactory.h"
+#include "Model.h"
 #include "stb_image.h"
 TEST(DomeTestSuite, SphereTextureTest)
 {

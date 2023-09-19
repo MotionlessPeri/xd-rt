@@ -59,5 +59,11 @@ class ConstantTexture;
 
 using ConstantTextureF = ConstantTexture<float>;
 using ConstantTextureColor = ConstantTexture<ColorRGB>;
+
+template <typename ReturnType>
+class SphereTexture;
+
+using SphereTexture3f = SphereTexture<Vector3f>;
+using SphereTexturef = SphereTexture<float>;
 }  // namespace xd
 #endif	// XD_RT_CORETYPES_H
