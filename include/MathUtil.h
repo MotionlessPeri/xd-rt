@@ -65,5 +65,16 @@ inline Vector2f getSphereUV(const Vector3f& dir)
 	const auto [theta, phi] = getSphereThetaPhi(dir);
 	return {theta * INV_PI, phi * INV_TWO_PI};
 }
+inline Vector3f reflected(const Vector3f& i, const Vector3f& n)
+{
+	return 2 * n.dot(i) * n - i;
+}
+inline std::tuple<Vector3f, Vector3f> coordSystem(const Vector3f& v1)
+{
+	Vector3f v2{-v1.z(), 0, v1.x()};
+	v2.normalize();
+	Vector3f v3 = v1.cross(v2);
+	return {v2, v3};
+}
 }  // namespace xd
 #endif	// XD_RT_MATHUTIL_H

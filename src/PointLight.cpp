@@ -1,6 +1,7 @@
 //
 // Created by Frank on 2023/8/29.
 //
+#include "HitRecord.h"
 #include "Light.h"
 #include "Ray.h"
 using namespace xd;
@@ -12,7 +13,9 @@ ColorRGB PointLight::getIntensity(const Vector3f& point) const
 {
 	return intensity;
 }
-Ray PointLight::getShadowRay(const Vector3f& point) const
+Ray PointLight::getShadowRay(const Vector3f& point, HitRecord& record) const
 {
-	return {point, (position - point).normalized()};
+	const Vector3f pp = position - point;
+	record.tHit = pp.norm();
+	return {point, pp.normalized()};
 }

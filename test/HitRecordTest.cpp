@@ -6,9 +6,8 @@
 #include "Model.h"
 #include "gtest/gtest.h"
 using namespace xd;
-TEST(HitRecordTestSuite, differentialTest)
+TEST(HitRecordTestSuite, DifferentialTest)
 {
-	HitRecord rec;
 	Vector3f center{0, 0, 0};
 	auto sphere = std::make_shared<Sphere>(center, 1.f);
 	constexpr uint32_t TIMES = 1000u;
@@ -18,7 +17,7 @@ TEST(HitRecordTestSuite, differentialTest)
 	while (cnt < TIMES) {
 		Vector3f dir =
 			Vector3f{distrib(generator), distrib(generator), distrib(generator)}.normalized();
-
+		HitRecord rec;
 		Ray ray{center, dir};
 		EXPECT_TRUE(sphere->hit(ray, rec));
 		const auto localToWorld = rec.getLocalToWorld();

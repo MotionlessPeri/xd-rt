@@ -10,6 +10,11 @@ namespace xd {
 class Hitable {
 public:
 	virtual ~Hitable() = default;
+	virtual bool hit(const Ray& ray) const
+	{
+		HitRecord dummy;
+		return hit(ray, dummy);
+	}
 	virtual bool hit(const Ray& ray, HitRecord& rec) const = 0;
 };
 }  // namespace xd

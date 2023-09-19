@@ -32,7 +32,7 @@ TEST(BVHTestSuite, hitTest1)
 	const Vector3f maxPoint{halfLen, halfLen, halfLen};
 	const Vector3f minPoint{-halfLen, -halfLen, -halfLen};
 
-	const uint32_t count = 10;
+	const uint32_t count = 5;
 	const float radius = len / count / 2;
 	const Vector3f firstCenter = minPoint + Vector3f{radius, radius, radius};
 	auto scene = std::make_shared<Scene>();

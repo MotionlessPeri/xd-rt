@@ -19,22 +19,22 @@ bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 	if (count == 0)
 		return false;
 	else if (count == 1) {
-		if (t1 > 0) {
+		if (t1 > 0 && t1 < rec.tHit) {
 			hit = true;
 			resT = t1;
 		}
 	}
 	else {
-		if (t1 > 0) {
+		if (t1 > 0 && t1 < rec.tHit) {
 			hit = true;
 			resT = t1;
 		}
-		else if (t2 > 0) {
+		else if (t2 > 0 && t2 < rec.tHit) {
 			hit = true;
 			resT = t2;
 		}
 	}
-	if (hit && resT < rec.tHit) {
+	if (hit) {
 		rec.tHit = resT;
 		const Vector3f hitPoint = ray.getTPoint(rec.tHit);
 		std::tie(rec.dpdu, rec.dpdv, rec.n) = generateDifferentials(hitPoint);

@@ -39,5 +39,13 @@ public:
 protected:
 	std::shared_ptr<Texture2DC> color;
 };
+
+class SpecularReflection : public Material {
+public:
+	Vector3f getBRDF(const HitRecord& hitRecord,
+					 const Vector3f& wi,
+					 const Vector3f& wo) const override;
+	Vector3f getDirection(const HitRecord& hitRecord, const Vector3f& wo) const override;
+};
 }  // namespace xd
 #endif	// XD_RT_MATERIAL_H

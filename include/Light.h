@@ -13,7 +13,7 @@ class Light : public std::enable_shared_from_this<Light> {
 public:
 	virtual ~Light() = default;
 	virtual ColorRGB getIntensity(const Vector3f& point) const = 0;
-	virtual Ray getShadowRay(const Vector3f& point) const = 0;
+	virtual Ray getShadowRay(const Vector3f& point, HitRecord& record) const = 0;
 	virtual bool isDeltaPosition() const = 0;
 	virtual bool isDeltaDirection() const = 0;
 };
@@ -22,7 +22,7 @@ class PointLight : public Light {
 public:
 	PointLight(const Vector3f& position, const ColorRGB& intensity);
 	ColorRGB getIntensity(const Vector3f& point) const override;
-	Ray getShadowRay(const Vector3f& point) const override;
+	Ray getShadowRay(const Vector3f& point, HitRecord& record) const override;
 	bool isDeltaPosition() const override { return true; }
 	bool isDeltaDirection() const override { return false; }
 

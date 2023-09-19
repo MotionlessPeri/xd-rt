@@ -8,7 +8,7 @@
 #include "Triangle.h"
 #include "gtest/gtest.h"
 using namespace xd;
-TEST(ObjLoaderTestSuite, loadTest)
+TEST(ObjLoaderTestSuite, LoadTest)
 {
 	ObjLoader loader;
 	auto mesh = loader.load(R"(D:\qem-simple.obj)");
@@ -24,7 +24,7 @@ TEST(ObjLoaderTestSuite, loadTest)
 	EXPECT_TRUE(biTangents.empty());
 }
 
-TEST(ObjLoaderTestSuite, meshHitTest)
+TEST(ObjLoaderTestSuite, MeshHitTest)
 {
 	ObjLoader loader;
 	auto meshWithNoAccel = loader.load(R"(D:\qem-test.obj)");

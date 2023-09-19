@@ -17,7 +17,7 @@ public:
 	virtual ~Model() = default;
 	virtual float getArea() const = 0;
 	virtual AABB getAABB() const = 0;
-
+	// TODO: we need interfaces to deal with hit point shift due to floating-point accuracy issue
 protected:
 };
 
@@ -42,5 +42,17 @@ protected:
 	float radius;
 };
 
+// Similar as AABB but is a model
+class Box : public Model {
+public:
+	Box(const Vector3f& minPoint, const Vector3f& maxPoint);
+	bool hit(const Ray& ray, HitRecord& rec) const override;
+	float getArea() const override;
+	AABB getAABB() const override;
+	Vector3f getExtent() const { return maxPoint - minPoint; }
+
+protected:
+	Vector3f minPoint, maxPoint;
+};
 }  // namespace xd
 #endif	// XD_RT_MODEL_H

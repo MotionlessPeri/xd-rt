@@ -69,9 +69,10 @@ TEST(LightTestSuite, PointLightTest)
 					hitPoint += (n * epsilon);
 
 					for (const auto& light : lights) {
-						const auto shadowRay = light->getShadowRay(hitPoint);
-						const float cosTheta = n.dot(shadowRay.d);
 						HitRecord dummy;
+						const auto shadowRay = light->getShadowRay(hitPoint, dummy);
+						const float cosTheta = n.dot(shadowRay.d);
+
 						if (!hitSolver->solve(shadowRay, dummy)) {
 							const auto projectedRadiance = light->getIntensity(hitPoint) * cosTheta;
 							film->addSample(projectedRadiance, sample);

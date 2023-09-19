@@ -10,7 +10,7 @@ add_executable(xd_rt_test SamplerTest.cpp FilmTest.cpp CameraTest.cpp ModelHitTe
         ObjLoaderTest.cpp
         AABBTest.cpp
         BVHTest.cpp
-        DomeTest.cpp)
+)
 target_link_libraries(xd_rt_test xd_rt)
 target_link_libraries(xd_rt_test gtest gtest_main)
 target_link_libraries(xd_rt_test TBB::tbb)

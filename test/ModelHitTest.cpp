@@ -91,3 +91,40 @@ TEST(ModelHitTestSuite, SphereHitTest2)
 	const std::string hdrPath = R"(D:\sphere_hit_uv.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
+
+TEST(ModelHitTestSuite, BoxHitTest1)
+{
+	const float extent = 1000.f;
+	const float z = -100;
+	const float delta = 10;
+	const Vector3f minPoint{-extent, -extent, z};
+	const Vector3f maxPoint{extent, extent, z + delta};
+	auto plane = std::make_shared<Box>(minPoint, maxPoint);
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 1000u;
+	const Vector3f right{500, 0, 0};
+	const Vector3f up{0, 0, 500};
+
+	const Vector3f camPos{0, -1, 0};
+	const Vector3f target{0, 0, 0};
+	const float verticalFov = 90.f / 180.f * PI;
+	auto cam = CameraFactory::createPerspCamera(camPos, target, up.normalized(), verticalFov,
+												right.norm() / up.norm(), width, height);
+	auto film = cam->getFilm();
+	auto sampler = std::make_shared<SimpleSampler>(width, height);
+	const auto samples = sampler->generateSamples();
+	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
+					  [&](const tbb::blocked_range<size_t>& r) {
+						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
+							  const auto& sample = samples[sampleIdx];
+							  const auto ray = cam->generateRay(sample);
+							  HitRecord rec;
+							  if (plane->hit(ray, rec)) {
+								  film->addSample(ColorRGB{rec.tHit, 0, 0}, sample);
+							  }
+						  }
+					  });
+
+	const std::string hdrPath = R"(D:\box_hit_test_1.hdr)";
+	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+}

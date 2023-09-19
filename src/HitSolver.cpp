@@ -11,7 +11,6 @@ bool xd::NaiveHitSolver::solve(const Ray& ray, HitRecord& record) const
 	const auto scene = sceneRef.lock();
 	const auto& primitives = scene->getPrimitives();
 	bool hit = false;
-	record.tHit = std::numeric_limits<float>::max();
 	for (const auto primitive : primitives) {
 		auto model = primitive->getModel();
 		if (model->hit(ray, record)) {
