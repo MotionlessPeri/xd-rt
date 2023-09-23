@@ -26,7 +26,10 @@ set(SRC_FILES
         src/SpecularReflectionMaterial.cpp
         src/Box.cpp
         src/TextureFactory.cpp
-        src/DomeLight.cpp)
+        src/DomeLight.cpp
+        src/PieceWise1D.cpp
+        src/PIeceWise2D.cpp
+        src/CosineHemisphere.cpp)
 add_executable(xd_rt_playground main.cpp)
 add_library(xd_rt STATIC ${INCLUDE_FILES} ${SRC_FILES})
 

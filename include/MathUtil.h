@@ -63,7 +63,17 @@ inline std::pair<float, float> getSphereThetaPhi(const Vector3f& dir)
 inline Vector2f getSphereUV(const Vector3f& dir)
 {
 	const auto [theta, phi] = getSphereThetaPhi(dir);
-	return {theta * INV_PI, phi * INV_TWO_PI};
+	return {phi * INV_TWO_PI, theta * INV_PI};
+}
+inline Vector3f getSphereDirFromUV(const Vector2f& uv)
+{
+	const float phi = uv.x() * TWO_PI;
+	const float theta = uv.y() * PI;
+	const float sinTheta = std::sinf(theta);
+	const float cosTheta = std::cosf(theta);
+	const float sinPhi = std::sinf(phi);
+	const float cosPhi = std::cosf(phi);
+	return {sinTheta * cosPhi, sinTheta * sinPhi, cosTheta};
 }
 inline Vector3f reflected(const Vector3f& i, const Vector3f& n)
 {
@@ -75,6 +85,19 @@ inline std::tuple<Vector3f, Vector3f> coordSystem(const Vector3f& v1)
 	v2.normalize();
 	Vector3f v3 = v1.cross(v2);
 	return {v2, v3};
+}
+inline float balanceHeuristic(uint32_t numF, float pdfF, uint32_t numG, float pdfG)
+{
+	return (numF * pdfF) / (numF * pdfF + numG * pdfG);
+}
+inline float powerHeuristic(uint32_t numF, float pdfF, uint32_t numG, float pdfG)
+{
+	const float f = numF * pdfF, g = numG * pdfG;
+	return (f * f) / (f * f + g * g);
+}
+inline float rgbToLuminance(const ColorRGB& color)
+{
+	return color.x() * 0.212671f + color.y() * 0.715160f + color.z() * 0.072169f;
 }
 }  // namespace xd
 #endif	// XD_RT_MATHUTIL_H

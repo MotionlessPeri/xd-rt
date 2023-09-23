@@ -6,16 +6,26 @@
 #include "Ray.h"
 using namespace xd;
 PointLight::PointLight(const Vector3f& position, const ColorRGB& intensity)
-	: position(position), intensity(intensity)
+	: Light(1u), position(position), intensity(intensity)
 {
 }
-ColorRGB PointLight::getIntensity(const Vector3f& direction) const
+ColorRGB PointLight::getIntensity(const Ray& ray) const
 {
 	return intensity;
 }
-Vector3f PointLight::getDirection(const Vector3f& point, HitRecord& rec) const
+Vector3f PointLight::getDirection(const HitRecord& primRec, HitRecord& shadowRec) const
 {
-	const Vector3f pp = (position - point);
-	rec.tHit = pp.norm();
+	const Vector3f pp = (position - primRec.tPoint);
+	shadowRec.tHit = pp.norm();
 	return pp.normalized();
+}
+float PointLight::getPdf(const Vector3f& dir) const
+{
+	return 0;
+}
+Vector3f PointLight::sample(const HitRecord& primRec, HitRecord& shadowRec, float& pdf)
+{
+	const auto wo = getDirection(primRec, shadowRec);
+	pdf = getPdf(wo);
+	return wo;
 }

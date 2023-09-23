@@ -65,12 +65,6 @@ bool BVHNode::hit(const Ray& ray, HitRecord& rec) const
 		const auto leftHit = left->hit(ray, rec);
 		const auto rightHit = right->hit(ray, rec);
 		hit = leftHit || rightHit;
-		if (hit) {
-			rec.debug <<= 1;
-			if (rightHit) {
-				rec.debug += 1;
-			}
-		}
 		return hit;
 	}
 }

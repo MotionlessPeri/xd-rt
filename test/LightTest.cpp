@@ -66,13 +66,13 @@ TEST(LightTestSuite, PointLightTest)
 					hitPoint += (n * epsilon);
 
 					for (const auto& light : lights) {
-						HitRecord dummy;
-						const Ray shadowRay{hitPoint, light->getDirection(hitPoint, dummy)};
+						HitRecord shadowRec;
+						const Ray shadowRay{hitPoint, light->getDirection(rec, shadowRec)};
 						const float cosTheta = n.dot(shadowRay.d);
 
-						if (!hitSolver->solve(shadowRay, dummy)) {
+						if (!hitSolver->solve(shadowRay, shadowRec)) {
 							const auto projectedRadiance =
-								light->getIntensity(shadowRay.d) * cosTheta;
+								light->getIntensity(shadowRay) * cosTheta;
 							film->addSample(projectedRadiance, sample);
 						}
 					}
@@ -153,7 +153,7 @@ TEST(LightTestSuite, DomeLightTest)
 			while (depth < MAX_DEPTH) {
 				HitRecord rec;
 				if (!hitSolver->solve(ray, rec)) {
-					film->addSample(domeLight->getIntensity(ray.d), sample);
+					film->addSample(domeLight->getIntensity(ray), sample);
 					break;
 				}
 
@@ -170,7 +170,7 @@ TEST(LightTestSuite, DomeLightTest)
 					const float cosTheta = std::clamp(n.dot(shadowRay.d), 0.f, 1.f);
 					if (!hitSolver->solve(shadowRay, dummy)) {
 						const ColorRGB projectedRadiance =
-							light->getIntensity(shadowRay.d) * cosTheta;
+							light->getIntensity(shadowRay) * cosTheta;
 						const Vector3f brdf = material->getBRDF(rec, shadowRay.d, -ray.d);
 						const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
 						film->addSample(SAMPLE_WEIGHT * Lo.cwiseProduct(weight), sample);

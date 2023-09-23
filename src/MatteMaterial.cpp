@@ -26,8 +26,5 @@ Vector3f MatteMaterial::getDirection(const HitRecord& hitRecord, const Vector3f&
 {
 	auto sampledColor = color->sample(hitRecord.uv);
 	Lambertian lambertian(sampledColor);
-	Vector3f dummy;
-	const auto dir = lambertian.getDirection(dummy);
-	const auto localToWorld = hitRecord.getLocalToWorld();
-	return localToWorld * dir;
+	return lambertian.getDirection(hitRecord.n);
 }

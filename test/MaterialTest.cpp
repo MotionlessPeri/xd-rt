@@ -13,6 +13,7 @@
 #include "Model.h"
 #include "Primitive.h"
 #include "Scene.h"
+#include "TextureFactory.h"
 using namespace xd;
 TEST(MaterialTestSuite, LambertianTest)
 {
@@ -57,7 +58,7 @@ TEST(MaterialTestSuite, LambertianTest)
 	auto sampler = std::make_shared<SimpleSampler>(width, height);
 
 	const auto samples = sampler->generateSamples();
-	constexpr uint32_t LIMIT = 20u;
+	constexpr uint32_t LIMIT = 5u;
 	constexpr float SAMPLE_WEIGHT = 1.f / (float)LIMIT;
 	const auto work = [&](const tbb::blocked_range<size_t>& r) {
 		for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
@@ -79,13 +80,13 @@ TEST(MaterialTestSuite, LambertianTest)
 				hitPoint += (n * epsilon);
 
 				for (const auto light : lights) {
-					HitRecord dummy;
-					const Ray shadowRay{hitPoint, light->getDirection(hitPoint, dummy)};
-					const float cosTheta = std::fabs(n.dot(shadowRay.d));
+					HitRecord shadowRec;
+					const Ray shadowRay{hitPoint, light->getDirection(rec, shadowRec)};
+					const float cosTheta = std::clamp(n.dot(shadowRay.d), 0.f, 1.f);
 
-					if (!hitSolver->solve(shadowRay, dummy)) {
+					if (!hitSolver->solve(shadowRay, shadowRec)) {
 						const ColorRGB projectedRadiance =
-							light->getIntensity(shadowRay.d) * cosTheta;
+							light->getIntensity(shadowRay) * cosTheta;
 						const Vector3f brdf = material->getBRDF(rec, shadowRay.d, -ray.d);
 						const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
 						film->addSample(SAMPLE_WEIGHT * Lo.cwiseProduct(weight), sample);
@@ -98,6 +99,10 @@ TEST(MaterialTestSuite, LambertianTest)
 			}
 		}
 	};
+
+	// oneapi::tbb::global_control
+	// global_limit(oneapi::tbb::global_control::max_allowed_parallelism,
+	// 1);
 
 	for (uint32_t i = 0u; i < LIMIT; ++i) {
 		tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()), work);
@@ -185,12 +190,12 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 				hitPoint += (n * epsilon);
 
 				for (const auto light : lights) {
-					HitRecord dummy;
-					const Ray shadowRay{hitPoint, light->getDirection(hitPoint, dummy)};
+					HitRecord shadowRec;
+					const Ray shadowRay{hitPoint, light->getDirection(rec, shadowRec)};
 					const float cosTheta = std::clamp(n.dot(shadowRay.d), 0.f, 1.f);
-					if (!hitSolver->solve(shadowRay, dummy)) {
+					if (!hitSolver->solve(shadowRay, shadowRec)) {
 						const ColorRGB projectedRadiance =
-							light->getIntensity(shadowRay.d) * cosTheta;
+							light->getIntensity(shadowRay) * cosTheta;
 						const Vector3f brdf = material->getBRDF(rec, shadowRay.d, -ray.d);
 						const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
 						film->addSample(SAMPLE_WEIGHT * Lo.cwiseProduct(weight), sample);
@@ -212,5 +217,111 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 	}
 
 	const std::string hdrPath = R"(D:\specular_reflection_test.hdr)";
+	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+}
+
+TEST(MaterialTestSuite, LambertianWithImageTest)
+{
+	const float radius = 400.f;
+	const Vector3f origin{0, 0, 0};
+	const ColorRGB white{1, 1, 1};
+	auto scene = std::make_shared<Scene>();
+	auto sphere = std::make_shared<Sphere>(origin, radius);
+	auto diffuse = TextureFactory::loadUVTexture3f(R"(D:\uv_checker.jpg)");
+	auto matte = std::make_shared<MatteMaterial>(diffuse);
+	auto spec = std::make_shared<SpecularReflectionMaterial>();
+	auto primitive = std::make_shared<Primitive>(sphere, matte);
+	scene->addPrimitive(primitive);
+
+	auto hitSolver = std::make_shared<NaiveHitSolver>(scene);
+
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 1000u;
+	const Vector3f center = Vector3f{0, 1.7, 0} * radius;
+	const Vector3f z{0, 0, 1};
+	const Vector3f target{0, 0, 0};
+	const Vector3f towards = (target - center).normalized();
+	const Vector3f right = towards.cross(z).normalized();
+	const Vector3f up = right.cross(towards);
+
+	const auto sphereTexture = TextureFactory::loadSphereTexture3f(R"(D:/dome.hdr)");
+	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
+
+	std::vector<std::shared_ptr<Light>> lights;
+	lights.push_back(domeLight);
+
+	const auto verticalFov = 90.f / 180.f * PI;
+	auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
+												width, height);
+	// auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), 500, 500,
+	//											width, height);
+	auto film = cam->getFilm();
+
+	auto sampler = std::make_shared<SimpleSampler>(width, height);
+
+	const auto samples = sampler->generateSamples();
+	constexpr uint32_t SAMPLE_PER_PIXEL = 2u;
+	constexpr float SAMPLE_WEIGHT = 1.f / (float)SAMPLE_PER_PIXEL;
+	const auto work = [&](const tbb::blocked_range<size_t>& r) {
+		for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
+			const auto& sample = samples[sampleIdx];
+			auto ray = cam->generateRay(sample);
+
+			constexpr uint32_t MAX_DEPTH = 1u;
+			int depth = 0;
+			Vector3f weight{1.f, 1.f, 1.f};
+			while (depth < MAX_DEPTH) {
+				HitRecord rec;
+				if (!hitSolver->solve(ray, rec)) {
+					film->addSample(SAMPLE_WEIGHT * domeLight->getIntensity(ray), sample);
+					break;
+				}
+
+				constexpr float epsilon = 1e-4;
+				auto hitPoint = ray.getTPoint(rec.tHit);
+				const auto model = rec.primitive->getModel();
+				const auto material = rec.primitive->getMaterial();
+				const auto [dpdu, dpdv, n] = std::tie(rec.dpdu, rec.dpdv, rec.n);
+				hitPoint += (n * epsilon);
+
+				for (const auto light : lights) {
+					const auto nLightSamples = light->getNumSamples();
+					uint32_t acceptedCount = 0u;
+					ColorRGB radiance{0, 0, 0};
+					for (auto i = 0u; i < nLightSamples; ++i) {
+						// sample light source
+						HitRecord shadowRec;
+						float pdf;
+						const Ray shadowRay{hitPoint, light->getDirection(rec, shadowRec)};
+						// const Ray shadowRay{hitPoint, light->sample(rec, shadowRec, pdf)};
+						const float cosTheta = std::clamp(n.dot(shadowRay.d), 0.f, 1.f);
+						if (!hitSolver->solve(shadowRay, shadowRec)) {
+							const ColorRGB projectedRadiance =
+								light->getIntensity(shadowRay) * cosTheta;
+							const Vector3f brdf = material->getBRDF(rec, shadowRay.d, -ray.d);
+							const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
+							radiance += Lo.cwiseProduct(weight);
+							++acceptedCount;
+						}
+					}
+					film->addSample(SAMPLE_WEIGHT * radiance / acceptedCount, sample);
+				}
+				auto newDirection = material->getDirection(rec, -ray.d);
+				weight = weight.cwiseProduct(material->getBRDF(rec, newDirection, -ray.d));
+				ray = Ray{hitPoint, newDirection};
+				++depth;
+			}
+		}
+	};
+
+	// oneapi::tbb::global_control
+	// global_limit(oneapi::tbb::global_control::max_allowed_parallelism,
+	// 1);
+
+	for (uint32_t i = 0u; i < SAMPLE_PER_PIXEL; ++i) {
+		tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()), work);
+	}
+
+	const std::string hdrPath = R"(D:\matte_with_texture_test.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }

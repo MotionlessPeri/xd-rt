@@ -36,6 +36,7 @@ bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 	}
 	if (hit) {
 		rec.tHit = resT;
+		rec.tPoint = ray.getTPoint(resT);
 		const Vector3f hitPoint = ray.getTPoint(rec.tHit);
 		std::tie(rec.dpdu, rec.dpdv, rec.n) = generateDifferentials(hitPoint);
 		rec.uv = generateUV(hitPoint);

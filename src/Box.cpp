@@ -51,6 +51,7 @@ bool Box::hit(const Ray& ray, HitRecord& rec) const
 	}
 	if (hit) {
 		rec.tHit = tHit.t;
+		rec.tPoint = ray.getTPoint(tHit.t);
 		rec.n = tHit.n;
 		rec.dpdu = {0, 0, 0};
 		rec.dpdv = {0, 0, 0};

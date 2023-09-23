@@ -54,11 +54,11 @@ using TextureColor = Texture<ColorRGB, SampleType>;
 using Texture2DF = Texture<float, Vector2f>;
 using Texture2DC = Texture<ColorRGB, Vector2f>;
 
-template <typename ReturnType>
+template <typename ReturnType, typename SampleType>
 class ConstantTexture;
 
-using ConstantTextureF = ConstantTexture<float>;
-using ConstantTextureColor = ConstantTexture<ColorRGB>;
+using ConstantTexture2DF = ConstantTexture<float, Vector2f>;
+using ConstantTexture2DColor = ConstantTexture<ColorRGB, Vector2f>;
 
 template <typename ReturnType>
 class SphereTexture;

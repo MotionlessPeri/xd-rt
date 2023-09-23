@@ -44,6 +44,7 @@ bool AABB::hit(const Ray& ray, HitRecord& rec) const
 		if (tHit < rec.tHit) {
 			hit = true;
 			rec.tHit = tHit;
+			rec.tPoint = ray.getTPoint(tHit);
 		}
 	}
 	return hit;

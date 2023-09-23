@@ -1,25 +1,44 @@
 //
 // Created by Frank on 2023/9/19.
 //
+#include "HitRecord.h"
 #include "Light.h"
 #include "Ray.h"
 #include "Texture.h"
 using namespace xd;
-DomeLight::DomeLight(const std::shared_ptr<SphereTexture3f>& dome) : dome(dome) {}
-Vector3f DomeLight::getDirection(const Vector3f& point, HitRecord& rec) const
+DomeLight::DomeLight(const std::shared_ptr<SphereTexture3f>& dome) : Light(16u), dome(dome)
 {
-	// TODO: return the direction according to dome's light distribution
-	return dis();
+	const auto width = dome->getWidth();
+	const auto height = dome->getHeight();
+	const auto& data = dome->getImage();
+	const auto pixelCnt = width * height;
+	std::vector<float> weights(pixelCnt, 0.f);
+	for (auto i = 0u; i < pixelCnt; ++i) {
+		weights[i] = rgbToLuminance(data[i]);
+	}
+	dis = std::make_shared<PieceWise2D>(weights, width, height);
 }
-ColorRGB DomeLight::getIntensity(const Vector3f& direction) const
+Vector3f DomeLight::getDirection(const HitRecord& primRec, HitRecord& shadowRec) const
 {
-	return dome->sample(direction);
+	const auto uv = (*dis)();
+	return getSphereDirFromUV(uv);
 }
-bool DomeLight::isDeltaPosition() const
+ColorRGB DomeLight::getIntensity(const Ray& ray) const
+{
+	return dome->sample(ray.d);
+}
+bool DomeLight::isDelta() const
 {
 	return false;
 }
-bool DomeLight::isDeltaDirection() const
+float DomeLight::getPdf(const Vector3f& dir) const
 {
-	return false;
+	const Vector2f uv = getSphereUV(dir);
+	return dis->getPdf(uv);
+}
+Vector3f DomeLight::sample(const HitRecord& primRec, HitRecord& shadowRec, float& pdf)
+{
+	const auto uv = (*dis)(pdf);
+	const auto wo = getSphereDirFromUV(uv);
+	return wo;
 }

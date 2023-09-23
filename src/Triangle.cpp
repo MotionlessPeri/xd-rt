@@ -191,6 +191,7 @@ bool Triangle::hit(const Ray& ray, HitRecord& rec) const
 		if (t >= rec.tHit)
 			return false;
 		rec.tHit = t;
+		rec.tPoint = ray.getTPoint(t);
 		if (mesh->hasUV()) {
 			const auto uvs = getUVsUnchecked();
 			rec.uv = interpolateWithBaryCoords(uvs, baryCoord);

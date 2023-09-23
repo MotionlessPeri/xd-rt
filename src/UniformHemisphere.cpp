@@ -1,8 +1,10 @@
 //
 // Created by Frank on 2023/8/28.
 //
+#include <numeric>
 #include <random>
 #include "Distribution.h"
+#include "MathUtil.h"
 using namespace xd;
 Vector3f UniformHemisphere::operator()() const
 {
@@ -19,4 +21,13 @@ Vector3f UniformHemisphere::operator()() const
 	const float y = sqrtOneMinusKsai1 * std::sin(twoPiKsai2);
 	const float z = sample1;
 	return {x, y, z};
+}
+Vector3f UniformHemisphere::operator()(float& pdf) const
+{
+	pdf = INV_TWO_PI;
+	return (*this)();
+}
+float UniformHemisphere::getPdf(const Vector3f& sample) const
+{
+	return INV_TWO_PI;
 }

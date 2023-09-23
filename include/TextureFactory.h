@@ -9,6 +9,7 @@ namespace xd {
 class TextureFactory {
 public:
 	static std::shared_ptr<SphereTexture<Vector3f>> loadSphereTexture3f(const std::string& path);
+	static std::shared_ptr<UVTexture<ColorRGB>> loadUVTexture3f(const std::string& path);
 };
 }  // namespace xd
 #endif	// XD_RT_TEXTUREFACTORY_H
