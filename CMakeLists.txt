@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.18)
 project(xd_rt)
 
 set(CMAKE_CXX_STANDARD 17)
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/external")
 
 include_directories(include)
-include_directories(external/include)
+include_directories(external)
 set(INCLUDE_FILES
         include/Camera.h
         include/Ray.h
@@ -28,7 +29,7 @@ set(SRC_FILES
         src/TextureFactory.cpp
         src/DomeLight.cpp
         src/PieceWise1D.cpp
-        src/PIeceWise2D.cpp
+        src/PieceWise2D.cpp
         src/CosineHemisphere.cpp)
 add_executable(xd_rt_playground main.cpp)
 add_library(xd_rt STATIC ${INCLUDE_FILES} ${SRC_FILES})
