@@ -8,7 +8,7 @@
 using namespace xd;
 MatteMaterial::MatteMaterial(const Vector3f& c)
 {
-	color = std::make_shared<ConstantTextureColor>(c);
+	color = std::make_shared<ConstantTexture<Vector3f, Vector2f>>(c);
 }
 MatteMaterial::MatteMaterial(const std::shared_ptr<Texture2DC>& colorTexture) : color(colorTexture)
 {

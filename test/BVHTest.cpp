@@ -105,5 +105,6 @@ TEST(BVHTestSuite, hitTest1)
 	end = std::chrono::steady_clock::now();
 	elapsedSeconds = end - start;
 	std::cout << "BVH solver cost " << elapsedSeconds.count() << " seconds.\n";
+
 	EXPECT_NO_THROW(film->saveToFile(R"(D:\bvh_hit_test_bvh_solver.hdr)"););
 }

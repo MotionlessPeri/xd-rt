@@ -15,6 +15,9 @@
 namespace xd {
 class Triangle;
 
+// TODO:
+// 1. use raw float data and Eigen::Map
+// 2. store indices
 class TriangleMesh : public Model {
 	friend class Triangle;
 
@@ -73,6 +76,7 @@ public:
 	std::array<Vector3f, 3> getBiTangentsUnchecked() const;
 	float getArea() const override;
 	AABB getAABB() const override { return aabb; }
+	const std::array<uint32_t, 3>& getIndices() const { return indices; }
 
 protected:
 	void calAccParams();
