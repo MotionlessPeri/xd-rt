@@ -11,8 +11,8 @@ using namespace xd;
 TEST(TriangleTestSuite, BaryCentricCoordTest)
 {
 	const float sqrt3 = std::sqrtf(3);
-	TriangleMesh mesh{{{0, 1, 0}, {-sqrt3 / 2.f, -0.5f, 0}, {sqrt3 / 2.f, -0.5f, 0}},
-					  {{1, 1}, {0, 0}, {0, 1}},
+	TriangleMesh mesh{{0, 1, 0, -sqrt3 / 2.f, -0.5f, 0, sqrt3 / 2.f, -0.5f, 0},
+					  {1, 1, 0, 0, 0, 1},
 					  {},
 					  {},
 					  {},
@@ -54,8 +54,8 @@ TEST(TriangleTestSuite, BaryCentricCoordTest)
 TEST(TriangleTestSuite, HitTest)
 {
 	const float sqrt3 = std::sqrtf(3);
-	TriangleMesh mesh{{{0, 1, 0}, {-sqrt3 / 2.f, -0.5f, 0}, {sqrt3 / 2.f, -0.5f, 0}},
-					  {{1, 1}, {0, 0}, {0, 1}},
+	TriangleMesh mesh{{0, 1, 0, -sqrt3 / 2.f, -0.5f, 0, sqrt3 / 2.f, -0.5f, 0},
+					  {1, 1, 0, 0, 0, 1},
 					  {},
 					  {},
 					  {},

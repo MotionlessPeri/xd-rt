@@ -1,25 +1,25 @@
 <?xml version="1.0"?>
 
 <scene>
-  <Group>
-    <RoundLineSegments>
+    <Group>
+        <RoundLineSegments>
 
-      <positions>
-        0 0 0 1
-        0 4 0 2
-      </positions>
+            <rawPositions>
+                0 0 0 1
+                0 4 0 2
+            </rawPositions>
 
-      <indices>
-        0
-      </indices>
+            <indices>
+                0
+            </indices>
 
-      <material>
-        <code>"OBJ"</code>
-        <parameters>
-          <float3 name="Kd">1 1 1</float3>
-        </parameters>
-      </material>
+            <material>
+                <code>"OBJ"</code>
+                <parameters>
+                    <float3 name="Kd">1 1 1</float3>
+                </parameters>
+            </material>
 
-    </RoundLineSegments>
-  </Group>
+        </RoundLineSegments>
+    </Group>
 </scene>

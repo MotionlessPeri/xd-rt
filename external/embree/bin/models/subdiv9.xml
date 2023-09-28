@@ -1,47 +1,47 @@
 <?xml version="1.0"?>
 
 <scene>
-  <Group>
-    <SubdivisionMesh>
+    <Group>
+        <SubdivisionMesh>
 
-      <positions>
-        -1.0 -1.0 0.0
-         0.0 -1.0 0.0 
-        +1.0 -1.0 0.0
-        +2.0 -1.0 0.0
+            <rawPositions>
+                -1.0 -1.0 0.0
+                0.0 -1.0 0.0
+                +1.0 -1.0 0.0
+                +2.0 -1.0 0.0
 
-        -1.0  0.0 0.0
-         0.0  0.0 0.0
-        +1.0  0.0 0.0
-        +2.0  0.0 0.0
+                -1.0 0.0 0.0
+                0.0 0.0 0.0
+                +1.0 0.0 0.0
+                +2.0 0.0 0.0
 
-        -1.0 +1.0 0.0
-         0.0 +1.0 0.0
-        +1.0 +1.0 0.0
-        +2.0 +1.0 0.0
+                -1.0 +1.0 0.0
+                0.0 +1.0 0.0
+                +1.0 +1.0 0.0
+                +2.0 +1.0 0.0
 
-        -1.0 +2.0 0.0
-         0.0 +2.0 0.0
-        +1.0 +2.0 0.0
-        +2.0 +2.0 0.0
+                -1.0 +2.0 0.0
+                0.0 +2.0 0.0
+                +1.0 +2.0 0.0
+                +2.0 +2.0 0.0
 
-      </positions>
+            </rawPositions>
 
-      <position_indices>
-        0 1 5 4
-      </position_indices>
+            <position_indices>
+                0 1 5 4
+            </position_indices>
 
-      <faces>
-        4
-      </faces>
+            <faces>
+                4
+            </faces>
 
-      <material>
-        <code>"OBJ"</code>
-        <parameters>
-          <float3 name="Kd">1 1 1</float3>
-        </parameters>
-      </material>
+            <material>
+                <code>"OBJ"</code>
+                <parameters>
+                    <float3 name="Kd">1 1 1</float3>
+                </parameters>
+            </material>
 
-    </SubdivisionMesh>
-  </Group>
+        </SubdivisionMesh>
+    </Group>
 </scene>

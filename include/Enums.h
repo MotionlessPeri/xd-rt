@@ -5,6 +5,6 @@
 #ifndef XD_RT_ENUMS_H
 #define XD_RT_ENUMS_H
 namespace xd {
-enum class HitAccelMethod { NO_ACCEL, BVH };
+enum class HitAccelMethod { NO_ACCEL, BVH, EMBREE };
 }
 #endif	// XD_RT_ENUMS_H

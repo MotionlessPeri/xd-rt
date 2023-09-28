@@ -66,8 +66,8 @@ TEST(TextureTestSuite, SphereTextureTest)
 TEST(TextureTestSuite, UVTextureTest)
 {
 	const float sqrt3 = std::sqrtf(3);
-	TriangleMesh mesh{{{0, 1, 0}, {-sqrt3 / 2.f, -0.5f, 0}, {sqrt3 / 2.f, -0.5f, 0}},
-					  {{0.5, 0}, {0, sqrt3 / 2}, {1, sqrt3 / 2}},
+	TriangleMesh mesh{{0, 1, 0, -sqrt3 / 2.f, -0.5f, 0, sqrt3 / 2.f, -0.5f, 0},
+					  {0.5, 0, 0, sqrt3 / 2, 1, sqrt3 / 2},
 					  {},
 					  {},
 					  {},

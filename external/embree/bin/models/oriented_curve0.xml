@@ -1,36 +1,36 @@
 <?xml version="1.0"?>
 
 <scene>
-  <Group>
+    <Group>
 
-    <Curves basis="bezier" type="normal_oriented">
+        <Curves basis="bezier" type="normal_oriented">
 
-      <positions>
-        -2 0 0 0.3
-        -1 1 0 0.3
-        1 0 1 0.3
-        2 0 0 0.3
-      </positions>
+            <rawPositions>
+                -2 0 0 0.3
+                -1 1 0 0.3
+                1 0 1 0.3
+                2 0 0 0.3
+            </rawPositions>
 
-      <normals>
-        0 0 1
-        0 1 0
-        0 0 0
-        0 0 0
-      </normals>
+            <rawNormals>
+                0 0 1
+                0 1 0
+                0 0 0
+                0 0 0
+            </rawNormals>
 
-      <indices>
-        0
-      </indices>
+            <indices>
+                0
+            </indices>
 
-      <material>
-        <code>"OBJ"</code>
-        <parameters>
-          <float3 name="Kd">1 1 1</float3>
-        </parameters>
-      </material>
+            <material>
+                <code>"OBJ"</code>
+                <parameters>
+                    <float3 name="Kd">1 1 1</float3>
+                </parameters>
+            </material>
 
-    </Curves>
+        </Curves>
 
-  </Group>
+    </Group>
 </scene>

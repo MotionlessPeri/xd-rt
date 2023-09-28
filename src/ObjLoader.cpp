@@ -96,9 +96,9 @@ std::shared_ptr<TriangleMesh> ObjLoader::load(const std::string& path,
 	if (inFile.fail())
 		throw std::runtime_error("Could not open input file.");
 
-	std::vector<Vector3f> positions;
-	std::vector<Vector2f> uvs;
-	std::vector<Vector3f> normals;
+	std::vector<float> positions;
+	std::vector<float> uvs;
+	std::vector<float> normals;
 	std::vector<std::string> faceStrs;
 	// Parse the file
 	while (!inFile.eof()) {
@@ -113,12 +113,24 @@ std::shared_ptr<TriangleMesh> ObjLoader::load(const std::string& path,
 
 		// Parse the line, if it is non-empty
 		if (line.size() >= 1) {
-			if (line.substr(0, 2) == "v ")
-				positions.push_back(parseVector3(line.substr(2)));
-			else if (line.substr(0, 3) == "vt ")
-				uvs.push_back(parseVector2(line.substr(3)));
-			else if (line.substr(0, 3) == "vn ")
-				normals.push_back(parseVector3(line.substr(3)));
+			if (line.substr(0, 2) == "v ") {
+				const auto vec = parseVector3(line.substr(2));
+				positions.push_back(vec(0));
+				positions.push_back(vec(1));
+				positions.push_back(vec(2));
+			}
+			else if (line.substr(0, 3) == "vt ") {
+				const auto vec = parseVector2(line.substr(3));
+				uvs.push_back(vec(0));
+				uvs.push_back(vec(1));
+			}
+
+			else if (line.substr(0, 3) == "vn ") {
+				const auto vec = parseVector3(line.substr(3));
+				normals.push_back(vec(0));
+				normals.push_back(vec(1));
+				normals.push_back(vec(2));
+			}
 			else if (line.substr(0, 2) == "f ")
 				faceStrs.push_back(line.substr(2));
 		}
@@ -128,18 +140,18 @@ std::shared_ptr<TriangleMesh> ObjLoader::load(const std::string& path,
 	const auto firstFace = parseFace(faceStrs.front());
 	bool hasUV = firstFace[0].it != invalidIndex;
 	bool hasNormal = firstFace[0].in != invalidIndex;
-	std::vector<Vector3f> meshPos(vertexCnt);
+	std::vector<float> meshPos(vertexCnt * 3);
 
-	std::vector<Vector2f> meshUV{};
+	std::vector<float> meshUV{};
 	if (hasUV)
-		meshUV.resize(vertexCnt);
+		meshUV.resize(vertexCnt * 2);
 
-	std::vector<Vector3f> meshNormal{};
+	std::vector<float> meshNormal{};
 	if (hasNormal)
-		meshNormal.resize(vertexCnt);
+		meshNormal.resize(vertexCnt * 3);
 
-	std::vector<Vector3f> meshTangent{};
-	std::vector<Vector3f> meshBiTangent{};
+	std::vector<float> meshTangent{};
+	std::vector<float> meshBiTangent{};
 	std::vector<uint32_t> meshIndices{};
 	meshIndices.reserve(vertexCnt);
 	uint32_t vIndex = 0;
@@ -147,11 +159,19 @@ std::shared_ptr<TriangleMesh> ObjLoader::load(const std::string& path,
 	for (const auto& faceStr : faceStrs) {
 		const auto indices = parseFace(faceStr);
 		for (int i = 0; i <= 2; ++i) {
-			meshPos[vIndex] = positions[indices[i].i];
-			if (hasUV)
-				meshUV[vIndex] = uvs[indices[i].it];
-			if (hasNormal)
-				meshNormal[vIndex] = normals[indices[i].in];
+			for (auto j = 0u; j < 3; ++j) {
+				meshPos[3 * vIndex + j] = positions[3 * indices[i].i + j];
+			}
+			if (hasUV) {
+				for (auto j = 0u; j < 2; ++j) {
+					meshUV[2 * vIndex + j] = uvs[2 * indices[i].it + j];
+				}
+			}
+			if (hasNormal) {
+				for (auto j = 0u; j < 3; ++j) {
+					meshNormal[3 * vIndex + j] = normals[3 * indices[i].in + j];
+				}
+			}
 			meshIndices.emplace_back(vIndex);
 			++vIndex;
 		}

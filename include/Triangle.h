@@ -22,18 +22,18 @@ class TriangleMesh : public Model {
 	friend class Triangle;
 
 public:
-	TriangleMesh(const std::vector<Vector3f>& positions,
-				 const std::vector<Vector2f>& uvs,
-				 const std::vector<Vector3f>& normals,
-				 const std::vector<Vector3f>& tangents,
-				 const std::vector<Vector3f>& biTangents,
+	TriangleMesh(const std::vector<float>& positions,
+				 const std::vector<float>& uvs,
+				 const std::vector<float>& normals,
+				 const std::vector<float>& tangents,
+				 const std::vector<float>& biTangents,
 				 const std::vector<uint32_t>& indices,
 				 HitAccelMethod method = HitAccelMethod::NO_ACCEL);
-	TriangleMesh(std::vector<Vector3f>&& positions,
-				 std::vector<Vector2f>&& uvs,
-				 std::vector<Vector3f>&& normals,
-				 std::vector<Vector3f>&& tangents,
-				 std::vector<Vector3f>&& biTangents,
+	TriangleMesh(std::vector<float>&& positions,
+				 std::vector<float>&& uvs,
+				 std::vector<float>&& normals,
+				 std::vector<float>&& tangents,
+				 std::vector<float>&& biTangents,
 				 std::vector<uint32_t>&& indices,
 				 HitAccelMethod method = HitAccelMethod::NO_ACCEL);
 	bool hasUV() const;
@@ -42,31 +42,37 @@ public:
 	bool hasBiTangent() const;
 	const std::vector<Triangle>& getTriangles() const { return triangles; }
 	bool hit(const Ray& ray, HitRecord& rec) const override;
-	const std::vector<Vector3f>& getPositions() const;
-	const std::vector<Vector2f>& getUvs() const;
-	const std::vector<Vector3f>& getNormals() const;
-	const std::vector<Vector3f>& getTangents() const;
-	const std::vector<Vector3f>& getBiTangents() const;
+	const std::vector<float>& getPositions() const;
+	const std::vector<float>& getUvs() const;
+	const std::vector<float>& getNormals() const;
+	const std::vector<float>& getTangents() const;
+	const std::vector<float>& getBiTangents() const;
+	const std::vector<uint32_t>& getIndices() const;
 	float getArea() const override;
 	AABB getAABB() const override;
 
 protected:
-	void init(const std::vector<uint32_t>& indices, HitAccelMethod method);
-	void initTriangles(const std::vector<uint32_t>& indices);
+	void init(HitAccelMethod method);
+	void initTriangles();
 	void initAccel(HitAccelMethod method);
-	std::vector<Vector3f> positions;
-	std::vector<Vector2f> uvs;
-	std::vector<Vector3f> normals;
-	std::vector<Vector3f> tangents;
-	std::vector<Vector3f> biTangents;
+	std::vector<float> rawPositions;
+	Eigen::Map<const Eigen::Matrix3Xf> positionsAccessor;
+	std::vector<float> rawUVs;
+	Eigen::Map<const Eigen::Matrix2Xf> uvAccessor;
+	std::vector<float> rawNormals;
+	Eigen::Map<const Eigen::Matrix3Xf> normalAccessor;
+	std::vector<float> rawTangents;
+	Eigen::Map<const Eigen::Matrix3Xf> tangentAccessor;
+	std::vector<float> rawBiTangents;
+	Eigen::Map<const Eigen::Matrix3Xf> biTangentAccessor;
+	std::vector<uint32_t> indices;
 	std::vector<Triangle> triangles;
 	AABB aabb;
 	std::unique_ptr<HitAccel> hitAccel;
 };
 class Triangle : public Model {
 public:
-	Triangle(const TriangleMesh* mesh, uint32_t i0, uint32_t i1, uint32_t i2);
-	Triangle(const TriangleMesh* mesh, const std::array<uint32_t, 3>& vertices);
+	Triangle(const TriangleMesh* mesh, uint32_t index);
 	Vector3f getBarycentricCoordUnchecked(const Vector3f& P) const;
 	bool hit(const Ray& ray, HitRecord& rec) const override;
 	std::array<Vector3f, 3> getPositionsUnchecked() const;
@@ -76,17 +82,19 @@ public:
 	std::array<Vector3f, 3> getBiTangentsUnchecked() const;
 	float getArea() const override;
 	AABB getAABB() const override { return aabb; }
-	const std::array<uint32_t, 3>& getIndices() const { return indices; }
 
 protected:
 	void calAccParams();
-	template <typename T>
-	std::array<T, 3> getTriangleCoeffs(const std::vector<T>& vec) const
+	template <typename ScalarType, int N>
+	std::array<Eigen::Vector<ScalarType, N>, 3> getTriangleCoeffs(
+		const Eigen::Map<const Eigen::Matrix<ScalarType, N, Eigen::Dynamic>>& mat) const
 	{
-		return {vec[indices[0]], vec[indices[1]], vec[indices[2]]};
+		const auto& indices = mesh->indices;
+		return {mat.col(indices[3 * index]), mat.col(indices[3 * index + 1]),
+				mat.col(indices[3 * index + 2])};
 	}
 	const TriangleMesh* mesh;
-	std::array<uint32_t, 3> indices;
+	uint32_t index;
 	Vector3f AB, AC;
 	float ABSquared, ACSquared, ABDotAC;
 	Vector3f N;

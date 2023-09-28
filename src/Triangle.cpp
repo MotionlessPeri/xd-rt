@@ -5,45 +5,65 @@
 #include "MathUtil.h"
 using namespace xd;
 
-TriangleMesh::TriangleMesh(const std::vector<Vector3f>& positions,
-						   const std::vector<Vector2f>& uvs,
-						   const std::vector<Vector3f>& normals,
-						   const std::vector<Vector3f>& tangents,
-						   const std::vector<Vector3f>& biTangents,
+TriangleMesh::TriangleMesh(const std::vector<float>& positions,
+						   const std::vector<float>& uvs,
+						   const std::vector<float>& normals,
+						   const std::vector<float>& tangents,
+						   const std::vector<float>& biTangents,
 						   const std::vector<uint32_t>& indices,
 						   HitAccelMethod method)
-	: positions(positions), uvs(uvs), normals(normals), tangents(tangents), biTangents(biTangents)
+	: rawPositions(positions),
+	  positionsAccessor(rawPositions.data(), 3, rawPositions.size()),
+	  rawUVs(uvs),
+	  uvAccessor(rawUVs.data(), 2, rawUVs.size()),
+	  rawNormals(normals),
+	  normalAccessor(rawNormals.data(), 3, rawNormals.size()),
+	  rawTangents(tangents),
+	  tangentAccessor(rawTangents.data(), 3, rawTangents.size()),
+	  rawBiTangents(biTangents),
+	  biTangentAccessor(rawBiTangents.data(), 3, rawBiTangents.size()),
+	  indices(indices)
 {
-	init(indices, method);
+	init(method);
 }
 
-TriangleMesh::TriangleMesh(std::vector<Vector3f>&& positions,
-						   std::vector<Vector2f>&& uvs,
-						   std::vector<Vector3f>&& normals,
-						   std::vector<Vector3f>&& tangents,
-						   std::vector<Vector3f>&& biTangents,
+TriangleMesh::TriangleMesh(std::vector<float>&& positions,
+						   std::vector<float>&& uvs,
+						   std::vector<float>&& normals,
+						   std::vector<float>&& tangents,
+						   std::vector<float>&& biTangents,
 						   std::vector<uint32_t>&& indices,
 						   HitAccelMethod method)
-	: positions(positions), uvs(uvs), normals(normals), tangents(tangents), biTangents(biTangents)
+	: rawPositions(positions),
+	  positionsAccessor(rawPositions.data(), 3, rawPositions.size()),
+	  rawUVs(uvs),
+	  uvAccessor(rawUVs.data(), 2, rawUVs.size()),
+	  rawNormals(normals),
+	  normalAccessor(rawNormals.data(), 3, rawNormals.size()),
+	  rawTangents(tangents),
+	  tangentAccessor(rawTangents.data(), 3, rawTangents.size()),
+	  rawBiTangents(biTangents),
+	  biTangentAccessor(rawBiTangents.data(), 3, rawBiTangents.size()),
+	  indices(indices)
 {
-	init(indices, method);
+	init(method);
 }
 
 bool TriangleMesh::hasUV() const
 {
-	return !uvs.empty();
+	return !rawUVs.empty();
 }
 bool TriangleMesh::hasNormal() const
 {
-	return !normals.empty();
+	return !rawNormals.empty();
 }
 bool TriangleMesh::hasTangent() const
 {
-	return !tangents.empty();
+	return !rawTangents.empty();
 }
 bool TriangleMesh::hasBiTangent() const
 {
-	return !biTangents.empty();
+	return !rawBiTangents.empty();
 }
 bool TriangleMesh::hit(const Ray& ray, HitRecord& rec) const
 {
@@ -51,25 +71,25 @@ bool TriangleMesh::hit(const Ray& ray, HitRecord& rec) const
 	// we may need a TriangleMeshHitSolver class for robustness
 	return hitAccel->hit(ray, rec);
 }
-const std::vector<Vector3f>& TriangleMesh::getPositions() const
+const std::vector<float>& TriangleMesh::getPositions() const
 {
-	return positions;
+	return rawPositions;
 }
-const std::vector<Vector2f>& TriangleMesh::getUvs() const
+const std::vector<float>& TriangleMesh::getUvs() const
 {
-	return uvs;
+	return rawUVs;
 }
-const std::vector<Vector3f>& TriangleMesh::getNormals() const
+const std::vector<float>& TriangleMesh::getNormals() const
 {
-	return normals;
+	return rawNormals;
 }
-const std::vector<Vector3f>& TriangleMesh::getTangents() const
+const std::vector<float>& TriangleMesh::getTangents() const
 {
-	return tangents;
+	return rawTangents;
 }
-const std::vector<Vector3f>& TriangleMesh::getBiTangents() const
+const std::vector<float>& TriangleMesh::getBiTangents() const
 {
-	return biTangents;
+	return rawBiTangents;
 }
 float TriangleMesh::getArea() const
 {
@@ -83,20 +103,20 @@ AABB TriangleMesh::getAABB() const
 {
 	return aabb;
 }
-void TriangleMesh::init(const std::vector<uint32_t>& indices, HitAccelMethod method)
+void TriangleMesh::init(HitAccelMethod method)
 {
-	initTriangles(indices);
+	initTriangles();
 	initAccel(method);
 }
-void TriangleMesh::initTriangles(const std::vector<uint32_t>& indices)
+void TriangleMesh::initTriangles()
 {
 	const auto indiceCount = indices.size();
-	triangles.reserve(indiceCount);
-	for (auto i = 0u; i < indiceCount; i += 3) {
+	triangles.reserve(indiceCount / 3);
+	for (auto i = 0u; i < indiceCount / 3; ++i) {
 		// NOTE: we may need a runtime determined fixed-capacity container for triangles.
 		// Thus, we can delete both copy and move ctors of Triangle
 		// And require users to get reference
-		triangles.emplace_back(this, indices[i], indices[i + 1], indices[i + 2]);
+		triangles.emplace_back(this, i);
 		aabb.merge(triangles.back().getAABB());
 	}
 }
@@ -114,15 +134,12 @@ void TriangleMesh::initAccel(HitAccelMethod method)
 			break;
 	}
 }
-
-Triangle::Triangle(const TriangleMesh* mesh, uint32_t i0, uint32_t i1, uint32_t i2)
-	: mesh(mesh), indices({i0, i1, i2})
+const std::vector<uint32_t>& TriangleMesh::getIndices() const
 {
-	calAccParams();
+	return indices;
 }
 
-Triangle::Triangle(const TriangleMesh* mesh, const std::array<uint32_t, 3>& indices)
-	: mesh(mesh), indices(indices)
+Triangle::Triangle(const TriangleMesh* mesh, uint32_t index) : mesh(mesh), index(index)
 {
 	calAccParams();
 }
@@ -208,24 +225,25 @@ bool Triangle::hit(const Ray& ray, HitRecord& rec) const
 			rec.n = N.normalized();
 		}
 
-		if (mesh->hasTangent()) {
-			const auto tangents = getTangentsUnchecked();
-			rec.dpdu = interpolateWithBaryCoords(tangents, baryCoord);
-		}
-		else {
-			rec.dpdu = dpdu;
-		}
-
-		if (mesh->hasBiTangent()) {
-			const auto biTangents = getBiTangentsUnchecked();
-			rec.dpdv = interpolateWithBaryCoords(biTangents, baryCoord);
-		}
-		else {
-			if (mesh->hasTangent())
-				rec.dpdv = rec.n.cross(rec.dpdu);
-			else
-				rec.dpdv = dpdv;
-		}
+		//		if (mesh->hasTangent()) {
+		//			const auto tangents = getTangentsUnchecked();
+		//			rec.dpdu = interpolateWithBaryCoords(tangents, baryCoord);
+		//		}
+		//		else {
+		//			rec.dpdu = dpdu;
+		//		}
+		rec.dpdu = dpdu;
+		//		if (mesh->hasBiTangent()) {
+		//			const auto biTangents = getBiTangentsUnchecked();
+		//			rec.dpdv = interpolateWithBaryCoords(biTangents, baryCoord);
+		//		}
+		//		else {
+		//			if (mesh->hasTangent())
+		//				rec.dpdv = rec.n.cross(rec.dpdu);
+		//			else
+		//				rec.dpdv = dpdv;
+		//		}
+		rec.dpdv = dpdv;
 		return true;
 	}
 	else
@@ -234,23 +252,23 @@ bool Triangle::hit(const Ray& ray, HitRecord& rec) const
 
 std::array<Vector3f, 3> Triangle::getPositionsUnchecked() const
 {
-	return getTriangleCoeffs(mesh->positions);
+	return getTriangleCoeffs<float, 3>(mesh->positionsAccessor);
 }
 std::array<Vector2f, 3> Triangle::getUVsUnchecked() const
 {
-	return getTriangleCoeffs(mesh->uvs);
+	return getTriangleCoeffs<float, 2>(mesh->uvAccessor);
 }
 std::array<Vector3f, 3> Triangle::getNormalsUnchecked() const
 {
-	return getTriangleCoeffs(mesh->normals);
+	return getTriangleCoeffs<float, 3>(mesh->normalAccessor);
 }
 std::array<Vector3f, 3> Triangle::getTangentsUnchecked() const
 {
-	return getTriangleCoeffs(mesh->tangents);
+	return getTriangleCoeffs<float, 3>(mesh->tangentAccessor);
 }
 std::array<Vector3f, 3> Triangle::getBiTangentsUnchecked() const
 {
-	return getTriangleCoeffs(mesh->biTangents);
+	return getTriangleCoeffs<float, 3>(mesh->biTangentAccessor);
 }
 float Triangle::getArea() const
 {

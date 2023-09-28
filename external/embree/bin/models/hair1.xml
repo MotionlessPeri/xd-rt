@@ -1,42 +1,42 @@
 <?xml version="1.0"?>
 
 <scene>
-  <PerspectiveCamera name="frontview" from="0 0 -300" to="0 0 0" up="0 1 0" fov="1"/>
- 
-  <Group>
+    <PerspectiveCamera name="frontview" from="0 0 -300" to="0 0 0" up="0 1 0" fov="1"/>
 
-    <BezierHair tessellation_rate="4">
+    <Group>
 
-      <positions>
-        -2 0 0 0.2
-        -2 0 0 0.2
-        2 0 0 0.2
-        2 0 0 0.2
+        <BezierHair tessellation_rate="4">
 
-        -2 -2 0 0.2
-        -2 -2 0 0.2
-        -2 -2 0 0.2
-        2 -2 0 0.2
+            <rawPositions>
+                -2 0 0 0.2
+                -2 0 0 0.2
+                2 0 0 0.2
+                2 0 0 0.2
 
-        -2 2 0 0.2
-        2 2 0 0.2
-        2 2 0 0.2
-        2 2 0 0.2
-      </positions>
+                -2 -2 0 0.2
+                -2 -2 0 0.2
+                -2 -2 0 0.2
+                2 -2 0 0.2
 
-      <indices>
-        0 0
-        4 1
-        8 1
-      </indices>
+                -2 2 0 0.2
+                2 2 0 0.2
+                2 2 0 0.2
+                2 2 0 0.2
+            </rawPositions>
 
-      <material>
-        <code>"OBJ"</code>
-        <parameters>
-          <float3 name="Kd">1 0 0</float3>
-        </parameters>
-      </material>
+            <indices>
+                0 0
+                4 1
+                8 1
+            </indices>
 
-    </BezierHair>
-  </Group>
+            <material>
+                <code>"OBJ"</code>
+                <parameters>
+                    <float3 name="Kd">1 0 0</float3>
+                </parameters>
+            </material>
+
+        </BezierHair>
+    </Group>
 </scene>
