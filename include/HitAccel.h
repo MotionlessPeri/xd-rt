@@ -7,11 +7,12 @@
 #include "AABB.h"
 #include "CoreTypes.h"
 #include "Hitable.h"
+#include "embree4/rtcore.h"
 namespace xd {
 class HitAccel : public Hitable {};
 class NoAccel : public HitAccel {
 public:
-	NoAccel(const std::vector<const Model*>& models);
+	explicit NoAccel(const std::vector<const Model*>& models);
 	~NoAccel() = default;
 	NoAccel(const NoAccel& other) = delete;
 	NoAccel(NoAccel&& other) noexcept = delete;
@@ -20,7 +21,7 @@ public:
 	bool hit(const Ray& ray, HitRecord& rec) const override;
 
 protected:
-	std::vector<const Model*> models{};
+	std::vector<const Model*> models;
 };
 class BVHNode : public HitAccel {
 public:
@@ -29,18 +30,28 @@ public:
 	BVHNode(BVHNode&& other) noexcept = delete;
 	BVHNode& operator=(const BVHNode& other) = delete;
 	BVHNode& operator=(BVHNode&& other) noexcept = delete;
-	BVHNode(std::vector<const Model*>& p_models);
+	explicit BVHNode(std::vector<const Model*>& models);
 	~BVHNode() override;
 	bool hit(const Ray& ray, HitRecord& rec) const override;
 	bool isLeaf() const;
 	AABB getAABB() const { return aabb; }
-	const std::vector<const Model*>& getModels() const { return models; }
+	const std::vector<const Model*>& getLeafModels() const { return leafModels; }
 
 protected:
 	BVHNode* left = nullptr;
 	BVHNode* right = nullptr;
 	AABB aabb{};
-	std::vector<const Model*> models{};
+	std::vector<const Model*> leafModels{};
+};
+class EmbreeAccel : public HitAccel {
+public:
+	EmbreeAccel(RTCDevice device, const std::vector<const Model*>& models);
+	bool hit(const Ray& ray, HitRecord& rec) const override;
+
+protected:
+	RTCDevice device;
+	RTCScene scene;
+	std::unordered_map<unsigned int, const Model*> geomMap;
 };
 }  // namespace xd
 #endif	// XD_RT_HITACCEL_H

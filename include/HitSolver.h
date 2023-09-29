@@ -9,6 +9,7 @@
 #include "HitAccel.h"
 #include "HitRecord.h"
 #include "Ray.h"
+#include "embree4/rtcore.h"
 namespace xd {
 class HitSolver : public std::enable_shared_from_this<HitSolver> {
 public:
@@ -32,6 +33,15 @@ public:
 
 protected:
 	BVHNode* root;
+};
+
+class EmbreeHitSolver : public HitSolver {
+public:
+	explicit EmbreeHitSolver(const std::shared_ptr<Scene>& scene);
+	bool solve(const Ray& ray, HitRecord& record) const override;
+
+protected:
+	std::shared_ptr<EmbreeAccel> accel;
 };
 }  // namespace xd
 #endif	// XD_RT_HITSOLVER_H

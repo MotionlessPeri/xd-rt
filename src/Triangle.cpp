@@ -75,7 +75,7 @@ const std::vector<float>& TriangleMesh::getPositions() const
 {
 	return rawPositions;
 }
-const std::vector<float>& TriangleMesh::getUvs() const
+const std::vector<float>& TriangleMesh::getUVs() const
 {
 	return rawUVs;
 }

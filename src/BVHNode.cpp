@@ -6,37 +6,37 @@
 #include "Model.h"
 using namespace xd;
 
-BVHNode::BVHNode(std::vector<const Model*>& p_models)
+BVHNode::BVHNode(std::vector<const Model*>& models)
 {
-	for (const auto* model : p_models) {
+	for (const auto* model : models) {
 		aabb = aabb.merge(model->getAABB());
 	}
 	constexpr uint32_t THRESHOLD = 4u;
-	if (p_models.size() <= THRESHOLD) {
-		models = p_models;
+	if (models.size() <= THRESHOLD) {
+		leafModels = models;
 		return;
 	}
 	float totalArea = 0.f;
-	for (const auto* model : p_models) {
+	for (const auto* model : models) {
 		totalArea += model->getArea();
 	}
 	const Vector3f extent = aabb.getExtent();
 	uint32_t maxIndex;
 	extent.maxCoeff(&maxIndex);
-	std::sort(p_models.begin(), p_models.end(), [&](const Model* lhs, const Model* rhs) {
+	std::sort(models.begin(), models.end(), [&](const Model* lhs, const Model* rhs) {
 		return lhs->getAABB().getCenter()(maxIndex) < rhs->getAABB().getCenter()(maxIndex);
 	});
-	std::vector<float> sumArea(p_models.size());
-	sumArea[0] = p_models.front()->getArea();
-	for (auto i = 1u; i < p_models.size(); ++i) {
-		sumArea[i] = sumArea[i - 1] + p_models[i]->getArea();
+	std::vector<float> sumArea(models.size());
+	sumArea[0] = models.front()->getArea();
+	for (auto i = 1u; i < models.size(); ++i) {
+		sumArea[i] = sumArea[i - 1] + models[i]->getArea();
 	}
 	auto pivot = std::partition_point(sumArea.begin(), sumArea.end(), [&](const float area) {
 		return area < sumArea.back() / 2.f;
 	});
 	const uint32_t pivotIdx = std::distance(sumArea.begin(), pivot);
-	std::vector<const Model*> leftModels{p_models.begin(), p_models.begin() + pivotIdx + 1};
-	std::vector<const Model*> rightModels{p_models.begin() + pivotIdx + 1, p_models.end()};
+	std::vector<const Model*> leftModels{models.begin(), models.begin() + pivotIdx + 1};
+	std::vector<const Model*> rightModels{models.begin() + pivotIdx + 1, models.end()};
 	left = new BVHNode{leftModels};
 	right = new BVHNode{rightModels};
 }
@@ -54,7 +54,7 @@ bool BVHNode::hit(const Ray& ray, HitRecord& rec) const
 	rec.tHit = prevTHit;
 	bool hit = false;
 	if (isLeaf()) {
-		for (const auto* model : models) {
+		for (const auto* model : leafModels) {
 			if (model->hit(ray, rec)) {
 				hit = true;
 			}

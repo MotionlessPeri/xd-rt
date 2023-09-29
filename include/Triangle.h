@@ -43,7 +43,7 @@ public:
 	const std::vector<Triangle>& getTriangles() const { return triangles; }
 	bool hit(const Ray& ray, HitRecord& rec) const override;
 	const std::vector<float>& getPositions() const;
-	const std::vector<float>& getUvs() const;
+	const std::vector<float>& getUVs() const;
 	const std::vector<float>& getNormals() const;
 	const std::vector<float>& getTangents() const;
 	const std::vector<float>& getBiTangents() const;

@@ -4,9 +4,10 @@
 #include "HitSolver.h"
 #include "Primitive.h"
 #include "Scene.h"
-xd::HitSolver::HitSolver(const std::shared_ptr<Scene>& scene) : sceneRef(scene) {}
-xd::NaiveHitSolver::NaiveHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(scene) {}
-bool xd::NaiveHitSolver::solve(const Ray& ray, HitRecord& record) const
+using namespace xd;
+HitSolver::HitSolver(const std::shared_ptr<Scene>& scene) : sceneRef(scene) {}
+NaiveHitSolver::NaiveHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(scene) {}
+bool NaiveHitSolver::solve(const Ray& ray, HitRecord& record) const
 {
 	const auto scene = sceneRef.lock();
 	const auto& primitives = scene->getPrimitives();
@@ -20,7 +21,7 @@ bool xd::NaiveHitSolver::solve(const Ray& ray, HitRecord& record) const
 	}
 	return hit;
 }
-xd::BVHHitSolver::BVHHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(scene)
+BVHHitSolver::BVHHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(scene)
 {
 	std::vector<const Model*> models;
 	for (const auto prim : scene->getPrimitives()) {
@@ -28,7 +29,20 @@ xd::BVHHitSolver::BVHHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(
 	}
 	root = new BVHNode{models};
 }
-bool xd::BVHHitSolver::solve(const Ray& ray, HitRecord& record) const
+bool BVHHitSolver::solve(const Ray& ray, HitRecord& record) const
 {
 	return root->hit(ray, record);
+}
+#include "EmbreeGlobal.h"
+EmbreeHitSolver::EmbreeHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(scene)
+{
+	std::vector<const Model*> models;
+	for (const auto& prim : scene->getPrimitives()) {
+		models.emplace_back(prim->getModel().get());
+	}
+	accel = std::make_shared<EmbreeAccel>(EmbreeGlobal::get().device, models);
+}
+bool EmbreeHitSolver::solve(const Ray& ray, HitRecord& record) const
+{
+	return accel->hit(ray, record);
 }

@@ -18,7 +18,7 @@ struct HitRecord {
 	Vector3f dpdu;
 	Vector3f dpdv;
 	Vector3f n;
-	std::shared_ptr<Primitive> primitive = nullptr;
+	std::shared_ptr<const Primitive> primitive = nullptr;
 	Matrix3f getLocalToWorld() const
 	{
 		Matrix3f localToWorld;

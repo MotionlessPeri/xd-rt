@@ -66,6 +66,6 @@ float PieceWise1D::operator()(float& pdf, uint32_t& offset) const
 float PieceWise1D::getPdf(const float& sample) const
 {
 	const float delta = 1.f / pdfs.size();
-	const uint32_t offset = sample / delta;
+	const uint32_t offset = std::clamp<uint32_t>(sample / delta, 0, pdfs.size() - 1);
 	return pdfs[offset];
 }

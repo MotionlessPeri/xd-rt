@@ -13,7 +13,7 @@ TEST(ObjLoaderTestSuite, LoadTest)
 	ObjLoader loader;
 	auto mesh = loader.load(R"(D:\qem-simple.obj)");
 	const auto& positions = mesh->getPositions();
-	const auto& uvs = mesh->getUvs();
+	const auto& uvs = mesh->getUVs();
 	const auto& normals = mesh->getNormals();
 	const auto& tangents = mesh->getTangents();
 	const auto& biTangents = mesh->getBiTangents();
@@ -64,9 +64,6 @@ TEST(ObjLoaderTestSuite, EmbreeTest)
 	rtcAttachGeometry(scene, geom);
 	rtcReleaseGeometry(geom);
 	rtcCommitScene(scene);
-
-	oneapi::tbb::global_control global_limit(oneapi::tbb::global_control::max_allowed_parallelism,
-											 1);
 
 	auto err = rtcGetDeviceError(device);
 	film->clear();

@@ -5,7 +5,7 @@
 #include "Model.h"
 #include "gtest/gtest.h"
 using namespace xd;
-TEST(BVHTestSuite, buildTest)
+TEST(HitAccelTestSuite, BVHBuildTest)
 {
 	const Vector3f center{0, 0, 0};
 	const float radius = 100.f;
@@ -15,7 +15,7 @@ TEST(BVHTestSuite, buildTest)
 	BVHNode bvh{models};
 	auto aabb = bvh.getAABB();
 	EXPECT_EQ(aabb, sphere.getAABB());
-	const auto& bvhModels = bvh.getModels();
+	const auto& bvhModels = bvh.getLeafModels();
 	EXPECT_EQ(bvhModels.size(), 1);
 	EXPECT_EQ(bvhModels.front(), &sphere);
 }
@@ -25,7 +25,7 @@ TEST(BVHTestSuite, buildTest)
 #include "CameraFactory.h"
 #include "Primitive.h"
 #include "Scene.h"
-TEST(BVHTestSuite, hitTest1)
+TEST(HitAccelTestSuite, BVHHitTest1)
 {
 	const float halfLen = 400.f;
 	const float len = 2 * halfLen;
@@ -107,4 +107,51 @@ TEST(BVHTestSuite, hitTest1)
 	std::cout << "BVH solver cost " << elapsedSeconds.count() << " seconds.\n";
 
 	EXPECT_NO_THROW(film->saveToFile(R"(D:\bvh_hit_test_bvh_solver.hdr)"););
+}
+
+#include "MeshLoader.h"
+#include "Triangle.h"
+TEST(HitAccelTestSuite, EmbreeHitTest1)
+{
+	ObjLoader loader;
+	auto mesh = loader.load(R"(D:\qem-test.obj)");
+	auto prim = std::make_shared<Primitive>(mesh, nullptr);
+
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 1000u;
+	const Vector3f center{0, 0, -2};
+	const Vector3f origin{0, 0, 0};
+	const float rightNorm = 1.5f;
+	const Vector3f right{rightNorm, 0, 0};
+	const Vector3f up{0, rightNorm / width * height, 0};
+
+	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
+												up.norm(), width, height);
+	auto film = cam->getFilm();
+	auto sampler = std::make_shared<SimpleSampler>(width, height);
+	const auto samples = sampler->generateSamples();
+
+	auto scene = std::make_shared<Scene>();
+	scene->addPrimitive(prim);
+	EmbreeHitSolver embreeSolver{scene};
+
+	film->clear();
+
+	auto start = std::chrono::steady_clock::now();
+	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
+					  [&](const tbb::blocked_range<size_t>& r) {
+						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
+							  const auto& sample = samples[sampleIdx];
+							  auto ray = cam->generateRay(sample);
+							  HitRecord rec;
+							  if (embreeSolver.solve(ray, rec)) {
+								  film->addSample({rec.uv(0), rec.uv(1), 0}, sample);
+							  }
+						  }
+					  });
+
+	auto end = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsedSeconds = end - start;
+	std::cout << "Embree Accel mesh cost " << elapsedSeconds.count() << " seconds.\n";
+	EXPECT_NO_THROW(film->saveToFile(R"(D:\embree_hit_solver_test_1.hdr)"););
 }

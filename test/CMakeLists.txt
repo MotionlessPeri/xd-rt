@@ -12,7 +12,7 @@ include_directories(${EMBREE_INCLUDE_DIRS})
 add_executable(xd_rt_test SamplerTest.cpp FilmTest.cpp CameraTest.cpp ModelHitTest.cpp VisibilityTest.cpp DistributionTest.cpp LightTest.cpp MaterialTest.cpp TextureTest.cpp HitRecordTest.cpp TriangleTest.cpp
         ObjLoaderTest.cpp
         AABBTest.cpp
-        BVHTest.cpp
+        HitAccelTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)

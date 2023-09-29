@@ -181,7 +181,6 @@ TEST(DistribTestSuite, PieceWise2DGenTest2)
 		counts[vIdx * width + uIdx].cnt++;
 	}
 	std::sort(counts.begin(), counts.end(), std::greater<Count>{});
-	__debugbreak();
 }
 
 TEST(DistribTestSuite, CosineHemisphereTest)

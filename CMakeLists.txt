@@ -19,7 +19,11 @@ set(INCLUDE_FILES
         include/AABB.h
         include/HitAccel.h
         include/Enums.h
-        include/TextureFactory.h)
+        include/TextureFactory.h
+        include/EmbreeGeomManager.h
+        include/EmbreeUtil.h
+        include/EmbreeGlobal.h
+)
 set(SRC_FILES
         src/Ray.cpp
         src/Film.cpp src/SimpleSampler.cpp src/Camera.cpp src/Sphere.cpp src/CameraFactory.cpp src/HitSolver.cpp src/Scene.cpp src/Primitive.cpp src/UniformHemisphere.cpp src/PointLight.cpp src/Lambertian.cpp src/MatteMaterial.cpp src/Triangle.cpp
@@ -33,12 +37,22 @@ set(SRC_FILES
         src/DomeLight.cpp
         src/PieceWise1D.cpp
         src/PieceWise2D.cpp
-        src/CosineHemisphere.cpp)
+        src/CosineHemisphere.cpp
+        src/EmbreeGeomManager.cpp
+        src/EmbreeHitAccel.cpp
+        src/EmbreeGlobal.cpp)
 add_executable(xd_rt_playground main.cpp)
 add_library(xd_rt STATIC ${INCLUDE_FILES} ${SRC_FILES})
 
 set(TBB_ROOT "${CMAKE_SOURCE_DIR}/external/TBB")
 set(EMBREE_ROOT_DIR "${CMAKE_SOURCE_DIR}/external/embree")
+
+find_package(TBB REQUIRED)
+include_directories(${TBB_INCLUDE_DIRS})
+find_package(embree 4 REQUIRED)
+include_directories(${EMBREE_INCLUDE_DIRS})
+
+target_link_libraries(xd_rt ${EMBREE_LIBRARIES})
 
 target_link_libraries(xd_rt_playground xd_rt)
 target_link_libraries(xd_rt_playground TBB)
