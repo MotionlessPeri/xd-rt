@@ -1,40 +1,34 @@
-#include <oneapi/tbb.h>
-#include <numeric>
-#include "CameraFactory.h"
-#include "MeshLoader.h"
-#include "Triangle.h"
-using namespace xd;
+// Define these only in *one* .cc file.
+#define TINYGLTF_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+// #define TINYGLTF_NOEXCEPTION // optional. disable exception handling.
+#include "tiny_gltf.h"
+
+using namespace tinygltf;
+
 int main()
 {
-	ObjLoader loader;
-	auto mesh = loader.load(R"(D:\qem-test.obj)");
+	Model model;
+	TinyGLTF loader;
+	std::string err;
+	std::string warn;
 
-	constexpr uint32_t width = 1000u;
-	constexpr uint32_t height = 800u;
-	const Vector3f center{0, 0, -2};
-	const Vector3f origin{0, 0, 0};
-	const float rightNorm = 3.f;
-	const Vector3f right{rightNorm, 0, 0};
-	const Vector3f up{0, rightNorm / width * height, 0};
+	const std::string path = R"(D:\buster_drone\scene.gltf)";
 
-	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
-												up.norm(), width, height);
-	auto film = cam->getFilm();
+	bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, path.c_str());
+	// bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, argv[1]); // for binary glTF(.glb)
 
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
-
-	const auto samples = sampler->generateSamples();
-
-	const uint32_t row = 264u;
-	const uint32_t col = 474u;
-	const uint32_t sampleIdx = row * width + col;
-	const auto& sample = samples[sampleIdx];
-	auto ray = cam->generateRay(sample);
-	HitRecord rec;
-	if (mesh->hit(ray, rec)) {
-		const float floatIdx = (float)rec.debug + 1.f;
-		film->addSample({floatIdx, floatIdx, floatIdx}, sample);
+	if (!warn.empty()) {
+		printf("Warn: %s\n", warn.c_str());
 	}
 
-	const std::string hdrPath = R"(D:\obj_load_and_hit_debug_idx.hdr)";
+	if (!err.empty()) {
+		printf("Err: %s\n", err.c_str());
+	}
+
+	if (!ret) {
+		printf("Failed to parse glTF\n");
+		return -1;
+	}
 }
