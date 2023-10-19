@@ -18,6 +18,7 @@ public:
 		return *singleton;
 	}
 	RTCGeometry getOrCreateGeom(const Model* model);
+	RTCScene getDefaultScene(const RTCGeometry& rtcGeom);
 	void releaseGeom(const Model* model);
 
 protected:
@@ -25,6 +26,7 @@ protected:
 	~EmbreeGeomManager() = default;
 	RTCDevice device;
 	std::unordered_map<const Model*, RTCGeometry> geoms;
+	std::unordered_map<RTCGeometry, RTCScene> defaultScenes;
 };
 }  // namespace xd
 #endif	// XD_RT_EMBREEGEOMMANAGER_H

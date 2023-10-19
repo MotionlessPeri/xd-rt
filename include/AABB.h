@@ -11,7 +11,7 @@ class AABB : public Hitable {
 public:
 	AABB();
 	AABB(const Vector3f& minPoint, const Vector3f& maxPoint);
-	AABB merge(const AABB& rhs) const;
+	void merge(const AABB& rhs);
 	bool isInside(const Vector3f& point) const;
 	bool isIntersected(const AABB& rhs) const;
 	void addPoint(const Vector3f& point);

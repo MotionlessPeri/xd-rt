@@ -13,6 +13,8 @@ add_executable(xd_rt_test SamplerTest.cpp FilmTest.cpp CameraTest.cpp ModelHitTe
         ObjLoaderTest.cpp
         AABBTest.cpp
         HitAccelTest.cpp
+        GLTFLoaderTest.cpp
+        PrimitiveTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)

@@ -20,10 +20,11 @@ public:
 protected:
 };
 
-class ObjLoader : public MeshLoader {
+class ObjMeshLoader : public MeshLoader {
 public:
 	std::shared_ptr<TriangleMesh> load(const std::string& path,
 									   const LoadMeshOptions& options = {}) override;
 };
+
 }  // namespace xd
 #endif	// XD_RT_MESHLOADER_H

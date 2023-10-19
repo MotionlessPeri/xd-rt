@@ -10,9 +10,10 @@ AABB::AABB(const Vector3f& minPoint, const Vector3f& maxPoint)
 {
 }
 
-AABB AABB::merge(const AABB& rhs) const
+void AABB::merge(const AABB& rhs)
 {
-	return AABB(minPoint.cwiseMin(rhs.getMinPoint()), maxPoint.cwiseMax(rhs.getMaxPoint()));
+	minPoint = minPoint.cwiseMin(rhs.getMinPoint());
+	maxPoint = maxPoint.cwiseMax(rhs.getMaxPoint());
 }
 bool AABB::isInside(const Vector3f& point) const
 {

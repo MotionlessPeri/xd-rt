@@ -30,14 +30,14 @@ public:
 class MatteMaterial : public Material {
 public:
 	MatteMaterial(const Vector3f& color);
-	MatteMaterial(const std::shared_ptr<Texture2DC>& colorTexture);
+	MatteMaterial(const std::shared_ptr<Texture2DRGB>& colorTexture);
 	Vector3f getBRDF(const HitRecord& hitRecord,
 					 const Vector3f& wi,
 					 const Vector3f& wo) const override;
 	Vector3f getDirection(const HitRecord& hitRecord, const Vector3f& wo) const override;
 
 protected:
-	std::shared_ptr<Texture2DC> color;
+	std::shared_ptr<Texture2DRGB> color;
 };
 
 class SpecularReflectionMaterial : public Material {

@@ -26,27 +26,23 @@ public:
 				 const std::vector<float>& uvs,
 				 const std::vector<float>& normals,
 				 const std::vector<float>& tangents,
-				 const std::vector<float>& biTangents,
 				 const std::vector<uint32_t>& indices,
 				 HitAccelMethod method = HitAccelMethod::NO_ACCEL);
 	TriangleMesh(std::vector<float>&& positions,
 				 std::vector<float>&& uvs,
 				 std::vector<float>&& normals,
 				 std::vector<float>&& tangents,
-				 std::vector<float>&& biTangents,
 				 std::vector<uint32_t>&& indices,
 				 HitAccelMethod method = HitAccelMethod::NO_ACCEL);
 	bool hasUV() const;
 	bool hasNormal() const;
 	bool hasTangent() const;
-	bool hasBiTangent() const;
 	const std::vector<Triangle>& getTriangles() const { return triangles; }
 	bool hit(const Ray& ray, HitRecord& rec) const override;
 	const std::vector<float>& getPositions() const;
 	const std::vector<float>& getUVs() const;
 	const std::vector<float>& getNormals() const;
 	const std::vector<float>& getTangents() const;
-	const std::vector<float>& getBiTangents() const;
 	const std::vector<uint32_t>& getIndices() const;
 	float getArea() const override;
 	AABB getAABB() const override;
@@ -63,8 +59,6 @@ protected:
 	Eigen::Map<const Eigen::Matrix3Xf> normalAccessor;
 	std::vector<float> rawTangents;
 	Eigen::Map<const Eigen::Matrix3Xf> tangentAccessor;
-	std::vector<float> rawBiTangents;
-	Eigen::Map<const Eigen::Matrix3Xf> biTangentAccessor;
 	std::vector<uint32_t> indices;
 	std::vector<Triangle> triangles;
 	AABB aabb;

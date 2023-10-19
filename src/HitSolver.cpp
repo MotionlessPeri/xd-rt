@@ -13,10 +13,8 @@ bool NaiveHitSolver::solve(const Ray& ray, HitRecord& record) const
 	const auto& primitives = scene->getPrimitives();
 	bool hit = false;
 	for (const auto primitive : primitives) {
-		auto model = primitive->getModel();
-		if (model->hit(ray, record)) {
+		if (primitive->hit(ray, record)) {
 			hit = true;
-			record.primitive = primitive;
 		}
 	}
 	return hit;
@@ -36,10 +34,12 @@ bool BVHHitSolver::solve(const Ray& ray, HitRecord& record) const
 #include "EmbreeGlobal.h"
 EmbreeHitSolver::EmbreeHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(scene)
 {
-	std::vector<const Model*> models;
+	std::vector<const Primitive*> models;
 	for (const auto& prim : scene->getPrimitives()) {
-		models.emplace_back(prim->getModel().get());
+		models.emplace_back(prim.get());
 	}
+	//int i = 0;
+	//models.emplace_back(scene->getPrimitives()[i].get());
 	accel = std::make_shared<EmbreeAccel>(EmbreeGlobal::get().device, models);
 }
 bool EmbreeHitSolver::solve(const Ray& ray, HitRecord& record) const

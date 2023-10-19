@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include "MeshLoader.h"
+#include "Loader/MeshLoader.h"
 #include "Triangle.h"
 using namespace xd;
 static Vector2f parseVector2(const std::string& aString)
@@ -87,8 +87,8 @@ static std::array<ObjFaceIndex, 3> parseFace(const std::string& aStr)
 	}
 	return res;
 }
-std::shared_ptr<TriangleMesh> ObjLoader::load(const std::string& path,
-											  const LoadMeshOptions& options)
+std::shared_ptr<TriangleMesh> ObjMeshLoader::load(const std::string& path,
+												  const LoadMeshOptions& options)
 {
 	// NOTE: the code is copied from openctm viewer's code
 	// Open the input file
@@ -151,7 +151,6 @@ std::shared_ptr<TriangleMesh> ObjLoader::load(const std::string& path,
 		meshNormal.resize(vertexCnt * 3);
 
 	std::vector<float> meshTangent{};
-	std::vector<float> meshBiTangent{};
 	std::vector<uint32_t> meshIndices{};
 	meshIndices.reserve(vertexCnt);
 	uint32_t vIndex = 0;
@@ -176,7 +175,7 @@ std::shared_ptr<TriangleMesh> ObjLoader::load(const std::string& path,
 			++vIndex;
 		}
 	}
-	auto res = std::make_shared<TriangleMesh>(meshPos, meshUV, meshNormal, meshTangent,
-											  meshBiTangent, meshIndices, options.method);
+	auto res = std::make_shared<TriangleMesh>(meshPos, meshUV, meshNormal, meshTangent, meshIndices,
+											  options.method);
 	return res;
 }

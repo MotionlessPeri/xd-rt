@@ -9,7 +9,6 @@ TriangleMesh::TriangleMesh(const std::vector<float>& positions,
 						   const std::vector<float>& uvs,
 						   const std::vector<float>& normals,
 						   const std::vector<float>& tangents,
-						   const std::vector<float>& biTangents,
 						   const std::vector<uint32_t>& indices,
 						   HitAccelMethod method)
 	: rawPositions(positions),
@@ -20,8 +19,6 @@ TriangleMesh::TriangleMesh(const std::vector<float>& positions,
 	  normalAccessor(rawNormals.data(), 3, rawNormals.size()),
 	  rawTangents(tangents),
 	  tangentAccessor(rawTangents.data(), 3, rawTangents.size()),
-	  rawBiTangents(biTangents),
-	  biTangentAccessor(rawBiTangents.data(), 3, rawBiTangents.size()),
 	  indices(indices)
 {
 	init(method);
@@ -31,7 +28,6 @@ TriangleMesh::TriangleMesh(std::vector<float>&& positions,
 						   std::vector<float>&& uvs,
 						   std::vector<float>&& normals,
 						   std::vector<float>&& tangents,
-						   std::vector<float>&& biTangents,
 						   std::vector<uint32_t>&& indices,
 						   HitAccelMethod method)
 	: rawPositions(positions),
@@ -42,8 +38,6 @@ TriangleMesh::TriangleMesh(std::vector<float>&& positions,
 	  normalAccessor(rawNormals.data(), 3, rawNormals.size()),
 	  rawTangents(tangents),
 	  tangentAccessor(rawTangents.data(), 3, rawTangents.size()),
-	  rawBiTangents(biTangents),
-	  biTangentAccessor(rawBiTangents.data(), 3, rawBiTangents.size()),
 	  indices(indices)
 {
 	init(method);
@@ -60,10 +54,6 @@ bool TriangleMesh::hasNormal() const
 bool TriangleMesh::hasTangent() const
 {
 	return !rawTangents.empty();
-}
-bool TriangleMesh::hasBiTangent() const
-{
-	return !rawBiTangents.empty();
 }
 bool TriangleMesh::hit(const Ray& ray, HitRecord& rec) const
 {
@@ -86,10 +76,6 @@ const std::vector<float>& TriangleMesh::getNormals() const
 const std::vector<float>& TriangleMesh::getTangents() const
 {
 	return rawTangents;
-}
-const std::vector<float>& TriangleMesh::getBiTangents() const
-{
-	return rawBiTangents;
 }
 float TriangleMesh::getArea() const
 {
@@ -224,25 +210,7 @@ bool Triangle::hit(const Ray& ray, HitRecord& rec) const
 		else {
 			rec.n = N.normalized();
 		}
-
-		//		if (mesh->hasTangent()) {
-		//			const auto tangents = getTangentsUnchecked();
-		//			rec.dpdu = interpolateWithBaryCoords(tangents, baryCoord);
-		//		}
-		//		else {
-		//			rec.dpdu = dpdu;
-		//		}
 		rec.dpdu = dpdu;
-		//		if (mesh->hasBiTangent()) {
-		//			const auto biTangents = getBiTangentsUnchecked();
-		//			rec.dpdv = interpolateWithBaryCoords(biTangents, baryCoord);
-		//		}
-		//		else {
-		//			if (mesh->hasTangent())
-		//				rec.dpdv = rec.n.cross(rec.dpdu);
-		//			else
-		//				rec.dpdv = dpdv;
-		//		}
 		rec.dpdv = dpdv;
 		return true;
 	}
@@ -265,10 +233,6 @@ std::array<Vector3f, 3> Triangle::getNormalsUnchecked() const
 std::array<Vector3f, 3> Triangle::getTangentsUnchecked() const
 {
 	return getTriangleCoeffs<float, 3>(mesh->tangentAccessor);
-}
-std::array<Vector3f, 3> Triangle::getBiTangentsUnchecked() const
-{
-	return getTriangleCoeffs<float, 3>(mesh->biTangentAccessor);
 }
 float Triangle::getArea() const
 {

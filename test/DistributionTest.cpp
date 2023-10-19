@@ -143,7 +143,7 @@ TEST(DistribTestSuite, PieceWise2DGenTest)
 #include "TextureFactory.h"
 TEST(DistribTestSuite, PieceWise2DGenTest2)
 {
-	auto texture = TextureFactory::loadSphereTexture3f(R"(D:\dome.hdr)");
+	auto texture = TextureFactory::loadSphereTextureRGB(R"(D:\dome.hdr)");
 	const auto width = texture->getWidth();
 	const auto height = texture->getHeight();
 	const auto& data = texture->getImage();

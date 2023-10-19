@@ -40,7 +40,7 @@ protected:
 };
 class DomeLight : public Light {
 public:
-	DomeLight(const std::shared_ptr<SphereTexture3f>& dome);
+	DomeLight(const std::shared_ptr<SphereTextureRGB>& dome);
 	Vector3f getDirection(const HitRecord& primRec, HitRecord& shadowRec) const override;
 	ColorRGB getIntensity(const Ray& ray) const override;
 	bool isDelta() const override;
@@ -48,7 +48,7 @@ public:
 	Vector3f sample(const HitRecord& primRec, HitRecord& shadowRec, float& pdf) override;
 
 protected:
-	std::shared_ptr<SphereTexture3f> dome;
+	std::shared_ptr<SphereTextureRGB> dome;
 	std::shared_ptr<PieceWise2D> dis;
 };
 }  // namespace xd

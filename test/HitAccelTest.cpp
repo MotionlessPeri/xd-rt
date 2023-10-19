@@ -109,11 +109,11 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 	EXPECT_NO_THROW(film->saveToFile(R"(D:\bvh_hit_test_bvh_solver.hdr)"););
 }
 
-#include "MeshLoader.h"
+#include "Loader/MeshLoader.h"
 #include "Triangle.h"
 TEST(HitAccelTestSuite, EmbreeHitTest1)
 {
-	ObjLoader loader;
+	ObjMeshLoader loader;
 	auto mesh = loader.load(R"(D:\qem-test.obj)");
 	auto prim = std::make_shared<Primitive>(mesh, nullptr);
 

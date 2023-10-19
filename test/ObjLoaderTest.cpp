@@ -4,31 +4,29 @@
 #include <oneapi/tbb.h>
 #include <numeric>
 #include "CameraFactory.h"
-#include "MeshLoader.h"
+#include "Loader/MeshLoader.h"
 #include "Triangle.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(ObjLoaderTestSuite, LoadTest)
 {
-	ObjLoader loader;
+	ObjMeshLoader loader;
 	auto mesh = loader.load(R"(D:\qem-simple.obj)");
 	const auto& positions = mesh->getPositions();
 	const auto& uvs = mesh->getUVs();
 	const auto& normals = mesh->getNormals();
 	const auto& tangents = mesh->getTangents();
-	const auto& biTangents = mesh->getBiTangents();
 	EXPECT_EQ(positions.size(), 36);
 	EXPECT_TRUE(uvs.empty());
 	EXPECT_TRUE(normals.empty());
 	EXPECT_TRUE(tangents.empty());
-	EXPECT_TRUE(biTangents.empty());
 }
 
 #include "embree4/rtcore.h"
 
 TEST(ObjLoaderTestSuite, EmbreeTest)
 {
-	ObjLoader loader;
+	ObjMeshLoader loader;
 	auto mesh = loader.load(R"(D:\qem-test.obj)");
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 1000u;
@@ -65,7 +63,8 @@ TEST(ObjLoaderTestSuite, EmbreeTest)
 	rtcReleaseGeometry(geom);
 	rtcCommitScene(scene);
 
-	auto err = rtcGetDeviceError(device);
+	RTCBounds rtcBounds;
+	rtcGetSceneBounds(scene, &rtcBounds);
 	film->clear();
 	auto start = std::chrono::steady_clock::now();
 	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
@@ -95,7 +94,6 @@ TEST(ObjLoaderTestSuite, EmbreeTest)
 					  });
 
 	auto end = std::chrono::steady_clock::now();
-	err = rtcGetDeviceError(device);
 	std::chrono::duration<double> elapsedSeconds = end - start;
 	std::cout << "Embree Accel mesh cost " << elapsedSeconds.count() << " seconds.\n";
 	EXPECT_NO_THROW(film->saveToFile(R"(D:\obj_load_and_hit_embree_accel.hdr)"););
@@ -103,7 +101,7 @@ TEST(ObjLoaderTestSuite, EmbreeTest)
 
 TEST(ObjLoaderTestSuite, MeshHitTest)
 {
-	ObjLoader loader;
+	ObjMeshLoader loader;
 	auto meshWithNoAccel = loader.load(R"(D:\qem-test.obj)");
 	auto meshWithBVHAccel = loader.load(R"(D:\qem-test.obj)", {HitAccelMethod::BVH});
 	constexpr uint32_t width = 200u;

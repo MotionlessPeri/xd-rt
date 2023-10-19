@@ -9,7 +9,7 @@ using namespace xd;
 BVHNode::BVHNode(std::vector<const Model*>& models)
 {
 	for (const auto* model : models) {
-		aabb = aabb.merge(model->getAABB());
+		aabb.merge(model->getAABB());
 	}
 	constexpr uint32_t THRESHOLD = 4u;
 	if (models.size() <= THRESHOLD) {
@@ -48,10 +48,6 @@ bool BVHNode::isLeaf() const
 
 bool BVHNode::hit(const Ray& ray, HitRecord& rec) const
 {
-	auto prevTHit = rec.tHit;
-	if (!aabb.hit(ray, rec))
-		return false;
-	rec.tHit = prevTHit;
 	bool hit = false;
 	if (isLeaf()) {
 		for (const auto* model : leafModels) {
@@ -61,14 +57,31 @@ bool BVHNode::hit(const Ray& ray, HitRecord& rec) const
 		}
 		return hit;
 	}
-	else {
-		const auto leftHit = left->hit(ray, rec);
-		const auto rightHit = right->hit(ray, rec);
-		hit = leftHit || rightHit;
-		return hit;
-	}
+	auto prevTHit = rec.tHit;
+	if (!aabb.hit(ray, rec))
+		return false;
+	rec.tHit = prevTHit;
+	const auto leftHit = left->hit(ray, rec);
+	const auto rightHit = right->hit(ray, rec);
+	hit = leftHit || rightHit;
+	return hit;
 }
-
+bool BVHNode::hitAnything(const Ray& ray, HitRecord& rec) const
+{
+	if (isLeaf()) {
+		for (const auto* model : leafModels) {
+			if (model->hit(ray, rec)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	auto prevTHit = rec.tHit;
+	if (!aabb.hit(ray, rec))
+		return false;
+	rec.tHit = prevTHit;
+	return left->hit(ray, rec) || right->hit(ray, rec);
+}
 BVHNode::~BVHNode()
 {
 	delete left;

@@ -70,20 +70,19 @@ TEST(TextureTestSuite, UVTextureTest)
 					  {0.5, 0, 0, sqrt3 / 2, 1, sqrt3 / 2},
 					  {},
 					  {},
-					  {},
 					  {0, 1, 2}};
 
 	int imageWidth, imageHeight, imageChannels;
 	auto* rawData = stbi_load(R"(D:\uv_checker.jpg)", &imageWidth, &imageHeight, &imageChannels, 0);
 	const auto pixelCnt = imageWidth * imageHeight;
-	std::vector<Vector3f> imgData;
+	std::vector<float> imgData;
 	imgData.reserve(pixelCnt);
 	for (auto i = 0u; i < pixelCnt; ++i) {
-		imgData.emplace_back(rawData[i * imageChannels], rawData[i * imageChannels + 1],
-							 rawData[i * imageChannels + 2]);
-		imgData.back() /= 255;
+		imgData.emplace_back((float)rawData[i * imageChannels] / 255.f);
+		imgData.emplace_back((float)rawData[i * imageChannels + 1] / 255.f);
+		imgData.emplace_back((float)rawData[i * imageChannels + 2] / 255.f);
 	}
-	UVTexture<Vector3f> texture{imgData, (uint32_t)imageWidth, (uint32_t)imageHeight};
+	UVTextureRGB texture{imgData, (uint32_t)imageWidth, (uint32_t)imageHeight};
 	const Vector3f origin{0, 0, 0};
 	const Vector3f center{0, 0, -1};
 	const Vector3f right{1.25, 0, 0};

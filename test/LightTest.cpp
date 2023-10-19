@@ -126,7 +126,7 @@ TEST(LightTestSuite, DomeLightTest)
 	const Vector3f right = towards.cross(z).normalized();
 	const Vector3f up = right.cross(towards);
 
-	const auto sphereTexture = TextureFactory::loadSphereTexture3f(R"(D:/dome.hdr)");
+	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
 	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
 
 	std::vector<std::shared_ptr<Light>> lights;

@@ -6,7 +6,7 @@
 #include "Ray.h"
 #include "Texture.h"
 using namespace xd;
-DomeLight::DomeLight(const std::shared_ptr<SphereTexture3f>& dome) : Light(16u), dome(dome)
+DomeLight::DomeLight(const std::shared_ptr<SphereTextureRGB>& dome) : Light(4u), dome(dome)
 {
 	const auto width = dome->getWidth();
 	const auto height = dome->getHeight();

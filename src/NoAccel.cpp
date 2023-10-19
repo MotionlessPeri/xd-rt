@@ -16,3 +16,12 @@ bool NoAccel::hit(const Ray& ray, HitRecord& rec) const
 	}
 	return hit;
 }
+bool NoAccel::hitAnything(const Ray& ray, HitRecord& rec) const
+{
+	for (const auto& model : models) {
+		if (model->hit(ray, rec)) {
+			return true;
+		}
+	}
+	return false;
+}

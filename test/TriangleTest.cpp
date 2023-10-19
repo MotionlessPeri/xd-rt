@@ -15,7 +15,6 @@ TEST(TriangleTestSuite, BaryCentricCoordTest)
 					  {1, 1, 0, 0, 0, 1},
 					  {},
 					  {},
-					  {},
 					  {0, 1, 2}};
 	auto triangles = mesh.getTriangles();
 	EXPECT_EQ(triangles.size(), 1);
@@ -56,7 +55,6 @@ TEST(TriangleTestSuite, HitTest)
 	const float sqrt3 = std::sqrtf(3);
 	TriangleMesh mesh{{0, 1, 0, -sqrt3 / 2.f, -0.5f, 0, sqrt3 / 2.f, -0.5f, 0},
 					  {1, 1, 0, 0, 0, 1},
-					  {},
 					  {},
 					  {},
 					  {0, 1, 2}};

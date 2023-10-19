@@ -227,13 +227,13 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 	const ColorRGB white{1, 1, 1};
 	auto scene = std::make_shared<Scene>();
 	auto sphere = std::make_shared<Sphere>(origin, radius);
-	auto diffuse = TextureFactory::loadUVTexture3f(R"(D:\uv_checker.jpg)");
+	auto diffuse = TextureFactory::loadUVTextureRGB(R"(D:\uv_checker.jpg)");
 	auto matte = std::make_shared<MatteMaterial>(diffuse);
 	auto spec = std::make_shared<SpecularReflectionMaterial>();
 	auto primitive = std::make_shared<Primitive>(sphere, matte);
 	scene->addPrimitive(primitive);
 
-	auto hitSolver = std::make_shared<NaiveHitSolver>(scene);
+	auto hitSolver = std::make_shared<EmbreeHitSolver>(scene);
 
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 1000u;
@@ -244,17 +244,17 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 	const Vector3f right = towards.cross(z).normalized();
 	const Vector3f up = right.cross(towards);
 
-	const auto sphereTexture = TextureFactory::loadSphereTexture3f(R"(D:/dome.hdr)");
+	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
 	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
 
 	std::vector<std::shared_ptr<Light>> lights;
 	lights.push_back(domeLight);
 
 	const auto verticalFov = 90.f / 180.f * PI;
-	auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
-												width, height);
-	// auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), 500, 500,
+	//auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
 	//											width, height);
+	auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), 500, 500,
+											width, height);
 	auto film = cam->getFilm();
 
 	auto sampler = std::make_shared<SimpleSampler>(width, height);
@@ -304,7 +304,8 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 							++acceptedCount;
 						}
 					}
-					film->addSample(SAMPLE_WEIGHT * radiance / acceptedCount, sample);
+					film->addSample(weight.cwiseProduct(SAMPLE_WEIGHT * radiance / acceptedCount),
+									sample);
 				}
 				auto newDirection = material->getDirection(rec, -ray.d);
 				weight = weight.cwiseProduct(material->getBRDF(rec, newDirection, -ray.d));

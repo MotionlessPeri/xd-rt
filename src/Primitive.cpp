@@ -8,10 +8,29 @@ Primitive::Primitive(const std::shared_ptr<Model>& model, const std::shared_ptr<
 	: model(model), material(material)
 {
 }
+Primitive::Primitive(const std::shared_ptr<Model>& model,
+					 const std::shared_ptr<Material>& material,
+					 const Transform& localToWorld)
+	: model(model),
+	  material(material),
+	  localToWorld(localToWorld),
+	  worldToLocal(localToWorld.inverse())
+{
+}
+
 bool Primitive::hit(const Ray& ray, HitRecord& rec) const
 {
-	if (model->hit(ray, rec)) {
+	const Ray localRay{worldToLocal * ray.o,
+					   worldToLocal.linear() * ray.d};
+	if (model->hit(localRay, rec)) {
 		rec.primitive = std::static_pointer_cast<const Primitive>(shared_from_this());
+		rec.tPoint = localToWorld * rec.tPoint;
+		rec.n = localToWorld.linear().inverse().transpose() * rec.n;
+		rec.n.normalize();
+		rec.dpdu = localToWorld.linear() * rec.dpdu;
+		rec.dpdu.normalize();
+		rec.dpdv = localToWorld.linear() * rec.dpdv;
+		rec.dpdv.normalize();
 		return true;
 	}
 	return false;

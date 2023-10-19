@@ -9,7 +9,10 @@
 #include "Hitable.h"
 #include "embree4/rtcore.h"
 namespace xd {
-class HitAccel : public Hitable {};
+class HitAccel : public Hitable {
+public:
+	virtual bool hitAnything(const Ray& ray, HitRecord& rec) const = 0;
+};
 class NoAccel : public HitAccel {
 public:
 	explicit NoAccel(const std::vector<const Model*>& models);
@@ -19,13 +22,14 @@ public:
 	NoAccel& operator=(const NoAccel& other) = delete;
 	NoAccel& operator=(NoAccel&& other) noexcept = delete;
 	bool hit(const Ray& ray, HitRecord& rec) const override;
+	bool hitAnything(const Ray& ray, HitRecord& rec) const override;
 
 protected:
 	std::vector<const Model*> models;
 };
 class BVHNode : public HitAccel {
 public:
-	BVHNode() = default;
+	BVHNode() = delete;
 	BVHNode(const BVHNode& other) = delete;
 	BVHNode(BVHNode&& other) noexcept = delete;
 	BVHNode& operator=(const BVHNode& other) = delete;
@@ -33,6 +37,7 @@ public:
 	explicit BVHNode(std::vector<const Model*>& models);
 	~BVHNode() override;
 	bool hit(const Ray& ray, HitRecord& rec) const override;
+	bool hitAnything(const Ray& ray, HitRecord& rec) const override;
 	bool isLeaf() const;
 	AABB getAABB() const { return aabb; }
 	const std::vector<const Model*>& getLeafModels() const { return leafModels; }
@@ -45,13 +50,15 @@ protected:
 };
 class EmbreeAccel : public HitAccel {
 public:
-	EmbreeAccel(RTCDevice device, const std::vector<const Model*>& models);
+	EmbreeAccel(RTCDevice device, const std::vector<const Primitive*>& primitives);
 	bool hit(const Ray& ray, HitRecord& rec) const override;
+	bool hitAnything(const Ray& ray, HitRecord& rec) const override;
 
 protected:
 	RTCDevice device;
 	RTCScene scene;
-	std::unordered_map<unsigned int, const Model*> geomMap;
+	std::unordered_map<unsigned int, const Primitive*> instanceIdToPrimitiveMap;
+	std::unordered_map<unsigned int, RTCGeometry> instanceIdToGeomMap;
 };
 }  // namespace xd
 #endif	// XD_RT_HITACCEL_H

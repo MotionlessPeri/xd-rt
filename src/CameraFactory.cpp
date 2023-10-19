@@ -13,7 +13,7 @@ std::shared_ptr<OrthoCamera> CameraFactory::createOrthoCamera(const Vector3f& po
 {
 	const Vector3f up = upNorm * upUnit;
 	const Vector3f direction = (target - position).normalized();
-	const Vector3f right = (-direction.cross(upUnit)) * rightNorm;
+	const Vector3f right = (direction.cross(upUnit)) * rightNorm;
 	auto film = std::make_shared<Film>(position, right, up, width, height);
 	auto camera = std::make_shared<OrthoCamera>(film);
 	return camera;

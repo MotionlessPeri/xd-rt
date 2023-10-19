@@ -20,7 +20,7 @@ Film::Film(const Vector3f& center,
 	  height(height),
 	  image(width * height * channels, 0.f)
 {
-	towards = -up.cross(right).normalized();
+	towards = up.cross(right).normalized();
 }
 
 Vector3f Film::getTopLeft() const
