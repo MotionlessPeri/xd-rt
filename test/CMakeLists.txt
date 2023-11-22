@@ -9,12 +9,24 @@ include_directories(${TBB_INCLUDE_DIRS})
 find_package(embree 4 REQUIRED)
 include_directories(${EMBREE_INCLUDE_DIRS})
 
-add_executable(xd_rt_test SamplerTest.cpp FilmTest.cpp CameraTest.cpp ModelHitTest.cpp VisibilityTest.cpp DistributionTest.cpp LightTest.cpp MaterialTest.cpp TextureTest.cpp HitRecordTest.cpp TriangleTest.cpp
+add_executable(xd_rt_test
+        SamplerTest.cpp
+        FilmTest.cpp
+        CameraTest.cpp
+        ModelHitTest.cpp
+        VisibilityTest.cpp
+        DistributionTest.cpp
+        LightTest.cpp
+        MaterialTest.cpp
+        TextureTest.cpp
+        HitRecordTest.cpp
+        TriangleTest.cpp
         ObjLoaderTest.cpp
         AABBTest.cpp
         HitAccelTest.cpp
         GLTFLoaderTest.cpp
         PrimitiveTest.cpp
+        TriangulateTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)

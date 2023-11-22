@@ -1,7 +1,7 @@
 //
 // Created by Frank on 2023/8/16.
 //
-#include "Sampler.h"
+#include "../src/core/Sampler.h"
 #include "gtest/gtest.h"
 
 using namespace xd;

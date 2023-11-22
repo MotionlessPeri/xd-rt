@@ -3,9 +3,9 @@
 //
 #include <oneapi/tbb.h>
 #include <numeric>
-#include "CameraFactory.h"
+#include "../src/camera/CameraFactory.h"
+#include "../src/core/Triangle.h"
 #include "Loader/MeshLoader.h"
-#include "Triangle.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(ObjLoaderTestSuite, LoadTest)

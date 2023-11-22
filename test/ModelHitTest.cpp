@@ -2,7 +2,7 @@
 // Created by Frank on 2023/8/19.
 //
 
-#include "Model.h"
+#include "../src/core/Model.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(ModelHitTestSuite, SphereHitTest)
@@ -59,7 +59,7 @@ TEST(ModelHitTestSuite, SphereHitTest)
 }
 
 #include <oneapi/tbb.h>
-#include "CameraFactory.h"
+#include "../src/camera/CameraFactory.h"
 TEST(ModelHitTestSuite, SphereHitTest2)
 {
 	const float radius = 400;

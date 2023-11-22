@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include "Loader/MeshLoader.h"
+#include "MeshLoader.h"
 #include "Triangle.h"
 using namespace xd;
 static Vector2f parseVector2(const std::string& aString)

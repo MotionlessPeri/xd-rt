@@ -69,3 +69,14 @@ AABB Box::getAABB() const
 {
 	return {minPoint, maxPoint};
 }
+
+std::shared_ptr<TriangleMesh> Box::triangulate() const
+{
+	std::vector<float> positions;
+	std::vector<float> uvs;
+	std::vector<float> normals;
+	std::vector<float> tangents;
+	std::vector<uint32_t> indices;
+	assert(false); // TODO: implement this
+	return nullptr;
+}

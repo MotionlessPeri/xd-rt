@@ -31,15 +31,15 @@ bool BVHHitSolver::solve(const Ray& ray, HitRecord& record) const
 {
 	return root->hit(ray, record);
 }
-#include "EmbreeGlobal.h"
+#include "../3rdParty/embree/EmbreeGlobal.h"
 EmbreeHitSolver::EmbreeHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(scene)
 {
 	std::vector<const Primitive*> models;
 	for (const auto& prim : scene->getPrimitives()) {
 		models.emplace_back(prim.get());
 	}
-	//int i = 0;
-	//models.emplace_back(scene->getPrimitives()[i].get());
+	// int i = 0;
+	// model.emplace_back(scene->getPrimitives()[i].get());
 	accel = std::make_shared<EmbreeAccel>(EmbreeGlobal::get().device, models);
 }
 bool EmbreeHitSolver::solve(const Ray& ray, HitRecord& record) const

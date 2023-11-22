@@ -1,8 +1,8 @@
 //
 // Created by Frank on 2023/9/12.
 //
-#include "HitAccel.h"
-#include "Model.h"
+#include "../src/core/HitAccel.h"
+#include "../src/core/Model.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(HitAccelTestSuite, BVHBuildTest)
@@ -22,9 +22,9 @@ TEST(HitAccelTestSuite, BVHBuildTest)
 
 #include <oneapi/tbb.h>
 #include <chrono>
-#include "CameraFactory.h"
-#include "Primitive.h"
-#include "Scene.h"
+#include "../src/camera/CameraFactory.h"
+#include "../src/core/Primitive.h"
+#include "../src/core/Scene.h"
 TEST(HitAccelTestSuite, BVHHitTest1)
 {
 	const float halfLen = 400.f;
@@ -109,8 +109,8 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 	EXPECT_NO_THROW(film->saveToFile(R"(D:\bvh_hit_test_bvh_solver.hdr)"););
 }
 
+#include "../src/core/Triangle.h"
 #include "Loader/MeshLoader.h"
-#include "Triangle.h"
 TEST(HitAccelTestSuite, EmbreeHitTest1)
 {
 	ObjMeshLoader loader;

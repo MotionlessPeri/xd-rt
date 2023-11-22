@@ -2,7 +2,7 @@
 // Created by Frank on 2023/8/19.
 //
 
-#include "Camera.h"
+#include "../src/core/Camera.h"
 #include "gtest/gtest.h"
 
 using namespace xd;
@@ -38,7 +38,7 @@ TEST(CameraTestSuite, OrthoCameraTest)
 	const Vector3f center{0, 0, 0};
 	const Vector3f right{1.5, 0, 0};
 	const Vector3f up{0, 0.5, 0};
-	const Vector3f towards = -up.cross(right).normalized();
+	const Vector3f towards = up.cross(right).normalized();
 
 	constexpr uint32_t width = 3;
 	constexpr uint32_t height = 2;

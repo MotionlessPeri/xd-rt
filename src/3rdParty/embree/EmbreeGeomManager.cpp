@@ -11,7 +11,7 @@ EmbreeGeomManager::EmbreeGeomManager()
 	device = EmbreeGlobal::get().device;
 }
 #include <iostream>
-RTCGeometry EmbreeGeomManager::getOrCreateGeom(const Model* model)
+RTCGeometry EmbreeGeomManager::getOrCreateGeom(Model* model)
 {
 	const auto queryIt = geoms.find(model);
 	if (queryIt != geoms.end()) {
@@ -19,7 +19,9 @@ RTCGeometry EmbreeGeomManager::getOrCreateGeom(const Model* model)
 	}
 	auto* mesh = dynamic_cast<const TriangleMesh*>(model);
 	if (mesh == nullptr) {
-		return nullptr;
+		mesh = model->getTriangulatedMesh().get();
+		if (mesh == nullptr)
+			return nullptr;
 	}
 
 	auto rtcGeom = rtcNewGeometry(device, RTC_GEOMETRY_TYPE_TRIANGLE);

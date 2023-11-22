@@ -22,6 +22,13 @@ class TriangleMesh : public Model {
 	friend class Triangle;
 
 public:
+	TriangleMesh(const std::shared_ptr<const Model>& owner,
+				 const std::vector<float>& positions,
+				 const std::vector<float>& uvs,
+				 const std::vector<float>& normals,
+				 const std::vector<float>& tangents,
+				 const std::vector<uint32_t>& indices,
+				 HitAccelMethod method = HitAccelMethod::NO_ACCEL);
 	TriangleMesh(const std::vector<float>& positions,
 				 const std::vector<float>& uvs,
 				 const std::vector<float>& normals,
@@ -46,11 +53,13 @@ public:
 	const std::vector<uint32_t>& getIndices() const;
 	float getArea() const override;
 	AABB getAABB() const override;
-
+	std::shared_ptr<const Model> triangulateFrom() const;
+	bool isTriangulatedFromOthers() const;
 protected:
 	void init(HitAccelMethod method);
 	void initTriangles();
 	void initAccel(HitAccelMethod method);
+	std::weak_ptr<const Model> owner;
 	std::vector<float> rawPositions;
 	Eigen::Map<const Eigen::Matrix3Xf> positionsAccessor;
 	std::vector<float> rawUVs;

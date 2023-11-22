@@ -17,8 +17,11 @@ public:
 	virtual ~Model() = default;
 	virtual float getArea() const = 0;
 	virtual AABB getAABB() const = 0;
+	std::shared_ptr<TriangleMesh> getTriangulatedMesh();
 	// TODO: we need interfaces to deal with hit point shift due to floating-point accuracy issue
 protected:
+	virtual std::shared_ptr<TriangleMesh> triangulate() const;
+	std::shared_ptr<TriangleMesh> triangulatedMesh = nullptr;
 };
 
 class Sphere : public Model {
@@ -29,6 +32,7 @@ public:
 	std::tuple<Vector3f, Vector3f, Vector3f> generateDifferentials(const Vector3f& point) const;
 	float getArea() const override;
 	AABB getAABB() const override;
+	std::shared_ptr<TriangleMesh> triangulate() const override;
 
 protected:
 	/**
@@ -52,6 +56,7 @@ public:
 	Vector3f getExtent() const { return maxPoint - minPoint; }
 
 protected:
+	std::shared_ptr<TriangleMesh> triangulate() const override;
 	Vector3f minPoint, maxPoint;
 };
 }  // namespace xd

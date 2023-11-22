@@ -2,17 +2,17 @@
 // Created by Frank on 2023/10/2.
 //
 #include <oneapi/tbb.h>
-#include "CameraFactory.h"
-#include "GLTFSceneLoader.h"
-#include "HitSolver.h"
-#include "Light.h"
-#include "Primitive.h"
-#include "TextureFactory.h"
+#include "../src/camera/CameraFactory.h"
+#include "../src/core/HitSolver.h"
+#include "../src/core/Light.h"
+#include "../src/core/Primitive.h"
+#include "../src/loader/GLTFSceneLoader.h"
+#include "../src/texture/TextureFactory.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(GLTFSceneLoaderTestSuite, loadTest)
 {
-	//const std::string path = R"(D:\cube_test.gltf)";
+	// const std::string path = R"(D:\cube_test.gltf)";
 	const std::string path = R"(D:\buster_drone\scene.gltf)";
 	GLTFSceneLoader loader;
 	auto scene = loader.load(path);
@@ -21,9 +21,9 @@ TEST(GLTFSceneLoaderTestSuite, loadTest)
 	constexpr uint32_t width = 2000u;
 	constexpr uint32_t height = 2000u;
 	const Vector3f center{0, 0, 1.5};
-	//const Vector3f center{0, 0, 15};
+	// const Vector3f center{0, 0, 15};
 	const Vector3f target{0, -1, 0};
-	//const Vector3f target{0, 0, 0};
+	// const Vector3f target{0, 0, 0};
 	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
 	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
 
@@ -31,8 +31,8 @@ TEST(GLTFSceneLoaderTestSuite, loadTest)
 	lights.push_back(domeLight);
 
 	const auto verticalFov = 90.f / 180.f * PI;
-	auto cam = CameraFactory::createPerspCamera(center, target, {0,1,0}, verticalFov, 1,
-												width, height);
+	auto cam =
+		CameraFactory::createPerspCamera(center, target, {0, 1, 0}, verticalFov, 1, width, height);
 
 	auto film = cam->getFilm();
 
@@ -57,9 +57,9 @@ TEST(GLTFSceneLoaderTestSuite, loadTest)
 		}
 	};
 
-	 //oneapi::tbb::global_control
-	 //global_limit(oneapi::tbb::global_control::max_allowed_parallelism,
-	 //1);
+	// oneapi::tbb::global_control
+	// global_limit(oneapi::tbb::global_control::max_allowed_parallelism,
+	// 1);
 
 	for (uint32_t i = 0u; i < SAMPLE_PER_PIXEL; ++i) {
 		tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()), work);

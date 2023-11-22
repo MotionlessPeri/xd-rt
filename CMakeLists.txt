@@ -7,54 +7,124 @@ set(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/cmake")
 # list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/external")
-include_directories(include)
+include_directories(src)
+include_directories(src/core)
 include_directories(external)
-set(INCLUDE_FILES
-        include/Camera.h
-        include/Ray.h
-        include/Film.h
-        include/Sampler.h include/Model.h include/HitRecord.h include/CoreTypes.h include/MathUtil.h include/Scene.h include/Primitive.h include/Light.h include/CameraFactory.h include/HitSolver.h include/Material.h include/BRDF.h include/Distribution.h include/Texture.h include/Triangle.h
-        include/Loader/MeshLoader.h
-        include/Hitable.h
-        include/AABB.h
-        include/HitAccel.h
-        include/Enums.h
-        include/TextureFactory.h
-        include/EmbreeGeomManager.h
-        include/EmbreeUtil.h
-        include/EmbreeGlobal.h
-        include/SceneLoader.h
-        include/Loader/MaterialLoader.h
-        include/Loader/GLTFMaterialLoader.h
-        include/Loader/GLTFMeshLoader.h
-        include/TinyGLTFUtil.h
-        include/GLTFSceneLoader.h
+
+set(3RDPARTY_FILES
+        src/3rdParty/embree/EmbreeGeomManager.h
+        src/3rdParty/embree/EmbreeGeomManager.cpp
+        src/3rdParty/embree/EmbreeUtil.h
+        src/3rdParty/embree/EmbreeGlobal.h
+        src/3rdParty/embree/EmbreeGlobal.cpp
+        src/3rdParty/tinygltf/TinyGLTFUtil.h
+        src/3rdParty/tinygltf/TinyGLTFWrapper.cpp
+        src/3rdParty/stb/STBWrapper.cpp
 )
+set(BRDF_FILES
+        src/brdf/Lambertian.cpp
+)
+set(CAMERA_FILES
+        src/camera/Camera.cpp
+        src/camera/CameraFactory.h
+        src/camera/CameraFactory.cpp
+)
+set(CORE_FILES
+        src/core/Camera.h
+        src/core/Ray.h
+        src/core/Film.h
+        src/core/Sampler.h
+        src/core/Model.h
+        src/core/HitRecord.h
+        src/core/CoreTypes.h
+        src/core/Scene.h
+        src/core/Primitive.h
+        src/core/Light.h
+
+        src/core/HitSolver.h
+        src/core/Material.h
+        src/core/BRDF.h
+        src/core/Distribution.h
+        src/core/Texture.h
+        src/core/Triangle.h
+
+        src/core/Hitable.h
+
+        src/core/HitAccel.h
+        src/core/Enums.h
+        src/core/Ray.cpp
+        src/core/Film.cpp
+        src/core/Scene.cpp
+        src/core/Primitive.cpp
+)
+set(DISTRIBUTION_FILES
+        src/distribution/PieceWise1D.cpp
+        src/distribution/PieceWise2D.cpp
+        src/distribution/CosineHemisphere.cpp
+        src/distribution/UniformHemisphere.cpp
+)
+set(HITACCEL_FILES
+        src/core/AABB.h
+
+        src/hitAccel/AABB.cpp
+        src/hitAccel/BVHNode.cpp
+        src/hitAccel/NoAccel.cpp
+        src/hitAccel/EmbreeHitAccel.cpp
+)
+set(HITSOLVER_FILES
+        src/hitSolver/HitSolver.cpp
+)
+set(LIGHT_FILES
+        src/light/PointLight.cpp
+        src/light/DomeLight.cpp
+)
+set(LOADER_FILES
+        src/loader/MeshLoader.h
+        src/loader/ObjMeshLoader.cpp
+        src/loader/SceneLoader.h
+        src/loader/MaterialLoader.h
+        src/loader/GLTFMaterialLoader.h
+        src/loader/GLTFMaterialLoader.cpp
+        src/loader/GLTFMeshLoader.h
+        src/loader/GLTFMeshLoader.cpp
+        src/loader/GLTFSceneLoader.h
+        src/loader/GLTFSceneLoader.cpp
+)
+set(MATERIAL_FILES
+        src/material/MatteMaterial.cpp
+        src/material/SpecularReflectionMaterial.cpp
+)
+set(MODEL_FILES
+        src/model/Sphere.cpp
+        src/model/Triangle.cpp
+        src/model/Box.cpp
+)
+set(TEXTURE_FILES
+        src/texture/TextureFactory.h
+        src/texture/TextureFactory.cpp
+)
+set(MISC_FILES
+        src/SimpleSampler.cpp
+)
+
 set(SRC_FILES
-        src/Ray.cpp
-        src/Film.cpp src/SimpleSampler.cpp src/Camera.cpp src/Sphere.cpp src/CameraFactory.cpp src/HitSolver.cpp src/Scene.cpp src/Primitive.cpp src/UniformHemisphere.cpp src/PointLight.cpp src/Lambertian.cpp src/MatteMaterial.cpp src/Triangle.cpp
-        src/ObjMeshLoader.cpp
-        src/AABB.cpp
-        src/BVHNode.cpp
-        src/NoAccel.cpp
-        src/SpecularReflectionMaterial.cpp
-        src/Box.cpp
-        src/TextureFactory.cpp
-        src/DomeLight.cpp
-        src/PieceWise1D.cpp
-        src/PieceWise2D.cpp
-        src/CosineHemisphere.cpp
-        src/EmbreeGeomManager.cpp
-        src/EmbreeHitAccel.cpp
-        src/EmbreeGlobal.cpp
-        src/GLTFMaterialLoader.cpp
-        src/TinyGLTFWrapper.cpp
-        src/GLTFMeshLoader.cpp
-        src/GLTFSceneLoader.cpp
-        src/STBWrapper.cpp
+        ${3RDPARTY_FILES}
+        ${BRDF_FILES}
+        ${CAMERA_FILES}
+        ${CORE_FILES}
+        ${DISTRIBUTION_FILES}
+        ${HITACCEL_FILES}
+        ${HITSOLVER_FILES}
+        ${LIGHT_FILES}
+        ${HITSOLVER_FILES}
+        ${LOADER_FILES}
+        ${MATERIAL_FILES}
+        ${MODEL_FILES}
+        ${TEXTURE_FILES}
+        ${MISC_FILES}
 )
 add_executable(xd_rt_playground main.cpp)
-add_library(xd_rt STATIC ${INCLUDE_FILES} ${SRC_FILES})
+add_library(xd_rt STATIC ${SRC_FILES})
 
 set(TBB_ROOT "${CMAKE_SOURCE_DIR}/external/TBB")
 set(EMBREE_ROOT_DIR "${CMAKE_SOURCE_DIR}/external/embree")

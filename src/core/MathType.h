@@ -5,8 +5,8 @@
 #ifndef XD_RT_MATHTYPE_H
 #define XD_RT_MATHTYPE_H
 
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
+#include "Eigen/Dense"
+#include "Eigen/Geometry"
 namespace xd {
 using Eigen::Matrix2f;
 using Eigen::Matrix3f;
@@ -14,7 +14,7 @@ using Eigen::Matrix4f;
 using Eigen::Vector2f;
 using Eigen::Vector3f;
 using Eigen::Vector4f;
-using Transform = Eigen::Transform<float,3,1,0>;
+using Transform = Eigen::Transform<float, 3, 1, 0>;
 typedef Vector4f ColorRGBA;
 typedef Vector3f ColorRGB;
 constexpr float PI = 3.14159265f;

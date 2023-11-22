@@ -2,13 +2,13 @@
 // Created by Frank on 2023/8/29.
 //
 #include <oneapi/tbb.h>
-#include "Camera.h"
-#include "CameraFactory.h"
-#include "Film.h"
-#include "Light.h"
-#include "Model.h"
-#include "Primitive.h"
-#include "Scene.h"
+#include "../src/camera/CameraFactory.h"
+#include "../src/core/Camera.h"
+#include "../src/core/Film.h"
+#include "../src/core/Light.h"
+#include "../src/core/Model.h"
+#include "../src/core/Primitive.h"
+#include "../src/core/Scene.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(LightTestSuite, PointLightTest)
@@ -32,11 +32,11 @@ TEST(LightTestSuite, PointLightTest)
 	const Vector3f right{500, 0, 0};
 	const Vector3f up{0, 400, 0};
 
-	const ColorRGB intensity{1.f, 0.f, 0.f};
+	const ColorRGB intensity = Vector3f{1.f, 0.f, 0.f} * 100000;
 	const Vector3f lightPos{0, 500, 0};
 	auto redLight = std::make_shared<PointLight>(lightPos, intensity);
 
-	const ColorRGB intensity2{0.f, 1.f, 0.f};
+	const ColorRGB intensity2 = Vector3f{0.f, 1.f, 0.f} * 100000;
 	const Vector3f lightPos2 = 2 * center;
 	auto greenLight = std::make_shared<PointLight>(lightPos2, intensity2);
 
@@ -84,8 +84,8 @@ TEST(LightTestSuite, PointLightTest)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
-#include "Material.h"
-#include "TextureFactory.h"
+#include "../src/core/Material.h"
+#include "../src/texture/TextureFactory.h"
 TEST(LightTestSuite, DomeLightTest)
 {
 	const float halfLen = 400.f;

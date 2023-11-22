@@ -48,6 +48,7 @@ protected:
 	AABB aabb{};
 	std::vector<const Model*> leafModels{};
 };
+
 class EmbreeAccel : public HitAccel {
 public:
 	EmbreeAccel(RTCDevice device, const std::vector<const Primitive*>& primitives);

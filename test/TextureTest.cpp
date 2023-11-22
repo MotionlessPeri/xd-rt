@@ -3,8 +3,8 @@
 //
 #include "gtest/gtest.h"
 
-#include "Sampler.h"
-#include "Texture.h"
+#include "../src/core/Sampler.h"
+#include "../src/core/Texture.h"
 using namespace xd;
 TEST(TextureTestSuite, ConstantTextureSampleTest)
 {
@@ -18,8 +18,8 @@ TEST(TextureTestSuite, ConstantTextureSampleTest)
 }
 
 #include <oneapi/tbb.h>
-#include "CameraFactory.h"
-#include "Model.h"
+#include "../src/camera/CameraFactory.h"
+#include "../src/core/Model.h"
 #include "stb_image.h"
 TEST(TextureTestSuite, SphereTextureTest)
 {
@@ -62,7 +62,7 @@ TEST(TextureTestSuite, SphereTextureTest)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
-#include "Triangle.h"
+#include "../src/core/Triangle.h"
 TEST(TextureTestSuite, UVTextureTest)
 {
 	const float sqrt3 = std::sqrtf(3);

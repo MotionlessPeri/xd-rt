@@ -2,10 +2,10 @@
 // Created by Frank on 2023/9/5.
 //
 #include <oneapi/tbb.h>
-#include "CameraFactory.h"
-#include "Film.h"
-#include "Sampler.h"
-#include "Triangle.h"
+#include "../src/camera/CameraFactory.h"
+#include "../src/core/Film.h"
+#include "../src/core/Sampler.h"
+#include "../src/core/Triangle.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(TriangleTestSuite, BaryCentricCoordTest)

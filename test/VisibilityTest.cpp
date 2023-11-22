@@ -3,10 +3,10 @@
 //
 #include <oneapi/tbb.h>
 #include <thread>
-#include "Camera.h"
-#include "CameraFactory.h"
-#include "Film.h"
-#include "Model.h"
+#include "../src/camera/CameraFactory.h"
+#include "../src/core/Camera.h"
+#include "../src/core/Film.h"
+#include "../src/core/Model.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(VisibilityTestSuite, OrthoCamVisTest)
@@ -127,8 +127,8 @@ TEST(VisibilityTestSuite, PerspCamVisTestTBB)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
-#include "Primitive.h"
-#include "Scene.h"
+#include "../src/core/Primitive.h"
+#include "../src/core/Scene.h"
 TEST(VisibilityTestSuite, OrthoCamVisTestTBBWithHitSolver)
 {
 	const Vector3f origin{0, 0, 0};

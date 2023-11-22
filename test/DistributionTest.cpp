@@ -5,8 +5,8 @@
 #include <atomic>
 #include <numeric>
 
-#include "Distribution.h"
-#include "Film.h"
+#include "../src/core/Distribution.h"
+#include "../src/core/Film.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(DistribTestSuite, UniformHemisphereTest)
@@ -140,7 +140,7 @@ TEST(DistribTestSuite, PieceWise2DGenTest)
 	}
 }
 
-#include "TextureFactory.h"
+#include "../src/texture/TextureFactory.h"
 TEST(DistribTestSuite, PieceWise2DGenTest2)
 {
 	auto texture = TextureFactory::loadSphereTextureRGB(R"(D:\dome.hdr)");

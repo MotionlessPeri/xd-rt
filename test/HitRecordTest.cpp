@@ -2,8 +2,8 @@
 // Created by Frank on 2023/9/4.
 //
 #include <random>
-#include "HitRecord.h"
-#include "Model.h"
+#include "../src/core/HitRecord.h"
+#include "../src/core/Model.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(HitRecordTestSuite, DifferentialTest)

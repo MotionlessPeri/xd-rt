@@ -46,6 +46,10 @@ T interpolateWithBaryCoords(const std::array<T, 3>& inputs, const Vector3f& bary
 	return baryCoord.x() * inputs[0] + baryCoord.y() * inputs[1] + baryCoord.z() * inputs[2];
 }
 
+constexpr inline float toRadians(const float degree)
+{
+	return degree / 180.f * PI;
+}
 /**
  * given a direction, return [theta, phi] where theta is the angle with z axis and
  * phi is the angle with x axis
@@ -65,16 +69,21 @@ inline Vector2f getSphereUV(const Vector3f& dir)
 	const auto [theta, phi] = getSphereThetaPhi(dir);
 	return {phi * INV_TWO_PI, theta * INV_PI};
 }
-inline Vector3f getSphereDirFromUV(const Vector2f& uv)
+inline Vector3f getSphereDirFromThetaPhi(const float phi, const float theta)
 {
-	const float phi = uv.x() * TWO_PI;
-	const float theta = uv.y() * PI;
 	const float sinTheta = std::sinf(theta);
 	const float cosTheta = std::cosf(theta);
 	const float sinPhi = std::sinf(phi);
 	const float cosPhi = std::cosf(phi);
 	return {sinTheta * cosPhi, sinTheta * sinPhi, cosTheta};
 }
+inline Vector3f getSphereDirFromUV(const Vector2f& uv)
+{
+	const float phi = uv.x() * TWO_PI;
+	const float theta = uv.y() * PI;
+	return getSphereDirFromThetaPhi(phi, theta);
+}
+
 inline Vector3f reflected(const Vector3f& i, const Vector3f& n)
 {
 	return 2 * n.dot(i) * n - i;

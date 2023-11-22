@@ -20,8 +20,7 @@ Primitive::Primitive(const std::shared_ptr<Model>& model,
 
 bool Primitive::hit(const Ray& ray, HitRecord& rec) const
 {
-	const Ray localRay{worldToLocal * ray.o,
-					   worldToLocal.linear() * ray.d};
+	const Ray localRay{worldToLocal * ray.o, worldToLocal.linear() * ray.d};
 	if (model->hit(localRay, rec)) {
 		rec.primitive = std::static_pointer_cast<const Primitive>(shared_from_this());
 		rec.tPoint = localToWorld * rec.tPoint;

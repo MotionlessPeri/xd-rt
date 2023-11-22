@@ -6,14 +6,14 @@
 
 #include <oneapi/tbb.h>
 #include <thread>
-#include "Camera.h"
-#include "CameraFactory.h"
-#include "Film.h"
-#include "Light.h"
-#include "Model.h"
-#include "Primitive.h"
-#include "Scene.h"
-#include "TextureFactory.h"
+#include "../src/camera/CameraFactory.h"
+#include "../src/core/Camera.h"
+#include "../src/core/Film.h"
+#include "../src/core/Light.h"
+#include "../src/core/Model.h"
+#include "../src/core/Primitive.h"
+#include "../src/core/Scene.h"
+#include "../src/texture/TextureFactory.h"
 using namespace xd;
 TEST(MaterialTestSuite, LambertianTest)
 {
@@ -39,11 +39,11 @@ TEST(MaterialTestSuite, LambertianTest)
 	const Vector3f right{500, 0, 0};
 	const Vector3f up{0, 400, 0};
 
-	const ColorRGB intensity = Vector3f{1.f, 1.f, 1.f} * 3;
+	const ColorRGB intensity = Vector3f{1.f, 1.f, 1.f} * 200000;
 	const Vector3f lightPos{0, 500, 0};
 	auto redLight = std::make_shared<PointLight>(lightPos, intensity);
 
-	const ColorRGB intensity2 = Vector3f{1.f, 1.f, 1.f} * 3;
+	const ColorRGB intensity2 = Vector3f{1.f, 1.f, 1.f} * 200000;
 	const Vector3f lightPos2 = 2 * center;
 	auto greenLight = std::make_shared<PointLight>(lightPos2, intensity2);
 
@@ -147,11 +147,11 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 	const Vector3f right{500, 0, 0};
 	const Vector3f up{0, 500, 0};
 
-	const ColorRGB intensity = Vector3f{1.f, 0.f, 0.f} * 3;
+	const ColorRGB intensity = Vector3f{1.f, 0.f, 0.f} * 200000;
 	const Vector3f lightPos{0, 500, 0};
 	auto redLight = std::make_shared<PointLight>(lightPos, intensity);
 
-	const ColorRGB intensity2 = Vector3f{0.f, 1.f, 0.f} * 3;
+	const ColorRGB intensity2 = Vector3f{0.f, 1.f, 0.f} * 10000;
 	const Vector3f lightPos2{0, -100, -100};
 	auto greenLight = std::make_shared<PointLight>(lightPos2, intensity2);
 
@@ -200,9 +200,6 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 						const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
 						film->addSample(SAMPLE_WEIGHT * Lo.cwiseProduct(weight), sample);
 					}
-					else {
-						// film->addSample({dummy.tHit, dummy.tHit, dummy.tHit}, sample);
-					}
 				}
 				auto newDirection = material->getDirection(rec, -ray.d);
 				weight = weight.cwiseProduct(material->getBRDF(rec, newDirection, -ray.d));
@@ -212,6 +209,9 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 		}
 	};
 
+		// oneapi::tbb::global_control
+	 //global_limit(oneapi::tbb::global_control::max_allowed_parallelism,
+	 //1);
 	for (uint32_t i = 0u; i < SAMPLE_PER_PIXEL; ++i) {
 		tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()), work);
 	}
@@ -251,16 +251,16 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 	lights.push_back(domeLight);
 
 	const auto verticalFov = 90.f / 180.f * PI;
-	//auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
+	// auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
 	//											width, height);
-	auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), 500, 500,
-											width, height);
+	auto cam =
+		CameraFactory::createOrthoCamera(center, target, up.normalized(), 500, 500, width, height);
 	auto film = cam->getFilm();
 
 	auto sampler = std::make_shared<SimpleSampler>(width, height);
 
 	const auto samples = sampler->generateSamples();
-	constexpr uint32_t SAMPLE_PER_PIXEL = 2u;
+	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
 	constexpr float SAMPLE_WEIGHT = 1.f / (float)SAMPLE_PER_PIXEL;
 	const auto work = [&](const tbb::blocked_range<size_t>& r) {
 		for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
@@ -276,7 +276,12 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 					film->addSample(SAMPLE_WEIGHT * domeLight->getIntensity(ray), sample);
 					break;
 				}
-
+				//else {
+				//	const auto material = rec.primitive->getMaterial();
+				//	const Vector3f brdf = material->getBRDF(rec, {}, -ray.d);
+				//	film->addSample(brdf, sample);
+				//	break;
+				//}
 				constexpr float epsilon = 1e-4;
 				auto hitPoint = ray.getTPoint(rec.tHit);
 				const auto model = rec.primitive->getModel();

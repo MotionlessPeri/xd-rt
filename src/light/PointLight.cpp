@@ -11,7 +11,7 @@ PointLight::PointLight(const Vector3f& position, const ColorRGB& intensity)
 }
 ColorRGB PointLight::getIntensity(const Ray& ray) const
 {
-	return intensity;
+	return intensity / (position - ray.o).squaredNorm();
 }
 Vector3f PointLight::getDirection(const HitRecord& primRec, HitRecord& shadowRec) const
 {

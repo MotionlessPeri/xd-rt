@@ -45,7 +45,7 @@ std::shared_ptr<PerspCamera> CameraFactory::createPerspCamera(const Vector3f& po
 	const float upNorm = distance * std::tan(verticalFov / 2.f);
 	const float rightNorm = upNorm * aspect;
 	const Vector3f up = upNorm * upUnit;
-	const Vector3f right = (-direction.cross(upUnit)) * rightNorm;
+	const Vector3f right = direction.cross(upUnit) * rightNorm;
 	auto film = std::make_shared<Film>(target, right, up, width, height);
 	auto camera = std::make_shared<PerspCamera>(position, film);
 	return camera;

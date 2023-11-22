@@ -4,9 +4,9 @@
 
 #ifndef XD_RT_EMBREEUTIL_H
 #define XD_RT_EMBREEUTIL_H
-#include "CoreTypes.h"
-#include "HitRecord.h"
-#include "Ray.h"
+#include "../../core/CoreTypes.h"
+#include "../../core/HitRecord.h"
+#include "../../core/Ray.h"
 #include "embree4/rtcore.h"
 namespace xd {
 inline RTCRay rayToRTCRay(const Ray& ray)

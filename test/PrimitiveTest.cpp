@@ -1,14 +1,14 @@
 //
 // Created by Frank on 2023/10/4.
 //
-#include "CameraFactory.h"
+#include "../src/camera/CameraFactory.h"
+#include "../src/core/HitSolver.h"
+#include "../src/core/Light.h"
 #include "Eigen/Geometry"
-#include "HitSolver.h"
-#include "Light.h"
 
-#include "Primitive.h"
-#include "Scene.h"
-#include "TextureFactory.h"
+#include "../src/core/Primitive.h"
+#include "../src/core/Scene.h"
+#include "../src/texture/TextureFactory.h"
 #include "gtest/gtest.h"
 #include "oneapi/tbb.h"
 using namespace xd;
@@ -116,8 +116,8 @@ TEST(PrimitiveTestSuite, InstanceTest)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
+#include "../src/core/Triangle.h"
 #include "Loader/MeshLoader.h"
-#include "Triangle.h"
 TEST(PrimitiveTestSuite, InstanceTest2)
 {
 	ObjMeshLoader loader;
@@ -148,7 +148,7 @@ TEST(PrimitiveTestSuite, InstanceTest2)
 		auto prim = std::make_shared<Primitive>(mesh, matte, transform);
 		scene->addPrimitive(prim);
 	}
-	
+
 	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
 	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
 	scene->addLight(domeLight);
@@ -168,7 +168,7 @@ TEST(PrimitiveTestSuite, InstanceTest2)
 			auto ray = cam->generateRay(sample);
 			HitRecord rec;
 			if (!hitSolver->solve(ray, rec)) {
-				film->addSample({100,0,0}, sample);
+				film->addSample({100, 0, 0}, sample);
 			}
 			else {
 				Vector3f dummy;
@@ -178,9 +178,9 @@ TEST(PrimitiveTestSuite, InstanceTest2)
 		}
 	};
 
-	 //oneapi::tbb::global_control
-	 //global_limit(oneapi::tbb::global_control::max_allowed_parallelism,
-	 //1);
+	// oneapi::tbb::global_control
+	// global_limit(oneapi::tbb::global_control::max_allowed_parallelism,
+	// 1);
 	for (uint32_t i = 0u; i < SAMPLE_PER_PIXEL; ++i) {
 		tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()), work);
 	}

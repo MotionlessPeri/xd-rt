@@ -1,8 +1,8 @@
 //
 // Created by Frank on 2023/10/1.
 //
-#include "Loader/GLTFMeshLoader.h"
-#include "TinyGLTFUtil.h"
+#include "GLTFMeshLoader.h"
+#include "3rdParty/tinygltf/TinyGLTFUtil.h"
 #include "Triangle.h"
 using namespace xd;
 std::shared_ptr<TriangleMesh> GLTFMeshLoader::load(const std::string& path,

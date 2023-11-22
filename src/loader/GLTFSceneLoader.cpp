@@ -143,7 +143,7 @@ GLTFTextureLoader::RGBATextureSplitRes GLTFTextureLoader::splitRGBAImage(
 	return res;
 }
 
-#include "Material.h"
+#include "../core/Material.h"
 GLTFMaterialLoader::GLTFMaterialLoader(
 	const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>>& floatTextures,
 	const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>& rgbTextures,
@@ -169,10 +169,10 @@ std::shared_ptr<Material> GLTFMaterialLoader::loadMaterial(const tinygltf::Mater
 	return ret;
 }
 
-#include "Loader/GLTFMeshLoader.h"
-#include "Primitive.h"
-#include "Scene.h"
-#include "Triangle.h"
+#include "../core/Primitive.h"
+#include "../core/Scene.h"
+#include "../core/Triangle.h"
+#include "GLTFMeshLoader.h"
 std::shared_ptr<Scene> GLTFSceneLoader::load(const std::string& path,
 											 const LoadSceneOptions& options)
 {
@@ -234,7 +234,8 @@ std::shared_ptr<Scene> GLTFSceneLoader::load(const std::string& path,
 			return seed;
 		}
 	};
-	std::unordered_map<std::pair<uint32_t, uint32_t>, std::shared_ptr<TriangleMesh>, PairHasher> meshCache;
+	std::unordered_map<std::pair<uint32_t, uint32_t>, std::shared_ptr<TriangleMesh>, PairHasher>
+		meshCache;
 	GLTFMeshLoader meshLoader;
 	std::function<void(const tinygltf::Node&, const Transform&)> loadNodes =
 		[&](const tinygltf::Node& gltfNode, const Transform& ancestorTransform) -> void {
@@ -292,7 +293,6 @@ std::shared_ptr<Scene> GLTFSceneLoader::load(const std::string& path,
 			for (const auto& gltfPrim : gltfMesh.primitives) {
 				// TODO: we need a cache for load mesh(std::unordered_map<index,
 				// shared_ptr<TriangleMesh>>)
-
 			}
 		}
 

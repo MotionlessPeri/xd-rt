@@ -5,12 +5,23 @@
 #include "MathUtil.h"
 using namespace xd;
 
+TriangleMesh::TriangleMesh(const std::shared_ptr<const Model>& owner,
+	const std::vector<float>& positions,
+	const std::vector<float>& uvs,
+	const std::vector<float>& normals,
+	const std::vector<float>& tangents,
+	const std::vector<uint32_t>& indices,
+	HitAccelMethod method) : TriangleMesh(positions, uvs, normals, tangents, indices, method)
+{
+	this->owner = owner;
+}
+
 TriangleMesh::TriangleMesh(const std::vector<float>& positions,
-						   const std::vector<float>& uvs,
-						   const std::vector<float>& normals,
-						   const std::vector<float>& tangents,
-						   const std::vector<uint32_t>& indices,
-						   HitAccelMethod method)
+                           const std::vector<float>& uvs,
+                           const std::vector<float>& normals,
+                           const std::vector<float>& tangents,
+                           const std::vector<uint32_t>& indices,
+                           HitAccelMethod method)
 	: rawPositions(positions),
 	  positionsAccessor(rawPositions.data(), 3, rawPositions.size()),
 	  rawUVs(uvs),
@@ -89,6 +100,16 @@ AABB TriangleMesh::getAABB() const
 {
 	return aabb;
 }
+
+std::shared_ptr<const Model> TriangleMesh::triangulateFrom() const
+{
+	return owner.lock();
+}
+bool TriangleMesh::isTriangulatedFromOthers() const
+{
+	return owner.owner_before(std::weak_ptr<Model>{}) || std::weak_ptr<Model>{}.owner_before(owner);
+}
+
 void TriangleMesh::init(HitAccelMethod method)
 {
 	initTriangles();
