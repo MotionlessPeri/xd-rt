@@ -3,11 +3,20 @@
 //
 #include "Scene.h"
 using namespace xd;
-void Scene::addPrimitive(const std::shared_ptr<Primitive>& primitive)
+Scene::Scene(const std::vector<std::shared_ptr<Primitive>>& primitives,
+			 const std::vector<std::shared_ptr<Light>>& lights)
+	: primitives(primitives), lights(lights)
 {
-	primitives.emplace_back(primitive);
 }
-void Scene::addLight(const std::shared_ptr<Light>& light)
+
+bool Scene::hit(const Ray& ray, HitRecord& rec) const
 {
-	lights.emplace_back(light);
+	assert(hitSolver);
+	return hitSolver->hit(ray, rec);
+}
+
+bool Scene::hitAnything(const Ray& ray, HitRecord& rec) const
+{
+	assert(hitSolver);
+	return hitSolver->hitAnything(ray, rec);
 }

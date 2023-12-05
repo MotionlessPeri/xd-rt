@@ -1,7 +1,7 @@
 //
 // Created by Frank on 2023/9/10.
 //
-#include "core/AABB.h"
+#include "AABB.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(AABBTestSuite, hitWithParamTest)

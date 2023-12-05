@@ -2,8 +2,8 @@
 // Created by Frank on 2023/9/4.
 //
 #include <random>
-#include "../src/core/HitRecord.h"
-#include "../src/core/Model.h"
+#include "HitRecord.h"
+#include "Model.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(HitRecordTestSuite, DifferentialTest)
@@ -20,10 +20,11 @@ TEST(HitRecordTestSuite, DifferentialTest)
 		HitRecord rec;
 		Ray ray{center, dir};
 		EXPECT_TRUE(sphere->hit(ray, rec));
-		const auto localToWorld = rec.getLocalToWorld();
-		EXPECT_FLOAT_EQ(localToWorld.col(0).norm(), 1.f);
-		EXPECT_FLOAT_EQ(localToWorld.col(1).norm(), 1.f);
-		EXPECT_FLOAT_EQ(localToWorld.col(2).norm(), 1.f);
+		rec.buildFrames();
+		const auto localToModel = rec.localToModel;
+		EXPECT_FLOAT_EQ(localToModel.col(0).norm(), 1.f);
+		EXPECT_FLOAT_EQ(localToModel.col(1).norm(), 1.f);
+		EXPECT_FLOAT_EQ(localToModel.col(2).norm(), 1.f);
 		++cnt;
 	}
 }

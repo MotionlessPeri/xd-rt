@@ -40,9 +40,12 @@ bool EmbreeAccel::hit(const Ray& ray, HitRecord& rec) const
 					RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, (unsigned int)VertexAttributeSlot::UV,
 					rec.uv.data(), 2);
 	rtcInterpolate1(rtcGeom, rtcRayHit.hit.primID, rtcRayHit.hit.u, rtcRayHit.hit.v,
-					RTC_BUFFER_TYPE_VERTEX, 0, rec.tPoint.data(), rec.dpdu.data(), rec.dpdv.data(),
-					3);
-	rec.n = {rtcRayHit.hit.Ng_x, rtcRayHit.hit.Ng_y, rtcRayHit.hit.Ng_z};
+					RTC_BUFFER_TYPE_VERTEX, 0, rec.p.data(), rec.dpdu.data(), rec.dpdv.data(), 3);
+
+	rtcInterpolate0(rtcGeom, rtcRayHit.hit.primID, rtcRayHit.hit.u, rtcRayHit.hit.v,
+					RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, (unsigned int)VertexAttributeSlot::NORMAL,
+					rec.n.data(), 3);
+	// rec.n = {rtcRayHit.hit.Ng_x, rtcRayHit.hit.Ng_y, rtcRayHit.hit.Ng_z};
 	rec.n = (primitive->getLocalToWorld().linear().inverse().transpose() * rec.n).normalized();
 	rec.tHit = rtcRayHit.ray.tfar;
 	rec.primitive = std::static_pointer_cast<const Primitive>(primitive->shared_from_this());
@@ -52,6 +55,5 @@ bool EmbreeAccel::hitAnything(const Ray& ray, HitRecord& rec) const
 {
 	auto rtcRay = rayToRTCRay(ray);
 	rtcOccluded1(scene, &rtcRay);
-	const auto minusInf = -std::numeric_limits<float>::max();
-	return rtcRay.tfar == minusInf;
+	return rtcRay.tfar < 0;
 }

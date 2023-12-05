@@ -6,10 +6,9 @@
 #define XD_RT_CAMERA_H
 
 #include <memory>
-#include "Film.h"
+
+#include "CoreTypes.h"
 #include "MathType.h"
-#include "Ray.h"
-#include "Sampler.h"
 
 namespace xd {
 class Camera {

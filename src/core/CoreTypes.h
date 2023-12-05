@@ -6,37 +6,56 @@
 #define XD_RT_CORETYPES_H
 #include "MathType.h"
 namespace xd {
-class HitRecord;
+class BxDF;
+class Lambertian;
+class PerfectReflection;
 
 class Camera;
 class PerspCamera;
 class OrthoCamera;
 
-class Ray;
-
-class Model;
-class TriangleMesh;
-class Triangle;
+class Film;
 
 class HitAccel;
 class BVHNode;
 class NoAccel;
-
-class Primitive;
-
 class AABB;
 
-class Material;
-class MatteMaterial;
+class HitRecord;
+
+class HitSolver;
+class NaiveHitSolver;
+class BVHHitSolver;
+class EmbreeHitSolver;
+
+class Integrator;
+class SamplerIntegrator;
+class MIDirectIntegrator;
 
 class Light;
 class PointLight;
+class DomeLight;
+
+class Material;
+class MatteMaterial;
+class PerfectReflectionMaterial;
+
+class Model;
+class Sphere;
+class Box;
+class TriangleMesh;
+class Triangle;
+
+class Primitive;
+
+class Ray;
+
+class Sampler;
+class SimpleSampler;
 
 class Scene;
-class HitSolver;
+class SceneBuilder;
 
-class BRDF;
-class Lambertian;
 template <typename ReturnType, typename SampleType>
 class Texture;
 template <typename ReturnType>

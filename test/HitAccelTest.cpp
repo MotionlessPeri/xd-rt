@@ -1,8 +1,8 @@
 //
 // Created by Frank on 2023/9/12.
 //
-#include "../src/core/HitAccel.h"
-#include "../src/core/Model.h"
+#include "HitAccel.h"
+#include "Model.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(HitAccelTestSuite, BVHBuildTest)
@@ -22,9 +22,11 @@ TEST(HitAccelTestSuite, BVHBuildTest)
 
 #include <oneapi/tbb.h>
 #include <chrono>
-#include "../src/camera/CameraFactory.h"
-#include "../src/core/Primitive.h"
-#include "../src/core/Scene.h"
+#include "Film.h"
+#include "Primitive.h"
+#include "Scene.h"
+#include "SceneBuilder.h"
+#include "camera/CameraFactory.h"
 TEST(HitAccelTestSuite, BVHHitTest1)
 {
 	const float halfLen = 400.f;
@@ -35,7 +37,7 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 	const uint32_t count = 5;
 	const float radius = len / count / 2;
 	const Vector3f firstCenter = minPoint + Vector3f{radius, radius, radius};
-	auto scene = std::make_shared<Scene>();
+	SceneBuilder sb;
 	std::vector<std::shared_ptr<Primitive>> prims;
 	for (int i = 0u; i < count; ++i) {
 		const float x = firstCenter.x() + 2 * radius * i;
@@ -46,7 +48,7 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 				const Vector3f center{x, y, z};
 				const auto model = std::make_shared<Sphere>(center, radius);
 				const auto prim = std::make_shared<Primitive>(model, nullptr);
-				scene->addPrimitive(prim);
+				sb.addPrimitive(prim);
 			}
 		}
 	}
@@ -65,24 +67,28 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 	auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), rightNorm,
 												rightNorm / width * height, width, height);
 	auto film = cam->getFilm();
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
 
-	const auto samples = sampler->generateSamples();
+	const auto scene = sb.build();
 	const NaiveHitSolver naiveSolver{scene};
 	const BVHHitSolver bvhSolver{scene};
 
 	auto start = std::chrono::steady_clock::now();
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  auto ray = cam->generateRay(sample);
-							  HitRecord rec;
-							  if (naiveSolver.solve(ray, rec)) {
-								  film->addSample({rec.tHit, 0, 0}, sample);
-							  }
-						  }
-					  });
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+				const auto ray = cam->generateRay(pixelSample);
+				HitRecord rec;
+				if (naiveSolver.hit(ray, rec)) {
+					tile->addSample({rec.tHit, 0, 0}, pixelSample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 	auto end = std::chrono::steady_clock::now();
 	std::chrono::duration<double> elapsedSeconds{end - start};
 	std::cout << "Naive solver cost " << elapsedSeconds.count() << " seconds.\n";
@@ -90,18 +96,22 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 
 	film->clear();
 	start = std::chrono::steady_clock::now();
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  auto ray = cam->generateRay(sample);
-							  HitRecord rec;
-							  if (bvhSolver.solve(ray, rec)) {
-								  film->addSample({rec.tHit, 0, 0}, sample);
-							  }
-						  }
-					  });
-
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+				const auto ray = cam->generateRay(pixelSample);
+				HitRecord rec;
+				if (bvhSolver.hit(ray, rec)) {
+					tile->addSample({rec.tHit, 0, 0}, pixelSample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 	end = std::chrono::steady_clock::now();
 	elapsedSeconds = end - start;
 	std::cout << "BVH solver cost " << elapsedSeconds.count() << " seconds.\n";
@@ -109,8 +119,8 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 	EXPECT_NO_THROW(film->saveToFile(R"(D:\bvh_hit_test_bvh_solver.hdr)"););
 }
 
-#include "../src/core/Triangle.h"
 #include "Loader/MeshLoader.h"
+#include "Triangle.h"
 TEST(HitAccelTestSuite, EmbreeHitTest1)
 {
 	ObjMeshLoader loader;
@@ -128,27 +138,31 @@ TEST(HitAccelTestSuite, EmbreeHitTest1)
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
 												up.norm(), width, height);
 	auto film = cam->getFilm();
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
-	const auto samples = sampler->generateSamples();
 
-	auto scene = std::make_shared<Scene>();
-	scene->addPrimitive(prim);
+	SceneBuilder sb;
+	sb.addPrimitive(prim);
+	const auto scene = sb.build();
 	EmbreeHitSolver embreeSolver{scene};
 
 	film->clear();
 
 	auto start = std::chrono::steady_clock::now();
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  auto ray = cam->generateRay(sample);
-							  HitRecord rec;
-							  if (embreeSolver.solve(ray, rec)) {
-								  film->addSample({rec.uv(0), rec.uv(1), 0}, sample);
-							  }
-						  }
-					  });
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+				const auto ray = cam->generateRay(pixelSample);
+				HitRecord rec;
+				if (embreeSolver.hit(ray, rec)) {
+					tile->addSample({rec.tHit, 0, 0}, pixelSample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 
 	auto end = std::chrono::steady_clock::now();
 	std::chrono::duration<double> elapsedSeconds = end - start;

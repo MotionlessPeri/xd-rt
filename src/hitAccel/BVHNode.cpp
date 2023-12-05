@@ -57,10 +57,9 @@ bool BVHNode::hit(const Ray& ray, HitRecord& rec) const
 		}
 		return hit;
 	}
-	auto prevTHit = rec.tHit;
-	if (!aabb.hit(ray, rec))
+	auto aabbTestRec = HitRecord{rec.tHit};
+	if (!aabb.hit(ray, aabbTestRec))
 		return false;
-	rec.tHit = prevTHit;
 	const auto leftHit = left->hit(ray, rec);
 	const auto rightHit = right->hit(ray, rec);
 	hit = leftHit || rightHit;

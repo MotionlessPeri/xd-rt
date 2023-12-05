@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 project(xd_rt)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
 set(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
@@ -21,8 +21,9 @@ set(3RDPARTY_FILES
         src/3rdParty/tinygltf/TinyGLTFWrapper.cpp
         src/3rdParty/stb/STBWrapper.cpp
 )
-set(BRDF_FILES
-        src/brdf/Lambertian.cpp
+set(BXDF_FILES
+        src/bxdf/Lambertian.cpp
+        src/bxdf/PerfectReflection.cpp
 )
 set(CAMERA_FILES
         src/camera/Camera.cpp
@@ -30,32 +31,32 @@ set(CAMERA_FILES
         src/camera/CameraFactory.cpp
 )
 set(CORE_FILES
+        src/core/BxDF.h
         src/core/Camera.h
-        src/core/Ray.h
-        src/core/Film.h
-        src/core/Sampler.h
-        src/core/Model.h
-        src/core/HitRecord.h
         src/core/CoreTypes.h
-        src/core/Scene.h
-        src/core/Primitive.h
-        src/core/Light.h
-
-        src/core/HitSolver.h
-        src/core/Material.h
-        src/core/BRDF.h
         src/core/Distribution.h
+        src/core/Enums.h
+        src/core/Film.cpp
+        src/core/Film.h
+        src/core/HitAccel.h
+        src/core/HitRecord.h
+        src/core/HitSolver.h
+        src/core/Hitable.h
+        src/core/Integrator.h
+        src/core/Light.h
+        src/core/Material.h
+        src/core/Model.h
+        src/core/Primitive.cpp
+        src/core/Primitive.h
+        src/core/Ray.cpp
+        src/core/Ray.h
+        src/core/Sampler.h
+        src/core/Scene.cpp
+        src/core/Scene.h
         src/core/Texture.h
         src/core/Triangle.h
-
-        src/core/Hitable.h
-
-        src/core/HitAccel.h
-        src/core/Enums.h
-        src/core/Ray.cpp
-        src/core/Film.cpp
-        src/core/Scene.cpp
-        src/core/Primitive.cpp
+        src/core/SceneBuilder.cpp
+        src/core/SceneBuilder.h
 )
 set(DISTRIBUTION_FILES
         src/distribution/PieceWise1D.cpp
@@ -73,6 +74,13 @@ set(HITACCEL_FILES
 )
 set(HITSOLVER_FILES
         src/hitSolver/HitSolver.cpp
+)
+set(INTEGRATOR_FILES
+        src/integrator/DirectIntegrator.cpp
+        src/integrator/DebugIntegrator.cpp
+        src/integrator/PathIntegrator.cpp
+        src/integrator/SamplerIntegrator.cpp
+        src/integrator/Integrator.cpp
 )
 set(LIGHT_FILES
         src/light/PointLight.cpp
@@ -98,34 +106,50 @@ set(MODEL_FILES
         src/model/Sphere.cpp
         src/model/Triangle.cpp
         src/model/Box.cpp
+        src/core/Model.cpp
+)
+set(SAMPLER_FILES
+        src/core/Sampler.cpp
+        src/sampler/SimpleSampler.h
+        src/sampler/DebugSampler.cpp
+        src/sampler/DebugSampler.h
 )
 set(TEXTURE_FILES
         src/texture/TextureFactory.h
         src/texture/TextureFactory.cpp
 )
 set(MISC_FILES
-        src/SimpleSampler.cpp
+        src/sampler/SimpleSampler.cpp
 )
-
+set(NON_BUILD_FILES
+        ./.clang-format
+        ./eigen.natvis
+)
 set(SRC_FILES
         ${3RDPARTY_FILES}
-        ${BRDF_FILES}
+        ${BXDF_FILES}
         ${CAMERA_FILES}
         ${CORE_FILES}
         ${DISTRIBUTION_FILES}
         ${HITACCEL_FILES}
         ${HITSOLVER_FILES}
+        ${INTEGRATOR_FILES}
         ${LIGHT_FILES}
         ${HITSOLVER_FILES}
         ${LOADER_FILES}
         ${MATERIAL_FILES}
         ${MODEL_FILES}
+        ${SAMPLER_FILES}
         ${TEXTURE_FILES}
         ${MISC_FILES}
+
+        ${NON_BUILD_FILES}
+        src/integrator/SamplerIntegrator.cpp
 )
 add_executable(xd_rt_playground main.cpp)
 add_library(xd_rt STATIC ${SRC_FILES})
 
+target_link_libraries(xd_rt TBB)
 set(TBB_ROOT "${CMAKE_SOURCE_DIR}/external/TBB")
 set(EMBREE_ROOT_DIR "${CMAKE_SOURCE_DIR}/external/embree")
 
@@ -136,6 +160,7 @@ include_directories(${EMBREE_INCLUDE_DIRS})
 
 target_link_libraries(xd_rt ${EMBREE_LIBRARIES})
 
+#target_link_directories("${TBB_ROOT}/lib")
 target_link_libraries(xd_rt_playground xd_rt)
 target_link_libraries(xd_rt_playground TBB)
 
@@ -153,4 +178,3 @@ add_custom_command(TARGET xd_rt
         "${EMBREE_ROOT_DIR}/bin"
         $<TARGET_FILE_DIR:xd_rt>
 )
-message("${TBB_ROOT}")

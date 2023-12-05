@@ -3,14 +3,15 @@
 //
 #include "Distribution.h"
 using namespace xd;
-Vector3f CosineHemisphere::operator()() const
+float CosineHemisphere::getPdf(const Vector3f& sample) const
 {
-	static std::random_device rd;	// Will be used to obtain a seed for the random number engine
-	static std::mt19937 gen(rd());	// Standard mersenne_twister_engine seeded with rd()
-	static std::uniform_real_distribution<float> ksai1(0.f, 1.f);
-	std::uniform_real_distribution<float> ksai2(0.f, 1.f);
-	const float sample1 = ksai1(gen);
-	const float sample2 = ksai1(gen);
+	return sample.z() * INV_PI;
+}
+InverseMethodDistribution<3, 2>::RetType CosineHemisphere::sample(
+	const InverseMethodDistribution<3, 2>::UniformSampleType& uSample)
+{
+	const auto sample1 = uSample(0);
+	const auto sample2 = uSample(1);
 	const float sqrtKsai1 = std::sqrtf(sample1);
 	const float sqrtOneMinusKsai1 = std::sqrt(1 - sample1);
 	const float twoPiKsai2 = 2 * PI * sample2;
@@ -19,13 +20,11 @@ Vector3f CosineHemisphere::operator()() const
 	const float z = sqrtOneMinusKsai1;
 	return {x, y, z};
 }
-Vector3f CosineHemisphere::operator()(float& pdf) const
+InverseMethodDistribution<3, 2>::RetType CosineHemisphere::sampleWithPdf(
+	const InverseMethodDistribution<3, 2>::UniformSampleType& uSample,
+	float& pdf)
 {
-	const auto sample = (*this)();
-	pdf = sample.z();
-	return sample;
-}
-float CosineHemisphere::getPdf(const Vector3f& sample) const
-{
-	return 0;
+	const auto s = sample(uSample);
+	pdf = s.z() * INV_PI;
+	return s;
 }

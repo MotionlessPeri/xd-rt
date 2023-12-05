@@ -3,8 +3,8 @@
 //
 #include "gtest/gtest.h"
 
-#include "../src/core/Sampler.h"
-#include "../src/core/Texture.h"
+#include "Sampler.h"
+#include "Texture.h"
 using namespace xd;
 TEST(TextureTestSuite, ConstantTextureSampleTest)
 {
@@ -18,8 +18,9 @@ TEST(TextureTestSuite, ConstantTextureSampleTest)
 }
 
 #include <oneapi/tbb.h>
-#include "../src/camera/CameraFactory.h"
-#include "../src/core/Model.h"
+#include "Film.h"
+#include "Model.h"
+#include "camera/CameraFactory.h"
 #include "stb_image.h"
 TEST(TextureTestSuite, SphereTextureTest)
 {
@@ -46,23 +47,26 @@ TEST(TextureTestSuite, SphereTextureTest)
 	auto cam = CameraFactory::createPerspCamera(camPos, target, up.normalized(), verticalFov,
 												right.norm() / up.norm(), width, height);
 	auto film = cam->getFilm();
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
 
-	const auto samples = sampler->generateSamples();
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  const auto ray = cam->generateRay(sample);
-							  HitRecord rec;
-							  film->addSample(texture.sample(ray.d), sample);
-						  }
-					  });
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+				const auto ray = cam->generateRay(pixelSample);
+				HitRecord rec;
+				tile->addSample(texture.sample(ray.d), pixelSample);
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 	const std::string hdrPath = R"(D:\sphere_texture_test.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
-#include "../src/core/Triangle.h"
+#include "Triangle.h"
 TEST(TextureTestSuite, UVTextureTest)
 {
 	const float sqrt3 = std::sqrtf(3);
@@ -92,20 +96,23 @@ TEST(TextureTestSuite, UVTextureTest)
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
 												up.norm(), width, height);
 	auto film = cam->getFilm();
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
-	const auto samples = sampler->generateSamples();
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  const auto ray = cam->generateRay(sample);
-							  HitRecord rec;
 
-							  if (mesh.hit(ray, rec)) {
-								  const auto color = texture.sample(rec.uv);
-								  film->addSample(color, sample);
-							  }
-						  }
-					  });
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+				const auto ray = cam->generateRay(pixelSample);
+				HitRecord rec;
+				if (mesh.hit(ray, rec)) {
+					const auto color = texture.sample(rec.uv);
+					tile->addSample(color, pixelSample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 	film->saveToFile(R"(D:\uv_texture_test.hdr)");
 }

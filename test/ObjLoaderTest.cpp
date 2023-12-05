@@ -3,9 +3,9 @@
 //
 #include <oneapi/tbb.h>
 #include <numeric>
-#include "../src/camera/CameraFactory.h"
-#include "../src/core/Triangle.h"
 #include "Loader/MeshLoader.h"
+#include "Triangle.h"
+#include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(ObjLoaderTestSuite, LoadTest)
@@ -22,8 +22,8 @@ TEST(ObjLoaderTestSuite, LoadTest)
 	EXPECT_TRUE(tangents.empty());
 }
 
+#include "Film.h"
 #include "embree4/rtcore.h"
-
 TEST(ObjLoaderTestSuite, EmbreeTest)
 {
 	ObjMeshLoader loader;
@@ -39,8 +39,6 @@ TEST(ObjLoaderTestSuite, EmbreeTest)
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
 												up.norm(), width, height);
 	auto film = cam->getFilm();
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
-	const auto samples = sampler->generateSamples();
 
 	RTCDevice device = rtcNewDevice(nullptr);
 	RTCScene scene = rtcNewScene(device);
@@ -67,32 +65,36 @@ TEST(ObjLoaderTestSuite, EmbreeTest)
 	rtcGetSceneBounds(scene, &rtcBounds);
 	film->clear();
 	auto start = std::chrono::steady_clock::now();
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  auto ray = cam->generateRay(sample);
-							  RTCRayHit rayhit;
-							  rayhit.ray.org_x = ray.o.x();
-							  rayhit.ray.org_y = ray.o.y();
-							  rayhit.ray.org_z = ray.o.z();
-							  rayhit.ray.dir_x = ray.d.x();
-							  rayhit.ray.dir_y = ray.d.y();
-							  rayhit.ray.dir_z = ray.d.z();
-							  rayhit.ray.tnear = 0.f;
-							  rayhit.ray.tfar = std::numeric_limits<float>::infinity();
-							  rayhit.ray.mask = -1;
-							  rayhit.ray.flags = 0;
-							  rayhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
-							  rayhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+				const auto ray = cam->generateRay(pixelSample);
+				RTCRayHit rayhit;
+				rayhit.ray.org_x = ray.o.x();
+				rayhit.ray.org_y = ray.o.y();
+				rayhit.ray.org_z = ray.o.z();
+				rayhit.ray.dir_x = ray.d.x();
+				rayhit.ray.dir_y = ray.d.y();
+				rayhit.ray.dir_z = ray.d.z();
+				rayhit.ray.tnear = 0.f;
+				rayhit.ray.tfar = std::numeric_limits<float>::infinity();
+				rayhit.ray.mask = -1;
+				rayhit.ray.flags = 0;
+				rayhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+				rayhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 
-							  rtcIntersect1(scene, &rayhit);
-							  if (rayhit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
-								  film->addSample({rayhit.ray.tfar, 0, 0}, sample);
-							  }
-						  }
-					  });
-
+				rtcIntersect1(scene, &rayhit);
+				if (rayhit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
+					tile->addSample({rayhit.ray.tfar, 0, 0}, pixelSample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 	auto end = std::chrono::steady_clock::now();
 	std::chrono::duration<double> elapsedSeconds = end - start;
 	std::cout << "Embree Accel mesh cost " << elapsedSeconds.count() << " seconds.\n";
@@ -116,22 +118,23 @@ TEST(ObjLoaderTestSuite, MeshHitTest)
 												up.norm(), width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
-
-	const auto samples = sampler->generateSamples();
-
 	auto start = std::chrono::steady_clock::now();
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  auto ray = cam->generateRay(sample);
-							  HitRecord rec;
-							  if (meshWithNoAccel->hit(ray, rec)) {
-								  film->addSample({rec.uv.x(), rec.uv.y(), 0}, sample);
-							  }
-						  }
-					  });
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+				const auto ray = cam->generateRay(pixelSample);
+				HitRecord rec;
+				if (meshWithNoAccel->hit(ray, rec)) {
+					tile->addSample({rec.uv.x(), rec.uv.y(), 0}, pixelSample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 	auto end = std::chrono::steady_clock::now();
 	std::chrono::duration<double> elapsedSeconds{end - start};
 	std::cout << "NoAccel mesh cost " << elapsedSeconds.count() << " seconds.\n";
@@ -139,17 +142,22 @@ TEST(ObjLoaderTestSuite, MeshHitTest)
 
 	film->clear();
 	start = std::chrono::steady_clock::now();
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  auto ray = cam->generateRay(sample);
-							  HitRecord rec;
-							  if (meshWithBVHAccel->hit(ray, rec)) {
-								  film->addSample({rec.uv.x(), rec.uv.y(), 0}, sample);
-							  }
-						  }
-					  });
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+				const auto ray = cam->generateRay(pixelSample);
+				HitRecord rec;
+				if (meshWithBVHAccel->hit(ray, rec)) {
+					tile->addSample({rec.uv.x(), rec.uv.y(), 0}, pixelSample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 	end = std::chrono::steady_clock::now();
 	elapsedSeconds = end - start;
 	std::cout << "BVH Accel mesh cost " << elapsedSeconds.count() << " seconds.\n";
@@ -176,40 +184,40 @@ TEST(ObjLoaderTestSuite, MeshHitTest)
 	rtcReleaseGeometry(geom);
 	rtcCommitScene(scene);
 
-	oneapi::tbb::global_control global_limit(oneapi::tbb::global_control::max_allowed_parallelism,
-											 1);
-
-	auto err = rtcGetDeviceError(device);
 	film->clear();
 	start = std::chrono::steady_clock::now();
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  auto ray = cam->generateRay(sample);
-							  RTCRayHit rayhit;
-							  rayhit.ray.org_x = ray.o.x();
-							  rayhit.ray.org_y = ray.o.y();
-							  rayhit.ray.org_z = ray.o.z();
-							  rayhit.ray.dir_x = ray.d.x();
-							  rayhit.ray.dir_y = ray.d.y();
-							  rayhit.ray.dir_z = ray.d.z();
-							  rayhit.ray.tnear = 0.f;
-							  rayhit.ray.tfar = std::numeric_limits<float>::infinity();
-							  rayhit.ray.mask = -1;
-							  rayhit.ray.flags = 0;
-							  rayhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
-							  rayhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+				const auto ray = cam->generateRay(pixelSample);
+				RTCRayHit rayhit;
+				rayhit.ray.org_x = ray.o.x();
+				rayhit.ray.org_y = ray.o.y();
+				rayhit.ray.org_z = ray.o.z();
+				rayhit.ray.dir_x = ray.d.x();
+				rayhit.ray.dir_y = ray.d.y();
+				rayhit.ray.dir_z = ray.d.z();
+				rayhit.ray.tnear = 0.f;
+				rayhit.ray.tfar = std::numeric_limits<float>::infinity();
+				rayhit.ray.mask = -1;
+				rayhit.ray.flags = 0;
+				rayhit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+				rayhit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 
-							  rtcIntersect1(scene, &rayhit);
-							  if (rayhit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
-								  film->addSample({rayhit.ray.tfar, 0, 0}, sample);
-							  }
-						  }
-					  });
+				rtcIntersect1(scene, &rayhit);
+				if (rayhit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
+					tile->addSample({rayhit.ray.tfar, 0, 0}, pixelSample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 
 	end = std::chrono::steady_clock::now();
-	err = rtcGetDeviceError(device);
 	elapsedSeconds = end - start;
 	std::cout << "Embree Accel mesh cost " << elapsedSeconds.count() << " seconds.\n";
 	EXPECT_NO_THROW(film->saveToFile(R"(D:\obj_load_and_hit_embree_accel.hdr)"););

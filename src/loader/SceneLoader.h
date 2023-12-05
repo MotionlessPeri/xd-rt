@@ -11,6 +11,9 @@ class SceneLoader {
 public:
 	virtual std::shared_ptr<Scene> load(const std::string& path,
 										const LoadSceneOptions& options) = 0;
+	virtual void loadToSceneBuilder(const std::string& path,
+									const LoadSceneOptions& options,
+									SceneBuilder& sceneBuilder) const = 0;
 };
 
 }  // namespace xd

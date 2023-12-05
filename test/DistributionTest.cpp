@@ -5,23 +5,28 @@
 #include <atomic>
 #include <numeric>
 
-#include "../src/core/Distribution.h"
-#include "../src/core/Film.h"
+#include "Distribution.h"
+#include "Film.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(DistribTestSuite, UniformHemisphereTest)
 {
 	auto dis = std::make_shared<UniformHemisphere>();
-	auto film =
-		std::make_shared<Film>(Vector3f{0, 0, 0}, Vector3f{1, 0, 0}, Vector3f{0, 1, 0}, 100, 100);
+	UniformDistribution<2> uniform;
+	constexpr uint32_t width = 100u;
+	constexpr uint32_t height = 100u;
+	auto film = std::make_shared<Film>(Vector3f{0, 0, 0}, Vector3f{1, 0, 0}, Vector3f{0, 1, 0},
+									   width, height);
+	auto tile = film->getTile({0, 0}, {width - 1, height - 1});
 	constexpr auto nSamples = 10000u;
 	for (auto i = 0u; i < nSamples; ++i) {
-		const auto sample = dis->operator()();
-		const auto x = (sample.x() + 1.f) / 2.f;
-		const auto y = (sample.y() + 1.f) / 2.f;
-		film->addSample({1, 1, 1}, {x, y});
+		const auto sample = dis->sample(uniform.sample());
+		const auto x = (sample.x() + 1.f) / 2.f * width;
+		const auto y = (sample.y() + 1.f) / 2.f * height;
+		tile->addSample({1, 1, 1}, {x, y});
 	}
-	EXPECT_NO_THROW(film->saveToFile(R"(D:\uniform_hemisphere_test.hdr)"));
+	film->mergeTileToFilm(std::move(tile));
+	EXPECT_NO_THROW(film->saveToFile(R"(D:\uniform_hemisphere_test.hdr)", {true}));
 }
 
 TEST(DistribTestSuite, PieceWise1DCtorTest)
@@ -49,15 +54,13 @@ TEST(DistribTestSuite, PieceWise1DCtorTest)
 	EXPECT_FLOAT_EQ(cdf3[1], 0.3);
 	EXPECT_FLOAT_EQ(cdf3[2], 0.6);
 	EXPECT_FLOAT_EQ(cdf3[3], 1.0);
-
-	uint32_t offset;
-	auto sample = dis3(offset);
 }
 
 TEST(DistribTestSuite, PieceWise1DGenerateTest)
 {
 	std::vector<float> pdf{0.2, 0.6, 0.1, 0.1};
 	PieceWise1D dis(pdf);
+	UniformDistribution<1> uniform;
 	std::vector<uint32_t> counts(pdf.size(), 0u);
 	constexpr uint32_t TOTAL = 100000u;
 	const auto& cdf = dis.getCdfs();
@@ -65,7 +68,7 @@ TEST(DistribTestSuite, PieceWise1DGenerateTest)
 	for (auto i = 0u; i < TOTAL; ++i) {
 		uint32_t offset;
 		float p1;
-		const auto val = dis(p1, offset);
+		const auto val = dis.sampleWithPdf(uniform.sample(), p1, offset);
 		const auto p2 = dis.getPdf(val);
 		EXPECT_FLOAT_EQ(p1, p2);
 		for (int n = 0u; n < pdf.size(); ++n) {
@@ -75,7 +78,6 @@ TEST(DistribTestSuite, PieceWise1DGenerateTest)
 			}
 		}
 	}
-	const auto total = std::accumulate(counts.begin(), counts.end(), 0u);
 	constexpr float eps = 1e-2;
 	for (auto i = 0u; i < pdf.size(); ++i) {
 		EXPECT_TRUE(std::fabs((float)counts[i] / TOTAL - pdf[i]) < eps);
@@ -91,7 +93,7 @@ TEST(DistribTestSuite, PieceWise2DCtorTest)
 	std::vector<float> weights{2, 1, 2,	  // NOLINT
 							   4, 5, 6};  // NOLINT
 	PieceWise2D dis{weights, 3, 2};
-	const auto sum = std::accumulate(weights.cbegin(), weights.cend(), 0);
+	const auto sum = std::accumulate(weights.cbegin(), weights.cend(), 0.f);
 	std::vector<float> ps(weights);
 	for (auto& val : ps)
 		val /= sum;
@@ -114,12 +116,13 @@ TEST(DistribTestSuite, PieceWise2DGenTest)
 	constexpr float du = 1.f / width;
 	constexpr float dv = 1.f / height;
 	PieceWise2D dis{weights, width, height};
+	UniformDistribution<2> uniform;
 
 	constexpr uint32_t COUNT = 10000000u;
 	std::vector<uint32_t> counts(weights.size(), 0u);
 	for (auto i = 0u; i < COUNT; ++i) {
 		float pdf;
-		const auto sample = dis(pdf);
+		const auto sample = dis.sampleWithPdf(uniform.sample(), pdf);
 		const auto pdf2 = dis.getPdf(sample);
 		// EXPECT_FLOAT_EQ(pdf, pdf2);
 		const float dv = 1.f / height;
@@ -140,7 +143,7 @@ TEST(DistribTestSuite, PieceWise2DGenTest)
 	}
 }
 
-#include "../src/texture/TextureFactory.h"
+#include "texture/TextureFactory.h"
 TEST(DistribTestSuite, PieceWise2DGenTest2)
 {
 	auto texture = TextureFactory::loadSphereTextureRGB(R"(D:\dome.hdr)");
@@ -171,9 +174,10 @@ TEST(DistribTestSuite, PieceWise2DGenTest2)
 		}
 	}
 	PieceWise2D dis{weights, width, height};
+	UniformDistribution<2> uniform;
 	for (auto i = 0u; i < COUNT; ++i) {
 		float pdf;
-		const auto sample = dis(pdf);
+		const auto sample = dis.sampleWithPdf(uniform.sample(), pdf);
 		const float dv = 1.f / height;
 		const float du = 1.f / width;
 		const uint32_t vIdx = std::clamp((uint32_t)std::floorf(sample.y() / dv), 0u, height - 1);
@@ -186,14 +190,19 @@ TEST(DistribTestSuite, PieceWise2DGenTest2)
 TEST(DistribTestSuite, CosineHemisphereTest)
 {
 	auto dis = std::make_shared<CosineHemisphere>();
-	auto film =
-		std::make_shared<Film>(Vector3f{0, 0, 0}, Vector3f{1, 0, 0}, Vector3f{0, 1, 0}, 100, 100);
+	UniformDistribution<2> uniform;
+	constexpr uint32_t width = 100u;
+	constexpr uint32_t height = 100u;
+	auto film = std::make_shared<Film>(Vector3f{0, 0, 0}, Vector3f{1, 0, 0}, Vector3f{0, 1, 0},
+									   width, height);
+	auto tile = film->getTile({0, 0}, {width - 1, height - 1});
 	constexpr auto nSamples = 10000u;
 	for (auto i = 0u; i < nSamples; ++i) {
-		const auto sample = dis->operator()();
-		const auto x = (sample.x() + 1.f) / 2.f;
-		const auto y = (sample.y() + 1.f) / 2.f;
-		film->addSample({1, 1, 1}, {x, y});
+		const auto sample = dis->sample(uniform.sample());
+		const auto x = (sample.x() + 1.f) / 2.f * width;
+		const auto y = (sample.y() + 1.f) / 2.f * height;
+		tile->addSample({1, 1, 1}, {x, y});
 	}
-	EXPECT_NO_THROW(film->saveToFile(R"(D:\cosine_hemisphere_test.hdr)"));
+	film->mergeTileToFilm(std::move(tile));
+	EXPECT_NO_THROW(film->saveToFile(R"(D:\cosine_hemisphere_test.hdr)", {true}));
 }

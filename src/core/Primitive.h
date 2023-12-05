@@ -8,7 +8,7 @@
 #include "Material.h"
 #include "Model.h"
 namespace xd {
-class Primitive : public Model {
+class Primitive : public Model, public std::enable_shared_from_this<Primitive> {
 public:
 	Primitive(const std::shared_ptr<Model>& model, const std::shared_ptr<Material>& material);
 	Primitive(const std::shared_ptr<Model>& model,
@@ -19,14 +19,14 @@ public:
 	bool hit(const Ray& ray, HitRecord& rec) const override;
 	float getArea() const override;
 	AABB getAABB() const override;
-	Transform getLocalToWorld() const { return localToWorld; }
-	Transform getWorldToLocal() const { return worldToLocal; }
+	Transform getLocalToWorld() const { return modelToWorld; }
+	Transform getWorldToLocal() const { return worldToModel; }
 
 protected:
 	std::shared_ptr<Model> model;
 	std::shared_ptr<Material> material;
-	Transform localToWorld = Transform::Identity();
-	Transform worldToLocal = Transform::Identity();
+	Transform modelToWorld = Transform::Identity();
+	Transform worldToModel = Transform::Identity();
 };
 }  // namespace xd
 #endif	// XD_RT_PRIMITIVE_H

@@ -169,25 +169,25 @@ std::shared_ptr<Material> GLTFMaterialLoader::loadMaterial(const tinygltf::Mater
 	return ret;
 }
 
-#include "../core/Primitive.h"
-#include "../core/Scene.h"
-#include "../core/Triangle.h"
 #include "GLTFMeshLoader.h"
+#include "Primitive.h"
+#include "Scene.h"
+#include "SceneBuilder.h"
+#include "Triangle.h"
 std::shared_ptr<Scene> GLTFSceneLoader::load(const std::string& path,
 											 const LoadSceneOptions& options)
 {
-	tinygltf::Model gltfModel;
-	tinygltf::TinyGLTF loader;
-	std::string err;
-	std::string warn;
+	SceneBuilder builder;
+	loadToSceneBuilder(path, options, builder);
+	return builder.build();
+}
 
-	bool ret = loader.LoadASCIIFromFile(&gltfModel, &err, &warn, path.c_str());
-	if (!ret) {
-		throw std::runtime_error{"Load gltf failed!\n"};
-	}
-	auto RGBTextures = std::make_shared<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>();
-	auto RGBATextures = std::make_shared<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>();
-	auto floatTextures = std::make_shared<std::unordered_map<int, std::shared_ptr<Texture2DF>>>();
+void GLTFSceneLoader::loadTextures(
+	const tinygltf::Model& gltfModel,
+	std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>& RGBTextures,
+	std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>& RGBATextures,
+	std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>>& floatTextures) const
+{
 	GLTFTextureLoader textureLoader;
 
 	for (int i = 0; i < gltfModel.textures.size(); ++i) {
@@ -215,16 +215,30 @@ std::shared_ptr<Scene> GLTFSceneLoader::load(const std::string& path,
 			}
 		}
 	}
+}
+
+std::vector<std::shared_ptr<Material>> GLTFSceneLoader::loadMaterials(
+	tinygltf::Model& gltfModel,
+	const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>& RGBTextures,
+	const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>& RGBATextures,
+	const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>>& floatTextures)
+	const
+{
 	GLTFMaterialLoader materialLoader{floatTextures, RGBTextures, RGBATextures};
 	std::vector<std::shared_ptr<Material>> materials;
 	for (const auto& material : gltfModel.materials) {
 		materials.emplace_back(materialLoader.loadMaterial(material));
 	}
+	return materials;
+}
 
+SceneBuilder GLTFSceneLoader::loadNodes(const tinygltf::Model& gltfModel,
+										const std::vector<std::shared_ptr<Material>>& materials,
+										SceneBuilder& sceneBuilder) const
+{
 	std::shared_ptr<Material> defaultMaterial =
 		std::make_shared<MatteMaterial>(Vector3f{100, 100, 100});
-
-	auto scene = std::make_shared<Scene>();
+	sceneBuilder.setHitSolverType(HitSolverType::EMBREE);
 	struct PairHasher {
 		std::size_t operator()(const std::pair<uint32_t, uint32_t>& obj) const noexcept
 		{
@@ -288,7 +302,7 @@ std::shared_ptr<Scene> GLTFSceneLoader::load(const std::string& path,
 					material = defaultMaterial;
 				}
 				const auto primitive = std::make_shared<Primitive>(mesh, material, transform);
-				scene->addPrimitive(primitive);
+				sceneBuilder.addPrimitive(primitive);
 			}
 			for (const auto& gltfPrim : gltfMesh.primitives) {
 				// TODO: we need a cache for load mesh(std::unordered_map<index,
@@ -305,5 +319,27 @@ std::shared_ptr<Scene> GLTFSceneLoader::load(const std::string& path,
 	}
 
 	// TODO: handle lights
-	return scene;
+	return sceneBuilder;
+}
+void GLTFSceneLoader::loadToSceneBuilder(const std::string& path,
+										 const LoadSceneOptions& options,
+										 SceneBuilder& sceneBuilder) const
+{
+	tinygltf::Model gltfModel;
+	tinygltf::TinyGLTF loader;
+	std::string err;
+	std::string warn;
+
+	bool ret = loader.LoadASCIIFromFile(&gltfModel, &err, &warn, path.c_str());
+	if (!ret) {
+		throw std::runtime_error{"Load gltf failed!\n"};
+	}
+	auto RGBTextures = std::make_shared<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>();
+	auto RGBATextures = std::make_shared<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>();
+	auto floatTextures = std::make_shared<std::unordered_map<int, std::shared_ptr<Texture2DF>>>();
+	loadTextures(gltfModel, RGBTextures, RGBATextures, floatTextures);
+
+	auto materials = loadMaterials(gltfModel, RGBTextures, RGBATextures, floatTextures);
+
+	loadNodes(gltfModel, materials, sceneBuilder);
 }

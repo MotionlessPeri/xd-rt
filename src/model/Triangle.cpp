@@ -6,22 +6,23 @@
 using namespace xd;
 
 TriangleMesh::TriangleMesh(const std::shared_ptr<const Model>& owner,
-	const std::vector<float>& positions,
-	const std::vector<float>& uvs,
-	const std::vector<float>& normals,
-	const std::vector<float>& tangents,
-	const std::vector<uint32_t>& indices,
-	HitAccelMethod method) : TriangleMesh(positions, uvs, normals, tangents, indices, method)
+						   const std::vector<float>& positions,
+						   const std::vector<float>& uvs,
+						   const std::vector<float>& normals,
+						   const std::vector<float>& tangents,
+						   const std::vector<uint32_t>& indices,
+						   HitAccelMethod method)
+	: TriangleMesh(positions, uvs, normals, tangents, indices, method)
 {
 	this->owner = owner;
 }
 
 TriangleMesh::TriangleMesh(const std::vector<float>& positions,
-                           const std::vector<float>& uvs,
-                           const std::vector<float>& normals,
-                           const std::vector<float>& tangents,
-                           const std::vector<uint32_t>& indices,
-                           HitAccelMethod method)
+						   const std::vector<float>& uvs,
+						   const std::vector<float>& normals,
+						   const std::vector<float>& tangents,
+						   const std::vector<uint32_t>& indices,
+						   HitAccelMethod method)
 	: rawPositions(positions),
 	  positionsAccessor(rawPositions.data(), 3, rawPositions.size()),
 	  rawUVs(uvs),
@@ -68,8 +69,6 @@ bool TriangleMesh::hasTangent() const
 }
 bool TriangleMesh::hit(const Ray& ray, HitRecord& rec) const
 {
-	// naive method here
-	// we may need a TriangleMeshHitSolver class for robustness
 	return hitAccel->hit(ray, rec);
 }
 const std::vector<float>& TriangleMesh::getPositions() const
@@ -215,7 +214,7 @@ bool Triangle::hit(const Ray& ray, HitRecord& rec) const
 		if (t >= rec.tHit)
 			return false;
 		rec.tHit = t;
-		rec.tPoint = ray.getTPoint(t);
+		rec.p = ray.getTPoint(t);
 		if (mesh->hasUV()) {
 			const auto uvs = getUVsUnchecked();
 			rec.uv = interpolateWithBaryCoords(uvs, baryCoord);

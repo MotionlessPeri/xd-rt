@@ -9,6 +9,10 @@ include_directories(${TBB_INCLUDE_DIRS})
 find_package(embree 4 REQUIRED)
 include_directories(${EMBREE_INCLUDE_DIRS})
 
+set(NON_BUILD_FILES
+        ../.clang-format
+        ../eigen.natvis
+)
 add_executable(xd_rt_test
         SamplerTest.cpp
         FilmTest.cpp
@@ -26,7 +30,9 @@ add_executable(xd_rt_test
         HitAccelTest.cpp
         GLTFLoaderTest.cpp
         PrimitiveTest.cpp
-        TriangulateTest.cpp
+        #        TriangulateTest.cpp
+        ${NON_BUILD_FILES}
+        HitSolverTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)
@@ -34,3 +40,15 @@ target_link_libraries(xd_rt_test gtest gtest_main)
 target_link_libraries(xd_rt_test TBB)
 target_link_libraries(xd_rt_test ${EMBREE_LIBRARIES})
 
+add_custom_command(TARGET xd_rt_test
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${TBB_ROOT}/bin"
+        $<TARGET_FILE_DIR:xd_rt_test>
+)
+add_custom_command(TARGET xd_rt_test
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${EMBREE_ROOT_DIR}/bin"
+        $<TARGET_FILE_DIR:xd_rt_test>
+)

@@ -16,29 +16,56 @@ DomeLight::DomeLight(const std::shared_ptr<SphereTextureRGB>& dome) : Light(4u),
 	for (auto i = 0u; i < pixelCnt; ++i) {
 		weights[i] = rgbToLuminance(data[i]);
 	}
-	dis = std::make_shared<PieceWise2D>(weights, width, height);
+	dis = std::make_unique<PieceWise2D>(weights, width, height);
 }
-Vector3f DomeLight::getDirection(const HitRecord& primRec, HitRecord& shadowRec) const
+
+Vector3f DomeLight::sampleDirection(const Vector2f& uSample,
+									const HitRecord& primRec,
+									HitRecord& shadowRec) const
 {
-	const auto uv = (*dis)();
+	const auto uv = dis->sample(uSample);
 	return getSphereDirFromUV(uv);
 }
-ColorRGB DomeLight::getIntensity(const Ray& ray) const
+
+ColorRGB DomeLight::getRadiance(const HitRecord& primRec, const Vector3f& wi) const
 {
-	return dome->sample(ray.d);
+	return dome->sample(wi);
 }
+
+ColorRGB DomeLight::sampleRadiance(const Vector2f& uSample,
+								   const HitRecord& primRec,
+								   HitRecord& shadowRec,
+								   Vector3f& wi)
+{
+	wi = sampleDirection(uSample, primRec, shadowRec);
+	return getRadiance(primRec, wi);
+}
+
+ColorRGB DomeLight::sampleRadianceWithPdf(const Vector2f& uSample,
+										  const HitRecord& primRec,
+										  HitRecord& shadowRec,
+										  Vector3f& wi,
+										  float& pdf)
+{
+	wi = sampleDirectionWithPdf(uSample, primRec, shadowRec, pdf);
+	return getRadiance(primRec, wi);
+}
+
 bool DomeLight::isDelta() const
 {
 	return false;
 }
-float DomeLight::getPdf(const Vector3f& dir) const
+float DomeLight::getPdf(const HitRecord& primRec, const Vector3f& wo) const
 {
-	const Vector2f uv = getSphereUV(dir);
+	const Vector2f uv = getSphereUV(wo);
 	return dis->getPdf(uv);
 }
-Vector3f DomeLight::sample(const HitRecord& primRec, HitRecord& shadowRec, float& pdf)
+Vector3f DomeLight::sampleDirectionWithPdf(const Vector2f& uSample,
+										   const HitRecord& primRec,
+										   HitRecord& shadowRec,
+										   float& pdf) const
 {
-	const auto uv = (*dis)(pdf);
-	const auto wo = getSphereDirFromUV(uv);
+	const auto uv = dis->sample(uSample);
+	auto wo = getSphereDirFromUV(uv);
 	return wo;
 }

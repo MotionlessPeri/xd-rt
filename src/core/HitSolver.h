@@ -11,10 +11,13 @@
 #include "Ray.h"
 
 namespace xd {
-class HitSolver : public std::enable_shared_from_this<HitSolver> {
+/**
+ * @brief Hit acceleration structure specified on the whole scene
+ */
+class HitSolver : public HitAccel {
 public:
 	HitSolver(const std::shared_ptr<Scene>& scene);
-	virtual bool solve(const Ray& ray, HitRecord& record) const = 0;
+	virtual ~HitSolver() = default;
 
 protected:
 	std::weak_ptr<Scene> sceneRef;
@@ -23,22 +26,28 @@ protected:
 class NaiveHitSolver : public HitSolver {
 public:
 	explicit NaiveHitSolver(const std::shared_ptr<Scene>& scene);
-	bool solve(const Ray& ray, HitRecord& record) const override;
+	bool hit(const Ray& ray, HitRecord& rec) const override;
+	bool hitAnything(const Ray& ray, HitRecord& rec) const override;
+
+protected:
+	std::unique_ptr<NoAccel> accel;
 };
 
 class BVHHitSolver : public HitSolver {
 public:
 	explicit BVHHitSolver(const std::shared_ptr<Scene>& scene);
-	bool solve(const Ray& ray, HitRecord& record) const override;
+	bool hit(const Ray& ray, HitRecord& rec) const override;
+	bool hitAnything(const Ray& ray, HitRecord& rec) const override;
 
 protected:
 	BVHNode* root;
 };
-#include "embree4/rtcore.h"
+
 class EmbreeHitSolver : public HitSolver {
 public:
 	explicit EmbreeHitSolver(const std::shared_ptr<Scene>& scene);
-	bool solve(const Ray& ray, HitRecord& record) const override;
+	bool hit(const Ray& ray, HitRecord& rec) const override;
+	bool hitAnything(const Ray& ray, HitRecord& rec) const override;
 
 protected:
 	std::shared_ptr<EmbreeAccel> accel;

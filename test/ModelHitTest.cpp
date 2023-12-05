@@ -2,7 +2,7 @@
 // Created by Frank on 2023/8/19.
 //
 
-#include "../src/core/Model.h"
+#include "Model.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(ModelHitTestSuite, SphereHitTest)
@@ -21,7 +21,7 @@ TEST(ModelHitTestSuite, SphereHitTest)
 	auto b0 = sphere->hit(ray0, hit0);
 	EXPECT_TRUE(b0);
 	EXPECT_FLOAT_EQ(hit0.tHit, 1.);
-	EXPECT_TRUE(hit0.uv.isApprox(Vector2f{v0, 1.f / 8.f}));
+	EXPECT_TRUE(hit0.uv.isApprox(Vector2f{1.f / 8.f, v0}));
 
 	// tangency but not intersect
 	const Vector3f origin1{0, 0, 1};
@@ -39,7 +39,7 @@ TEST(ModelHitTestSuite, SphereHitTest)
 	auto b2 = sphere->hit(ray2, hit2);
 	EXPECT_TRUE(b2);
 	EXPECT_FLOAT_EQ(hit2.tHit, std::sqrt(2));
-	EXPECT_TRUE(hit2.uv.isApprox(Vector2f{0.f, 1.f / 8.f}));
+	EXPECT_TRUE(hit2.uv.isApprox(Vector2f{1.f / 8.f, 0.f}));
 
 	// not intersect at all
 	const Vector3f origin3{0, 0, 2};
@@ -59,7 +59,8 @@ TEST(ModelHitTestSuite, SphereHitTest)
 }
 
 #include <oneapi/tbb.h>
-#include "../src/camera/CameraFactory.h"
+#include "Film.h"
+#include "camera/CameraFactory.h"
 TEST(ModelHitTestSuite, SphereHitTest2)
 {
 	const float radius = 400;
@@ -74,22 +75,25 @@ TEST(ModelHitTestSuite, SphereHitTest2)
 	auto cam = CameraFactory::createOrthoCamera(pos, center, up.normalized(), right.norm(),
 												up.norm(), width, height);
 	auto film = cam->getFilm();
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
-	const auto samples = sampler->generateSamples();
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, width, 0, height),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.rows().begin(), range.cols().begin()};
+			const Vector2i bottomRight{range.rows().end() - 1, range.cols().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
 
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  auto ray = cam->generateRay(sample);
-							  HitRecord rec;
-							  if (sphere.hit(ray, rec)) {
-								  film->addSample({rec.uv.x(), rec.uv.y(), 1}, sample);
-							  }
-						  }
-					  });
+			for (auto pixel : *tile) {
+				const Vector2f sample = pixel.cast<float>() + Vector2f{0.5, 0.5};
+				auto ray = cam->generateRay(sample);
+				HitRecord rec;
+				if (sphere.hit(ray, rec)) {
+					tile->addSample({rec.uv.x(), rec.uv.y(), 1}, sample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 	const std::string hdrPath = R"(D:\sphere_hit_uv.hdr)";
-	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+	EXPECT_NO_THROW(film->saveToFile(hdrPath, {}););
 }
 
 TEST(ModelHitTestSuite, BoxHitTest1)
@@ -111,20 +115,25 @@ TEST(ModelHitTestSuite, BoxHitTest1)
 	auto cam = CameraFactory::createPerspCamera(camPos, target, up.normalized(), verticalFov,
 												right.norm() / up.norm(), width, height);
 	auto film = cam->getFilm();
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
-	const auto samples = sampler->generateSamples();
-	tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()),
-					  [&](const tbb::blocked_range<size_t>& r) {
-						  for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-							  const auto& sample = samples[sampleIdx];
-							  const auto ray = cam->generateRay(sample);
-							  HitRecord rec;
-							  if (plane->hit(ray, rec)) {
-								  film->addSample(ColorRGB{rec.tHit, 0, 0}, sample);
-							  }
-						  }
-					  });
+
+	tbb::parallel_for(
+		tbb::blocked_range2d<int, int>(0, width, 0, height),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+
+			for (auto pixel : *tile) {
+				const Vector2f sample = pixel.cast<float>() + Vector2f{0.5, 0.5};
+				auto ray = cam->generateRay(sample);
+				HitRecord rec;
+				if (plane->hit(ray, rec)) {
+					tile->addSample({rec.tHit, 0, 0}, sample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
 
 	const std::string hdrPath = R"(D:\box_hit_test_1.hdr)";
-	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+	EXPECT_NO_THROW(film->saveToFile(hdrPath, {}););
 }

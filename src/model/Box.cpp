@@ -51,7 +51,7 @@ bool Box::hit(const Ray& ray, HitRecord& rec) const
 	}
 	if (hit) {
 		rec.tHit = tHit.t;
-		rec.tPoint = ray.getTPoint(tHit.t);
+		rec.p = ray.getTPoint(tHit.t);
 		rec.n = tHit.n;
 		rec.dpdu = {0, 0, 0};
 		rec.dpdv = {0, 0, 0};
@@ -77,6 +77,6 @@ std::shared_ptr<TriangleMesh> Box::triangulate() const
 	std::vector<float> normals;
 	std::vector<float> tangents;
 	std::vector<uint32_t> indices;
-	assert(false); // TODO: implement this
+	assert(false);	// TODO: implement this
 	return nullptr;
 }

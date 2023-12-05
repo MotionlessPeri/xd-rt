@@ -7,42 +7,60 @@
 using namespace xd;
 HitSolver::HitSolver(const std::shared_ptr<Scene>& scene) : sceneRef(scene) {}
 NaiveHitSolver::NaiveHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(scene) {}
-bool NaiveHitSolver::solve(const Ray& ray, HitRecord& record) const
+bool NaiveHitSolver::hit(const Ray& ray, HitRecord& rec) const
 {
 	const auto scene = sceneRef.lock();
 	const auto& primitives = scene->getPrimitives();
 	bool hit = false;
 	for (const auto primitive : primitives) {
-		if (primitive->hit(ray, record)) {
+		if (primitive->hit(ray, rec)) {
 			hit = true;
 		}
 	}
 	return hit;
 }
+bool NaiveHitSolver::hitAnything(const Ray& ray, HitRecord& rec) const
+{
+	const auto scene = sceneRef.lock();
+	const auto& primitives = scene->getPrimitives();
+	bool hit = false;
+	for (const auto primitive : primitives) {
+		if (primitive->hit(ray, rec)) {
+			return true;
+		}
+	}
+	return false;
+}
 BVHHitSolver::BVHHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(scene)
 {
 	std::vector<const Model*> models;
 	for (const auto prim : scene->getPrimitives()) {
-		models.emplace_back(prim->getModel().get());
+		models.emplace_back(prim.get());
 	}
 	root = new BVHNode{models};
 }
-bool BVHHitSolver::solve(const Ray& ray, HitRecord& record) const
+bool BVHHitSolver::hit(const Ray& ray, HitRecord& rec) const
 {
-	return root->hit(ray, record);
+	return root->hit(ray, rec);
 }
-#include "../3rdParty/embree/EmbreeGlobal.h"
+bool BVHHitSolver::hitAnything(const Ray& ray, HitRecord& rec) const
+{
+	return root->hitAnything(ray, rec);
+}
+#include "3rdParty/embree/EmbreeGlobal.h"
 EmbreeHitSolver::EmbreeHitSolver(const std::shared_ptr<Scene>& scene) : HitSolver(scene)
 {
 	std::vector<const Primitive*> models;
 	for (const auto& prim : scene->getPrimitives()) {
 		models.emplace_back(prim.get());
 	}
-	// int i = 0;
-	// model.emplace_back(scene->getPrimitives()[i].get());
 	accel = std::make_shared<EmbreeAccel>(EmbreeGlobal::get().device, models);
 }
-bool EmbreeHitSolver::solve(const Ray& ray, HitRecord& record) const
+bool EmbreeHitSolver::hit(const Ray& ray, HitRecord& rec) const
 {
-	return accel->hit(ray, record);
+	return accel->hit(ray, rec);
+}
+bool EmbreeHitSolver::hitAnything(const Ray& ray, HitRecord& rec) const
+{
+	return accel->hitAnything(ray, rec);
 }

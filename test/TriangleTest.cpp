@@ -2,10 +2,10 @@
 // Created by Frank on 2023/9/5.
 //
 #include <oneapi/tbb.h>
-#include "../src/camera/CameraFactory.h"
-#include "../src/core/Film.h"
-#include "../src/core/Sampler.h"
-#include "../src/core/Triangle.h"
+#include "Film.h"
+#include "Sampler.h"
+#include "Triangle.h"
+#include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
 using namespace xd;
 TEST(TriangleTestSuite, BaryCentricCoordTest)
@@ -31,21 +31,27 @@ TEST(TriangleTestSuite, BaryCentricCoordTest)
 	const uint32_t width = 1000u;
 	const uint32_t height = 1000u;
 	auto film = std::make_shared<Film>(center, right, up, width, height);
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
+
 	const auto transform = [](const Vector2f& sample) -> Vector3f {
 		const auto offsetted = 2 * (sample - Vector2f{0.5, 0.5});
 		return {offsetted.x(), -offsetted.y(), 0};
 	};
-	const auto samples = sampler->generateSamples();
+
+	Vector2i resolution{width, height};
 	tbb::parallel_for(
-		tbb::blocked_range<size_t>(0, samples.size()), [&](const tbb::blocked_range<size_t>& r) {
-			for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-				const auto& sample = samples[sampleIdx];
-				const auto worldPos = transform(sample);
-				const auto baryCoord = triangle.getBarycentricCoordUnchecked(worldPos);
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const Vector2f sample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+				const Vector3f worldPos = film->getWorldCoordsFromSample(sample);
+				const Vector3f baryCoord = triangle.getBarycentricCoordUnchecked(worldPos);
 				const auto color = colorMat * baryCoord;
-				film->addSample(baryCoord, sample);
+				tile->addSample(color, sample);
 			}
+			film->mergeTileToFilm(std::move(tile));
 		});
 	film->saveToFile(R"(D:\bary_centric_coord_test.hdr)");
 }
@@ -76,12 +82,15 @@ TEST(TriangleTestSuite, HitTest)
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
 												up.norm(), width, height);
 	auto film = cam->getFilm();
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
-	const auto samples = sampler->generateSamples();
+
 	tbb::parallel_for(
-		tbb::blocked_range<size_t>(0, samples.size()), [&](const tbb::blocked_range<size_t>& r) {
-			for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-				const auto& sample = samples[sampleIdx];
+		tbb::blocked_range2d<int, int>(0, height, 0, width),
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+			for (const auto pixel : *tile) {
+				const auto sample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
 				const auto ray = cam->generateRay(sample);
 				HitRecord rec;
 
@@ -89,9 +98,11 @@ TEST(TriangleTestSuite, HitTest)
 					const auto worldPos = ray.getTPoint(rec.tHit);
 					const auto baryCoord = triangle.getBarycentricCoordUnchecked(worldPos);
 					const auto color = colorMat * baryCoord;
-					film->addSample(baryCoord, sample);
+					tile->addSample(baryCoord, sample);
 				}
 			}
+			film->mergeTileToFilm(std::move(tile));
 		});
+
 	film->saveToFile(R"(D:\triangle_hit_test.hdr)");
 }

@@ -88,11 +88,14 @@ inline Vector3f reflected(const Vector3f& i, const Vector3f& n)
 {
 	return 2 * n.dot(i) * n - i;
 }
-inline std::tuple<Vector3f, Vector3f> coordSystem(const Vector3f& v1)
+inline std::tuple<Vector3f, Vector3f> coordSystem(const Vector3f& v1, bool right = true)
 {
 	Vector3f v2{-v1.z(), 0, v1.x()};
 	v2.normalize();
 	Vector3f v3 = v1.cross(v2);
+	if (!right) {
+		v3 = -v3;
+	}
 	return {v2, v3};
 }
 inline float balanceHeuristic(uint32_t numF, float pdfF, uint32_t numG, float pdfG)
@@ -107,6 +110,10 @@ inline float powerHeuristic(uint32_t numF, float pdfF, uint32_t numG, float pdfG
 inline float rgbToLuminance(const ColorRGB& color)
 {
 	return color.x() * 0.212671f + color.y() * 0.715160f + color.z() * 0.072169f;
+}
+inline bool fuzzyEqual(float a, float b, float eps = 1e-5f)
+{
+	return std::fabs(b - a) < eps;
 }
 }  // namespace xd
 #endif	// XD_RT_MATHUTIL_H

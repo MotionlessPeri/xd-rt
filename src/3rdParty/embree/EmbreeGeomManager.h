@@ -4,9 +4,8 @@
 
 #ifndef XD_RT_EMBREEGEOMMANAGER_H
 #define XD_RT_EMBREEGEOMMANAGER_H
-#include <memory>
 #include <unordered_map>
-#include "../../core/CoreTypes.h"
+#include "CoreTypes.h"
 #include "embree4/rtcore.h"
 namespace xd {
 enum class VertexAttributeSlot : unsigned int { UV = 0, NORMAL = 1, TANGENT = 2 };

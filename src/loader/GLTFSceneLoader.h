@@ -72,6 +72,24 @@ class GLTFSceneLoader : public SceneLoader {
 public:
 	std::shared_ptr<Scene> load(const std::string& path,
 								const LoadSceneOptions& options = {}) override;
+	void loadToSceneBuilder(const std::string& path,
+							const LoadSceneOptions& options,
+							SceneBuilder& sceneBuilder) const override;
+	void loadTextures(
+		const tinygltf::Model& gltfModel,
+		std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>& RGBTextures,
+		std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>& RGBATextures,
+		std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>>& floatTextures) const;
+	std::vector<std::shared_ptr<Material>> loadMaterials(
+		tinygltf::Model& gltfModel,
+		const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>& RGBTextures,
+		const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>&
+			RGBATextures,
+		const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>>& floatTextures)
+		const;
+	SceneBuilder loadNodes(const tinygltf::Model& gltfModel,
+						   const std::vector<std::shared_ptr<Material>>& materials,
+						   SceneBuilder& sceneBuilder) const;
 };
 }  // namespace xd
 #endif	// XD_RT_GLTFSCENELOADER_H

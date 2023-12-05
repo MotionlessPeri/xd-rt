@@ -13,25 +13,12 @@ PieceWise2D::PieceWise2D(const std::vector<float>& weights, uint32_t width, uint
 			const auto index = row * width + col;
 			sumV[row] += weights[index];
 		}
-		conditionals.emplace_back(&weights[row * width], width);
+		conditionals.emplace_back(std::make_unique<PieceWise1D>(&weights[row * width], width));
 	}
-	marginalV = PieceWise1D{sumV};
+	marginalV = std::make_unique<PieceWise1D>(sumV);
 	float allSum = std::accumulate(sumV.cbegin(), sumV.cend(), 0.f);
 }
-Vector2f PieceWise2D::operator()() const
-{
-	float dummyPdf;
-	return (*this)(dummyPdf);
-}
-Vector2f PieceWise2D::operator()(float& pdf) const
-{
-	uint32_t vIdx, uIdx;
-	float vPdf, uPdf;
-	const auto v = marginalV(vPdf, vIdx);			// p(v)
-	const auto u = conditionals[vIdx](uPdf, uIdx);	// p(u|v)
-	pdf = uPdf * vPdf;
-	return {u, v};
-}
+
 float PieceWise2D::getPdf(const Vector2f& sample) const
 {
 	const float v = sample.y();
@@ -39,9 +26,26 @@ float PieceWise2D::getPdf(const Vector2f& sample) const
 	const float dv = 1.f / height;
 	const float du = 1.f / width;
 	const uint32_t vIdx = std::clamp((uint32_t)std::floorf(v / dv), 0u, height - 1);
-	return marginalV.getPdf(v) * conditionals[vIdx].getPdf(u);
+	return marginalV->getPdf(v) * conditionals[vIdx]->getPdf(u);
 }
 uint32_t PieceWise2D::getIndex(uint32_t row, uint32_t col) const
 {
 	return row * width + col;
+}
+Vector2f PieceWise2D::sample(const Vector2f& uSample)
+{
+	uint32_t vIdx, uIdx;
+	float vPdf, uPdf;
+	const auto v = marginalV->sampleWithPdf(uSample(0), vPdf, vIdx);  // p(v)
+	const auto u = conditionals[vIdx]->sample(uSample(1));			  // p(u|v)
+	return {u, v};
+}
+Vector2f PieceWise2D::sampleWithPdf(const Vector2f& uSample, float& pdf)
+{
+	uint32_t vIdx, uIdx;
+	float vPdf, uPdf;
+	const auto v = marginalV->sampleWithPdf(uSample(0), vPdf, vIdx);		   // p(v)
+	const auto u = conditionals[vIdx]->sampleWithPdf(uSample(1), uPdf, uIdx);  // p(u|v)
+	pdf = uPdf * vPdf;
+	return {u, v};
 }

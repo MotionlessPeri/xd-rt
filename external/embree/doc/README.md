@@ -3419,7 +3419,7 @@ sub-patch ID `i` and local UVs of this subpatch:
     float v = 2.0f*fracf(0.5f*V)-0.5f;
 
 This encoding allows local subpatch UVs to be in the range `[-0.5,1.5[`
-thus negative subpatch UVs can be passed to `rtcInterpolate` to sample
+thus negative subpatch UVs can be passed to `rtcInterpolate` to sampleDirectionWithPdf
 subpatches slightly out of bounds. This can be useful to calculate
 derivatives using finite differences if required. The encoding further
 has the property that one can just move the value `u` (or `v`) on a

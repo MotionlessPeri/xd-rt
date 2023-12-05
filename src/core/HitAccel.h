@@ -9,10 +9,17 @@
 #include "Hitable.h"
 #include "embree4/rtcore.h"
 namespace xd {
-class HitAccel : public Hitable {
-public:
-	virtual bool hitAnything(const Ray& ray, HitRecord& rec) const = 0;
-};
+/**
+ * @brief Hit acceleration structure interface
+ *
+ * This class represents hit accelerate structure. It inherits HitAggregate, which means any
+ * HitAccel must provide both closest hit query and any hit query.
+ */
+class HitAccel : public HitAggregate {};
+
+/**
+ * @brief Hit acceleration structure looping over primitives to find hit
+ */
 class NoAccel : public HitAccel {
 public:
 	explicit NoAccel(const std::vector<const Model*>& models);
@@ -27,7 +34,14 @@ public:
 protected:
 	std::vector<const Model*> models;
 };
+
+/**
+ * @brief Hit acceleration structure that using bounding volume hierarchy
+ *
+ * This implementation uses area estimate to split bvh.
+ */
 class BVHNode : public HitAccel {
+	// TODO: add other bvh splitting methods
 public:
 	BVHNode() = delete;
 	BVHNode(const BVHNode& other) = delete;
@@ -49,6 +63,9 @@ protected:
 	std::vector<const Model*> leafModels{};
 };
 
+/**
+ * @brief Hit acceleration structure using Intel's Embree library
+ */
 class EmbreeAccel : public HitAccel {
 public:
 	EmbreeAccel(RTCDevice device, const std::vector<const Primitive*>& primitives);

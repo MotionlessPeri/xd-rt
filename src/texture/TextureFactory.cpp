@@ -17,6 +17,8 @@ std::shared_ptr<SphereTexture<Vector3f>> TextureFactory::loadSphereTextureRGB(
 	const int pixelCount = width * height;
 	std::vector<Vector3f> textureData;
 	textureData.reserve(pixelCount);
+	if (channels < 3)
+		__debugbreak();
 	assert(channels >= 3);
 	for (auto i = 0u; i < pixelCount; ++i) {
 		textureData.emplace_back(rawData[channels * i], rawData[channels * i + 1],

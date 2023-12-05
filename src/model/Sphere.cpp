@@ -6,24 +6,18 @@
 #include "Model.h"
 #include "Triangle.h"
 using namespace xd;
-std::shared_ptr<TriangleMesh> Model::getTriangulatedMesh()
+
+Sphere::Sphere(const Vector3f& center, double radius)
+	: center(center), radius(radius), radiusInv(1.f / radius)
 {
-	if (!triangulatedMesh)
-		triangulatedMesh = triangulate();
-	return triangulatedMesh;
 }
 
-std::shared_ptr<TriangleMesh> Model::triangulate() const
-{
-	return nullptr;
-}
-Sphere::Sphere(const Vector3f& center, double radius) : center(center), radius(radius) {}
 bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 {
 	const Vector3f co = ray.o - center;
-	const double a = 1;
-	const double b = 2 * ray.d.dot(co);
-	const double c = co.squaredNorm() - radius * radius;
+	const float a = 1.f;
+	const float b = 2.f * ray.d.dot(co);
+	const float c = co.squaredNorm() - radius * radius;
 	float t1, t2;
 	const auto count = solveQuadraticReal(a, b, c, t1, t2);
 	float resT = 0.f;
@@ -48,7 +42,7 @@ bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 	}
 	if (hit) {
 		rec.tHit = resT;
-		rec.tPoint = ray.getTPoint(resT);
+		rec.p = ray.getTPoint(resT);
 		const Vector3f hitPoint = ray.getTPoint(rec.tHit);
 		std::tie(rec.dpdu, rec.dpdv, rec.n) = generateDifferentials(hitPoint);
 		rec.uv = generateUV(hitPoint);
@@ -58,10 +52,10 @@ bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 std::tuple<Vector3f, Vector3f, Vector3f> Sphere::generateDifferentials(const Vector3f& point) const
 {
 	const Vector3f cp = point - center;
-	const auto [theta, phi] = getThetaPhi(point);
-	const float cosPhi = std::cosf(phi);
-	const float sinPhi = std::sinf(phi);
-	const float sinTheta = std::sinf(theta);
+	const float cosPhi = cp.x() * radiusInv;
+	const float sinPhi = cp.y() * radiusInv;
+	const float cosTheta = cp.z() * radiusInv;
+	const float sinTheta = std::sqrtf(1 - cosTheta * cosTheta);
 	const Vector3f dpdu = Vector3f{-cp.y(), cp.x(), 0} * 2.f * PI;
 	const Vector3f dpdv = Vector3f{cp.z() * cosPhi, cp.z() * sinPhi, -radius * sinTheta} * PI;
 	const Vector3f n = cp.normalized();
@@ -70,7 +64,7 @@ std::tuple<Vector3f, Vector3f, Vector3f> Sphere::generateDifferentials(const Vec
 Vector2f Sphere::generateUV(const Vector3f& point) const
 {
 	const auto [theta, phi] = getThetaPhi(point);
-	return {theta / PI, phi / TWO_PI};
+	return {phi / TWO_PI, theta / PI};
 }
 std::pair<float, float> Sphere::getThetaPhi(const Vector3f& point) const
 {
@@ -93,7 +87,7 @@ AABB Sphere::getAABB() const
 
 std::shared_ptr<TriangleMesh> Sphere::triangulate() const
 {
-	constexpr float phiInterval = toRadians(10.f); // u 
+	constexpr float phiInterval = toRadians(10.f);	  // u
 	constexpr float thetaInterval = toRadians(10.f);  // v
 	constexpr float eps = 1e-4f;
 	const bool uOverlap = std::fmod(TWO_PI, phiInterval) < eps;
@@ -103,8 +97,7 @@ std::shared_ptr<TriangleMesh> Sphere::triangulate() const
 	const int vCount = (int)(PI / thetaInterval) + (vOverlap ? 0 : 1);
 	assert(vCount >= 2);
 	const int pointCnt = 2 + uCount * std::max(vCount - 2, 1);
-	const int triangleCnt =
-		2 * uCount /*sphere cap*/ + 2 * std::max(vCount - 3, 0) /*middle*/;
+	const int triangleCnt = 2 * uCount /*sphere cap*/ + 2 * std::max(vCount - 3, 0) /*middle*/;
 	std::vector<float> positions;
 	std::vector<float> uvs;
 	std::vector<float> normals;
@@ -133,13 +126,8 @@ std::shared_ptr<TriangleMesh> Sphere::triangulate() const
 	for (auto theta = thetaInterval; theta < PI; theta += thetaInterval) {
 		for (auto phi = 0.f; phi < TWO_PI; phi += phiInterval) {
 			const auto sphereDir = getSphereDirFromThetaPhi(phi, theta);
-			setVertex(
-				center + radius * sphereDir, 
-				sphereDir,
-					  {
-					  	std::clamp(phi / TWO_PI, 0.f, 1.f),
-					  	std::clamp(theta / PI, 0.f, 1.f)
-					  });
+			setVertex(center + radius * sphereDir, sphereDir,
+					  {std::clamp(phi / TWO_PI, 0.f, 1.f), std::clamp(theta / PI, 0.f, 1.f)});
 		}
 	}
 	{
@@ -154,9 +142,9 @@ std::shared_ptr<TriangleMesh> Sphere::triangulate() const
 	// generate sphere top
 	constexpr uint32_t topIndex = 0ull;
 	uint32_t beginIndex = 1;
-	uint32_t endIndex = beginIndex + uCount - 1; // [beginIndex, endIndex]
+	uint32_t endIndex = beginIndex + uCount - 1;  // [beginIndex, endIndex]
 	uint32_t pIndex = beginIndex;
-	for (;pIndex < endIndex; ++pIndex) {
+	for (; pIndex < endIndex; ++pIndex) {
 		indices.emplace_back(topIndex);
 		indices.emplace_back(pIndex);
 		indices.emplace_back(pIndex + 1);
@@ -191,6 +179,6 @@ std::shared_ptr<TriangleMesh> Sphere::triangulate() const
 	indices.emplace_back(beginIndex);
 	indices.emplace_back(bottomIndex);
 	// generate sphere bottom
-	return std::make_shared<TriangleMesh>(shared_from_this(), positions, uvs, normals,
-													tangents, indices);
+	return std::make_shared<TriangleMesh>(shared_from_this(), positions, uvs, normals, tangents,
+										  indices);
 }

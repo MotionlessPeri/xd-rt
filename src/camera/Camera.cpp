@@ -2,6 +2,8 @@
 // Created by Frank on 2023/8/17.
 //
 #include "Camera.h"
+#include "Film.h"
+#include "Ray.h"
 using namespace xd;
 
 Camera::Camera(const std::shared_ptr<Film>& pFilm) : film(pFilm) {}

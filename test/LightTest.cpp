@@ -2,14 +2,17 @@
 // Created by Frank on 2023/8/29.
 //
 #include <oneapi/tbb.h>
-#include "../src/camera/CameraFactory.h"
-#include "../src/core/Camera.h"
-#include "../src/core/Film.h"
-#include "../src/core/Light.h"
-#include "../src/core/Model.h"
-#include "../src/core/Primitive.h"
-#include "../src/core/Scene.h"
+#include "Camera.h"
+#include "Film.h"
+#include "Integrator.h"
+#include "Light.h"
+#include "Model.h"
+#include "Primitive.h"
+#include "Scene.h"
+#include "SceneBuilder.h"
+#include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "sampler/SimpleSampler.h"
 using namespace xd;
 TEST(LightTestSuite, PointLightTest)
 {
@@ -17,14 +20,15 @@ TEST(LightTestSuite, PointLightTest)
 	const float radius = 200.f;
 	auto redSphere = std::make_shared<Sphere>(Vector3f{-50, 0, 0}, radius);
 	auto greenSphere = std::make_shared<Sphere>(Vector3f{50, 0, 0}, radius);
-	auto prim1 = std::make_shared<Primitive>(redSphere, nullptr);
-	auto prim2 = std::make_shared<Primitive>(greenSphere, nullptr);
+	auto prim1 =
+		std::make_shared<Primitive>(redSphere, std::make_shared<MatteMaterial>(ColorRGB{1, 1, 1}));
+	auto prim2 = std::make_shared<Primitive>(greenSphere,
+											 std::make_shared<MatteMaterial>(ColorRGB{1, 1, 1}));
 
-	auto scene = std::make_shared<Scene>();
-	scene->addPrimitive(prim1);
-	scene->addPrimitive(prim2);
-
-	auto hitSolver = std::make_shared<NaiveHitSolver>(scene);
+	SceneBuilder sceneBuilder;
+	sceneBuilder.addPrimitive(prim1);
+	sceneBuilder.addPrimitive(prim2);
+	sceneBuilder.setHitSolverType(xd::HitSolverType::NAIVE);
 
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 800u;
@@ -40,52 +44,25 @@ TEST(LightTestSuite, PointLightTest)
 	const Vector3f lightPos2 = 2 * center;
 	auto greenLight = std::make_shared<PointLight>(lightPos2, intensity2);
 
-	std::vector<std::shared_ptr<Light>> lights;
-	lights.push_back(redLight);
-	lights.push_back(greenLight);
-
+	sceneBuilder.addLight(redLight);
+	sceneBuilder.addLight(greenLight);
+	auto scene = sceneBuilder.build();
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
 												up.norm(), width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
-
-	const auto samples = sampler->generateSamples();
-	tbb::parallel_for(
-		tbb::blocked_range<size_t>(0, samples.size()), [&](const tbb::blocked_range<size_t>& r) {
-			for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-				const auto& sample = samples[sampleIdx];
-				const auto ray = cam->generateRay(sample);
-				HitRecord rec;
-				if (hitSolver->solve(ray, rec)) {
-					constexpr float epsilon = 1e-4;
-					auto hitPoint = ray.getTPoint(rec.tHit);
-					const auto model = rec.primitive->getModel();
-					const auto material = rec.primitive->getMaterial();
-					const auto [dpdu, dpdv, n] = std::tie(rec.dpdu, rec.dpdv, rec.n);
-					hitPoint += (n * epsilon);
-
-					for (const auto& light : lights) {
-						HitRecord shadowRec;
-						const Ray shadowRay{hitPoint, light->getDirection(rec, shadowRec)};
-						const float cosTheta = n.dot(shadowRay.d);
-
-						if (!hitSolver->solve(shadowRay, shadowRec)) {
-							const auto projectedRadiance =
-								light->getIntensity(shadowRay) * cosTheta;
-							film->addSample(projectedRadiance, sample);
-						}
-					}
-				}
-			}
-		});
-
+	auto sampler = std::make_shared<SimpleSampler>(1);
+	MIDirectIntegrator integrator{sampler};
+	// DebugIntegrator integrator;
+	integrator.setCamera(cam);
+	integrator.render(*scene);
 	const std::string hdrPath = R"(D:\point_light_test.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
-#include "../src/core/Material.h"
-#include "../src/texture/TextureFactory.h"
+#include "BxDF.h"
+#include "Material.h"
+#include "texture/TextureFactory.h"
 TEST(LightTestSuite, DomeLightTest)
 {
 	const float halfLen = 400.f;
@@ -93,11 +70,12 @@ TEST(LightTestSuite, DomeLightTest)
 	const Vector3f maxPoint{halfLen, halfLen, halfLen};
 	const Vector3f minPoint{-halfLen, -halfLen, -halfLen};
 
-	const auto spec = std::make_shared<SpecularReflectionMaterial>();
+	const auto spec = std::make_shared<PerfectReflectionMaterial>();
 	const uint32_t count = 5;
 	const float radius = len / count / 2;
 	const Vector3f firstCenter = minPoint + Vector3f{radius, radius, radius};
-	auto scene = std::make_shared<Scene>();
+	SceneBuilder sceneBuilder;
+
 	std::vector<std::shared_ptr<Primitive>> prims;
 	for (int i = 0u; i < count; ++i) {
 		const float x = firstCenter.x() + 2 * radius * i;
@@ -108,12 +86,12 @@ TEST(LightTestSuite, DomeLightTest)
 				const Vector3f center{x, y, z};
 				const auto model = std::make_shared<Sphere>(center, radius);
 				const auto prim = std::make_shared<Primitive>(model, spec);
-				scene->addPrimitive(prim);
+				sceneBuilder.addPrimitive(prim);
 			}
 		}
 	}
 
-	auto hitSolver = std::make_shared<NaiveHitSolver>(scene);
+	sceneBuilder.setHitSolverType(xd::HitSolverType::EMBREE);
 
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 1000u;
@@ -129,67 +107,72 @@ TEST(LightTestSuite, DomeLightTest)
 	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
 	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
 
-	std::vector<std::shared_ptr<Light>> lights;
-	lights.push_back(domeLight);
-
+	sceneBuilder.addEnvironment(domeLight);
+	auto scene = sceneBuilder.build();
 	const auto verticalFov = 75.f / 180.f * PI;
 	auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
 												width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(width, height);
-
-	const auto samples = sampler->generateSamples();
 	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
-	constexpr float SAMPLE_WEIGHT = 1.f / (float)SAMPLE_PER_PIXEL;
-	const auto work = [&](const tbb::blocked_range<size_t>& r) {
-		for (size_t sampleIdx = r.begin(); sampleIdx != r.end(); ++sampleIdx) {
-			const auto& sample = samples[sampleIdx];
-			auto ray = cam->generateRay(sample);
+	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
 
-			constexpr uint32_t MAX_DEPTH = 5u;
-			int depth = 0;
-			Vector3f weight{1.f, 1.f, 1.f};
-			while (depth < MAX_DEPTH) {
-				HitRecord rec;
-				if (!hitSolver->solve(ray, rec)) {
-					film->addSample(domeLight->getIntensity(ray), sample);
-					break;
-				}
-
-				constexpr float epsilon = 1e-4;
-				auto hitPoint = ray.getTPoint(rec.tHit);
-				const auto model = rec.primitive->getModel();
-				const auto material = rec.primitive->getMaterial();
-				const auto [dpdu, dpdv, n] = std::tie(rec.dpdu, rec.dpdv, rec.n);
-				hitPoint += (n * epsilon);
-
-				for (const auto light : lights) {
-					HitRecord dummy;
-					const Ray shadowRay{hitPoint, material->getDirection(rec, -ray.d)};
-					const float cosTheta = std::clamp(n.dot(shadowRay.d), 0.f, 1.f);
-					if (!hitSolver->solve(shadowRay, dummy)) {
-						const ColorRGB projectedRadiance =
-							light->getIntensity(shadowRay) * cosTheta;
-						const Vector3f brdf = material->getBRDF(rec, shadowRay.d, -ray.d);
-						const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
-						film->addSample(SAMPLE_WEIGHT * Lo.cwiseProduct(weight), sample);
+	// oneapi::tbb::global_control
+	// global_limit(oneapi::tbb::global_control::max_allowed_parallelism, 1);
+	const auto work = [&](const tbb::blocked_range2d<int, int>& range) {
+		const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
+		const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
+		auto tile = film->getTile(topLeft, bottomRight);
+		auto tileSampler = sampler->clone(topLeft.y() * width + topLeft.x());
+		for (auto pixel : *tile) {
+			tileSampler->setCurrentPixel(pixel);
+			do {
+				const auto sample = pixel.cast<float>() + tileSampler->sample2D();
+				auto primRay = cam->generateRay(sample);
+				constexpr uint32_t MAX_DEPTH = 5u;
+				int depth = 0;
+				Vector3f weight{1.f, 1.f, 1.f};
+				while (depth < MAX_DEPTH) {
+					HitRecord primRec;
+					if (!scene->hit(primRay, primRec)) {
+						tile->addSample(domeLight->getRadiance(primRec, primRay.d), sample);
+						break;
 					}
-					else {
-						// film->addSample({dummy.tHit, dummy.tHit, dummy.tHit}, sample);
+
+					primRec.buildFrames();
+					const auto hitPoint = primRec.p;
+					const auto model = primRec.primitive->getModel();
+					const auto material = primRec.primitive->getMaterial();
+					const auto [dpdu, dpdv, n] = std::tie(primRec.dpdu, primRec.dpdv, primRec.n);
+
+					for (const auto light : scene->getLights()) {
+						HitRecord shadowRec;
+						const Ray shadowRay{
+							hitPoint, material->sampleDirection(tileSampler->sample2D(), -primRay.d,
+																primRec)};
+						const float cosTheta = std::clamp(n.dot(shadowRay.d), 0.f, 1.f);
+						if (!scene->hit(shadowRay, shadowRec)) {
+							const ColorRGB projectedRadiance =
+								light->getRadiance(primRec, shadowRay.d) * cosTheta;
+							const Vector3f brdf =
+								material->getBRDF(primRec, -primRay.d, shadowRay.d);
+							const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
+							tile->addSample(Lo.cwiseProduct(weight), sample);
+						}
 					}
+					const auto newDirection =
+						material->sampleDirection(tileSampler->sample2D(), -primRay.d, primRec);
+					weight =
+						weight.cwiseProduct(material->getBRDF(primRec, -primRay.d, newDirection));
+					primRay = Ray{hitPoint, newDirection};
+					++depth;
 				}
-				auto newDirection = material->getDirection(rec, -ray.d);
-				weight = weight.cwiseProduct(material->getBRDF(rec, newDirection, -ray.d));
-				ray = Ray{hitPoint, newDirection};
-				++depth;
-			}
+			} while (tileSampler->startNextSample());
 		}
+		film->mergeTileToFilm(std::move(tile));
 	};
 
-	for (uint32_t i = 0u; i < SAMPLE_PER_PIXEL; ++i) {
-		tbb::parallel_for(tbb::blocked_range<size_t>(0, samples.size()), work);
-	}
+	tbb::parallel_for(tbb::blocked_range2d<int, int>(0, width, 0, height), work);
 
 	const std::string hdrPath = R"(D:\dome_light_test_2.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););

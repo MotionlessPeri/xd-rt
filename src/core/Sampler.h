@@ -5,23 +5,38 @@
 #ifndef XD_RT_SAMPLER_H
 #define XD_RT_SAMPLER_H
 
+#include <span>
 #include <vector>
 #include "MathType.h"
 namespace xd {
 class Sampler {
 public:
-	virtual std::vector<Vector2f> generateSamples() = 0;
-};
-
-class SimpleSampler : public Sampler {
-public:
-	SimpleSampler(uint32_t width, uint32_t height);
-
-	std::vector<Vector2f> generateSamples() override;
+	Sampler(int samplerPerPixel);
+	virtual ~Sampler() = default;
+	virtual void setCurrentPixel(const Vector2i& pixel);
+	virtual void request1DArray(int n) = 0;
+	virtual void request2DArray(int n) = 0;
+	/**
+	 * get previous requested 1d sample array
+	 * @param n the size of previous requested array
+	 * @return a span describes the sample array. If get sample array fails, the span will be empty
+	 */
+	virtual const std::span<const float> get1DArray(int n) = 0;
+	/**
+	 * get previous requested 2d sample array
+	 * @param n the size of previous requested array
+	 * @return a span describes the sample array. If get sample array fails, the span will be empty
+	 */
+	virtual const std::span<const Vector2f> get2DArray(int n) = 0;
+	virtual float sample1D() = 0;
+	virtual Vector2f sample2D() = 0;
+	virtual bool startNextSample();
+	virtual std::unique_ptr<Sampler> clone(int seed) const = 0;
 
 protected:
-	uint32_t width;
-	uint32_t height;
+	int samplePerPixel;
+	int currentSampleIndex = 0;
+	Vector2i currentPixel;
 };
 
 }  // namespace xd

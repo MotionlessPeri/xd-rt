@@ -2,6 +2,7 @@
 // Created by Frank on 2023/8/22.
 //
 #include "CameraFactory.h"
+#include "Film.h"
 using namespace xd;
 std::shared_ptr<OrthoCamera> CameraFactory::createOrthoCamera(const Vector3f& position,
 															  const Vector3f& target,
