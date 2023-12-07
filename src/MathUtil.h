@@ -115,5 +115,33 @@ inline bool fuzzyEqual(float a, float b, float eps = 1e-5f)
 {
 	return std::fabs(b - a) < eps;
 }
+
+inline float nextFloatUp(float f)
+{
+	if (std::isinf(f) && f > 0.f)
+		return f;
+	if (f == -0.f)
+		return 0.f;
+	auto bits = std::bit_cast<uint32_t>(f);
+	if (f >= 0)
+		++bits;
+	else
+		--bits;
+	return std::bit_cast<float>(bits);
+}
+
+inline float nextFloatDown(float f)
+{
+	if (std::isinf(f) && f < 0.f)
+		return f;
+	if (f == 0.f)
+		return -0.f;
+	auto bits = std::bit_cast<uint32_t>(f);
+	if (f > 0)
+		--bits;
+	else
+		++bits;
+	return std::bit_cast<float>(bits);
+}
 }  // namespace xd
 #endif	// XD_RT_MATHUTIL_H

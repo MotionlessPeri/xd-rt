@@ -3,11 +3,9 @@
 //
 #include "Eigen/Geometry"
 #include "Film.h"
-#include "HitSolver.h"
 #include "Integrator.h"
 #include "Light.h"
 #include "Primitive.h"
-#include "Scene.h"
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
@@ -56,12 +54,12 @@ TEST(PrimitiveTestSuite, InstanceTest)
 												rightNorm / width * height, width, height);
 	auto film = cam->getFilm();
 
-	constexpr uint32_t SAMPLE_PER_PIXEL = 3u;
-	constexpr uint32_t MAX_DEPTH = 5u;
+	constexpr uint32_t SAMPLE_PER_PIXEL = 400u;
+	constexpr uint32_t MAX_DEPTH = 8u;
 	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
-	// PathIntegrator integrator{sampler, MAX_DEPTH};
-	DebugIntegrator integrator;
-	integrator.setDebugChannel(DebugChannel::BXDF);
+	PathIntegrator integrator{sampler, MAX_DEPTH};
+	// DebugIntegrator integrator;
+	// integrator.setDebugChannel(DebugChannel::BXDF);
 	integrator.setCamera(cam);
 	integrator.render(*scene);
 
@@ -117,5 +115,50 @@ TEST(PrimitiveTestSuite, InstanceTest2)
 	integrator.setDebugChannel(DebugChannel::BXDF);
 	integrator.render(*scene);
 	const std::string hdrPath = R"(D:\instance_test_2.hdr)";
+	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+}
+
+TEST(PrimitiveTestSuite, InstanceTest3)
+{
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 600u;
+	const Vector3f center = Vector3f{0, 1, 0} * 400;
+	const Vector3f z{0, 0, 1};
+	const Vector3f target{0, 0, 0};
+	const float rightNorm = 500.f;
+	const Vector3f towards = (target - center).normalized();
+	const Vector3f right = towards.cross(z).normalized();
+	const Vector3f up = right.cross(towards);
+
+	const float radius = 200.f;
+	SceneBuilder sb;
+	const auto sphere = std::make_shared<Sphere>(Vector3f{0, 0, 0}, radius);
+
+	auto diffuse = TextureFactory::loadUVTextureRGB(R"(D:\uv_checker.jpg)");
+	auto matte = std::make_shared<MatteMaterial>(diffuse);
+	auto reflect = std::make_shared<PerfectReflectionMaterial>();
+	Transform transform{Eigen::AngleAxis(toRadians(90.f), Vector3f{0, 0, 1})};
+	auto prim = std::make_shared<Primitive>(sphere, reflect, transform);
+	sb.addPrimitive(prim);
+
+	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
+	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
+	sb.addEnvironment(domeLight);
+	sb.setHitSolverType(HitSolverType::NAIVE);
+	const auto scene = sb.build();
+
+	auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), rightNorm,
+												rightNorm / width * height, width, height);
+	auto film = cam->getFilm();
+
+	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
+	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
+	// MIDirectIntegrator integrator{sampler};
+	DebugIntegrator integrator;
+	integrator.setDebugChannel(DebugChannel::BXDF);
+	integrator.setCamera(cam);
+	integrator.render(*scene);
+
+	const std::string hdrPath = R"(D:\instance_test_3.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }

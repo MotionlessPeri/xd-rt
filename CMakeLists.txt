@@ -57,6 +57,7 @@ set(CORE_FILES
         src/core/Triangle.h
         src/core/SceneBuilder.cpp
         src/core/SceneBuilder.h
+        src/core/FloatWithError.h
 )
 set(DISTRIBUTION_FILES
         src/distribution/PieceWise1D.cpp
@@ -111,6 +112,7 @@ set(MODEL_FILES
 set(SAMPLER_FILES
         src/core/Sampler.cpp
         src/sampler/SimpleSampler.h
+        src/sampler/SimpleSampler.cpp
         src/sampler/DebugSampler.cpp
         src/sampler/DebugSampler.h
 )
@@ -119,7 +121,7 @@ set(TEXTURE_FILES
         src/texture/TextureFactory.cpp
 )
 set(MISC_FILES
-        src/sampler/SimpleSampler.cpp
+        src/MathUtil.h
 )
 set(NON_BUILD_FILES
         ./.clang-format

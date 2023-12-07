@@ -33,6 +33,8 @@ add_executable(xd_rt_test
         #        TriangulateTest.cpp
         ${NON_BUILD_FILES}
         HitSolverTest.cpp
+        FloatWithErrorTest.cpp
+        MathUtilTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)
