@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <valarray>
 #include "MathType.h"
+#include "Ray.h"
+
 namespace xd {
 /**
  * Solve quadratic equation in real numbers.
@@ -116,6 +118,14 @@ inline bool fuzzyEqual(float a, float b, float eps = 1e-5f)
 	return std::fabs(b - a) < eps;
 }
 
+constexpr float MACHINE_EPSILON = std::numeric_limits<float>::epsilon() / 2;
+
+template <int N>
+inline constexpr float floatingGamma()
+{
+	return (N * MACHINE_EPSILON) / (1 - N * MACHINE_EPSILON);
+}
+
 inline float nextFloatUp(float f)
 {
 	if (std::isinf(f) && f > 0.f)
@@ -143,5 +153,88 @@ inline float nextFloatDown(float f)
 		++bits;
 	return std::bit_cast<float>(bits);
 }
+
+inline bool isExact(const Vector3f& error)
+{
+	return error.x() == 0.f && error.y() == 0.f && error.z() == 0.f;
+}
+
+inline void applyTransformToPoint(const Transform& transform, Vector3f& point, Vector3f& error)
+{
+	// Note: Most codes from pbrt-v4
+	const auto& m = transform.matrix();
+	auto& x = point.x();
+	auto& y = point.y();
+	auto& z = point.z();
+	if (isExact(error)) {
+		// Compute error for transformed exact _p_
+		error.x() = floatingGamma<3>() * (std::abs(m(0, 0) * x) + std::abs(m(0, 1) * y) +
+										  std::abs(m(0, 2) * z) + std::abs(m(0, 3)));
+		error.y() = floatingGamma<3>() * (std::abs(m(1, 0) * x) + std::abs(m(1, 1) * y) +
+										  std::abs(m(1, 2) * z) + std::abs(m(1, 3)));
+		error.z() = floatingGamma<3>() * (std::abs(m(2, 0) * x) + std::abs(m(2, 1) * y) +
+										  std::abs(m(2, 2) * z) + std::abs(m(2, 3)));
+	}
+	else {
+		// Compute error for transformed approximate _p_
+		const Vector3f pInError = error;
+		error.x() = (floatingGamma<3>() + 1) *
+						(std::abs(m(0, 0)) * pInError.x() + std::abs(m(0, 1)) * pInError.y() +
+						 std::abs(m(0, 2)) * pInError.z()) +
+					floatingGamma<3>() * (std::abs(m(0, 0) * x) + std::abs(m(0, 1) * y) +
+										  std::abs(m(0, 2) * z) + std::abs(m(0, 3)));
+		error.y() = (floatingGamma<3>() + 1) *
+						(std::abs(m(1, 0)) * pInError.x() + std::abs(m(1, 1)) * pInError.y() +
+						 std::abs(m(1, 2)) * pInError.z()) +
+					floatingGamma<3>() * (std::abs(m(1, 0) * x) + std::abs(m(1, 1) * y) +
+										  std::abs(m(1, 2) * z) + std::abs(m(1, 3)));
+		error.z() = (floatingGamma<3>() + 1) *
+						(std::abs(m(2, 0)) * pInError.x() + std::abs(m(2, 1)) * pInError.y() +
+						 std::abs(m(2, 2)) * pInError.z()) +
+					floatingGamma<3>() * (std::abs(m(2, 0) * x) + std::abs(m(2, 1) * y) +
+										  std::abs(m(2, 2) * z) + std::abs(m(2, 3)));
+	}
+	point = transform * point;
+}
+
+inline void applyTransformToDirection(const Transform& transform, Vector3f& dir, Vector3f& error)
+{
+	const auto& m = transform.matrix();
+	auto &x = dir.x(), &y = dir.y(), &z = dir.z();
+	if (isExact(error)) {
+		error.x() = floatingGamma<3>() *
+					(std::abs(m(0, 0) * x) + std::abs(m(0, 1) * y) + std::abs(m(0, 2) * z));
+		error.y() = floatingGamma<3>() *
+					(std::abs(m(1, 0) * x) + std::abs(m(1, 1) * y) + std::abs(m(1, 2) * z));
+		error.z() = floatingGamma<3>() *
+					(std::abs(m(2, 0) * x) + std::abs(m(2, 1) * y) + std::abs(m(2, 2) * z));
+	}
+	else {
+		const Vector3f vInError = error;
+		error.x() = (floatingGamma<3>() + 1) *
+						(std::abs(m(0, 0)) * vInError.x() + std::abs(m(0, 1)) * vInError.y() +
+						 std::abs(m(0, 2)) * vInError.z()) +
+					floatingGamma<3>() *
+						(std::abs(m(0, 0) * x) + std::abs(m(0, 1) * y) + std::abs(m(0, 2) * z));
+		error.y() = (floatingGamma<3>() + 1) *
+						(std::abs(m(1, 0)) * vInError.x() + std::abs(m(1, 1)) * vInError.y() +
+						 std::abs(m(1, 2)) * vInError.z()) +
+					floatingGamma<3>() *
+						(std::abs(m(1, 0) * x) + std::abs(m(1, 1) * y) + std::abs(m(1, 2) * z));
+		error.z() = (floatingGamma<3>() + 1) *
+						(std::abs(m(2, 0)) * vInError.x() + std::abs(m(2, 1)) * vInError.y() +
+						 std::abs(m(2, 2)) * vInError.z()) +
+					floatingGamma<3>() *
+						(std::abs(m(2, 0) * x) + std::abs(m(2, 1) * y) + std::abs(m(2, 2) * z));
+	}
+	dir = (transform.linear() * dir).normalized();
+}
+
+inline void applyTransformToRay(const Transform& transform, Ray& ray)
+{
+	applyTransformToPoint(transform, ray.o, ray.oError);
+	applyTransformToDirection(transform, ray.d, ray.dError);
+}
+
 }  // namespace xd
 #endif	// XD_RT_MATHUTIL_H

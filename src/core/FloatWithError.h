@@ -10,19 +10,6 @@
 #include "MathUtil.h"
 
 namespace xd {
-constexpr float MACHINE_EPSILON = std::numeric_limits<float>::epsilon() / 2;
-
-template <int N>
-inline constexpr float FloatingGamma()
-{
-	return (1 + MACHINE_EPSILON) / (1 - N * MACHINE_EPSILON);
-}
-
-template <>
-inline constexpr float FloatingGamma<1>()
-{
-	return MACHINE_EPSILON;
-}
 class FloatWithError {
 public:
 	FloatWithError() = default;
@@ -35,6 +22,7 @@ public:
 
 	float middle() const { return (low + high) / 2.f; }
 	float extent() const { return high - low; }
+	bool isExact() const { return low == high; }
 	operator float() const { return middle(); }
 	bool has(float f) const { return f >= low && f <= high; }
 	friend FloatWithError operator+(const FloatWithError& lhs, const FloatWithError& rhs)
