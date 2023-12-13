@@ -62,7 +62,6 @@ public:
 	}
 	ColorRGB sample(const Vector2f& sample) override
 	{
-		const auto* debug = data.data();
 		const uint32_t col = sample.x() * width;
 		const uint32_t row = sample.y() * height;
 		const uint32_t index = row * width + col;

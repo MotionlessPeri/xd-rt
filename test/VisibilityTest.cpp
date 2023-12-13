@@ -13,7 +13,7 @@ TEST(VisibilityTestSuite, OrthoCamVisTest)
 {
 	constexpr float radius = 400.f;
 	const Vector3f sphereCenter{0, 0, 0};
-	auto sphere = std::make_shared<Sphere>(sphereCenter, radius);
+	auto sphere = std::make_shared<Sphere>(radius);
 
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 800u;
@@ -55,7 +55,7 @@ TEST(VisibilityTestSuite, OrthoCamVisTestTBB)
 {
 	constexpr float radius = 400.f;
 	const Vector3f sphereCenter{0, 0, 0};
-	auto sphere = std::make_shared<Sphere>(sphereCenter, radius);
+	auto sphere = std::make_shared<Sphere>(radius);
 
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 800u;
@@ -87,7 +87,7 @@ TEST(VisibilityTestSuite, PerspCamVisTestTBB)
 {
 	constexpr float radius = 400.f;
 	const Vector3f sphereCenter{0, 0, 0};
-	auto sphere = std::make_shared<Sphere>(sphereCenter, radius);
+	auto sphere = std::make_shared<Sphere>(radius);
 
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 800u;
@@ -128,18 +128,20 @@ TEST(VisibilityTestSuite, OrthoCamVisTestTBBWithHitSolver)
 {
 	const Vector3f origin{0, 0, 0};
 	const float radius = 200.f;
-	auto redSphere = std::make_shared<Sphere>(Vector3f{-50, 0, 0}, radius);
-	auto greenSphere = std::make_shared<Sphere>(Vector3f{50, 0, 0}, radius);
-	auto prim1 = std::make_shared<Primitive>(redSphere, nullptr);
-	auto prim2 = std::make_shared<Primitive>(greenSphere, nullptr);
+	auto redSphere = std::make_shared<Sphere>(radius);
+	auto greenSphere = std::make_shared<Sphere>(radius);
+	const Transform redSphereTransform{Eigen::Translation3f{-50, 0, 0}};
+	const Transform greenSphereTransform{Eigen::Translation3f{50, 0, 0}};
+	auto prim1 = std::make_shared<Primitive>(redSphere, nullptr, redSphereTransform);
+	auto prim2 = std::make_shared<Primitive>(greenSphere, nullptr, greenSphereTransform);
 
 	SceneBuilder sceneBuilder;
 	sceneBuilder.addPrimitive(prim1).addPrimitive(prim2);
 	sceneBuilder.setHitSolverType(HitSolverType::NAIVE);
 	auto scene = sceneBuilder.build();
 
-	constexpr uint32_t width = 100u;
-	constexpr uint32_t height = 80u;
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 800u;
 	const Vector3f center{0, 0, -radius};
 	const Vector3f right{500, 0, 0};
 	const Vector3f up{0, 400, 0};

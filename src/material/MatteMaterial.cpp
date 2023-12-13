@@ -30,10 +30,13 @@ ColorRGB MatteMaterial::sampleBRDF(const Vector2f& uSample,
 								   const Vector3f& wo,
 								   Vector3f& wi)
 {
+	assert(primRec.frame == FrameCategory::WORLD);
+	const auto localToWorld = primRec.getCurrentFrame();
+	const auto worldToLocal = localToWorld.inverse();
 	auto sampledColor = color->sample(primRec.uv);
 	Lambertian lambertian(sampledColor);
-	auto ret = lambertian.sampleBRDF(uSample, primRec.modelToLocal * wo, wi);
-	wi = primRec.localToModel * wi;
+	auto ret = lambertian.sampleBRDF(uSample, worldToLocal * wo, wi);
+	wi = localToWorld * wi;
 	return ret;
 }
 
@@ -43,34 +46,40 @@ ColorRGB MatteMaterial::sampleBRDFWithPdf(const Vector2f& uSample,
 										  Vector3f& wi,
 										  float& pdf)
 {
+	assert(primRec.frame == FrameCategory::WORLD);
+	const auto localToWorld = primRec.getCurrentFrame();
+	const auto worldToLocal = localToWorld.inverse();
 	auto sampledColor = color->sample(primRec.uv);
 	Lambertian lambertian(sampledColor);
-	auto ret = lambertian.sampleBRDFWithPdf(uSample, primRec.modelToLocal * wo, wi, pdf);
-	wi = primRec.localToModel * wi;
+	auto ret = lambertian.sampleBRDFWithPdf(uSample, worldToLocal * wo, wi, pdf);
+	wi = localToWorld * wi;
 	return ret;
 }
 
 Vector3f MatteMaterial::sampleDirection(const Vector2f& uSample,
-										const Vector3f& wo,
-										const HitRecord& hitRecord) const
+										const HitRecord& primRec,
+										const Vector3f& wo) const
 {
-	auto sampledColor = color->sample(hitRecord.uv);
+	assert(primRec.frame == FrameCategory::WORLD);
+	auto sampledColor = color->sample(primRec.uv);
 	Lambertian lambertian(sampledColor);
-	return hitRecord.localToModel * lambertian.sampleDirection(uSample, {0, 0, 1});	 // dummy wi
+	return primRec.getCurrentFrame() * lambertian.sampleDirection(uSample, {0, 0, 1});	// dummy wi
 }
 Vector3f MatteMaterial::sampleDirectionWithPdf(const Vector2f& uSample,
+											   const HitRecord& primRec,
 											   const Vector3f& wo,
-											   const HitRecord& hitRecord,
 											   float& pdf) const
 {
-	auto sampledColor = color->sample(hitRecord.uv);
+	assert(primRec.frame == FrameCategory::WORLD);
+	auto sampledColor = color->sample(primRec.uv);
 	Lambertian lambertian(sampledColor);
-	return hitRecord.localToModel *
+	return primRec.getCurrentFrame() *
 		   lambertian.sampleDirectionWithPdf(uSample, {0, 0, 1}, pdf);	// dummy wi
 }
-float MatteMaterial::getPdf(const HitRecord& hitRecord, const Vector3f& wo) const
+float MatteMaterial::getPdf(const HitRecord& primRec, const Vector3f& wo) const
 {
-	auto sampledColor = color->sample(hitRecord.uv);
+	assert(primRec.frame == FrameCategory::WORLD);
+	auto sampledColor = color->sample(primRec.uv);
 	Lambertian lambertian(sampledColor);
-	return lambertian.getPdf(hitRecord.modelToLocal * wo);
+	return lambertian.getPdf(primRec.getCurrentFrame() * wo);
 }

@@ -58,7 +58,7 @@ public:
 	virtual ColorRGB sampleRadiance(const Vector2f& uSample,
 									const HitRecord& primRec,
 									HitRecord& shadowRec,
-									Vector3f& wi) = 0;
+									Vector3f& wi) const = 0;
 	/**
 	 * \brief sample a direction and return the radiance emitted in that direction. Pdf is also
 	 * returned.
@@ -74,7 +74,7 @@ public:
 										   const HitRecord& primRec,
 										   HitRecord& shadowRec,
 										   Vector3f& wi,
-										   float& pdf) = 0;
+										   float& pdf) const = 0;
 	virtual bool isDelta() const = 0;
 	virtual float getPdf(const HitRecord& primRec, const Vector3f& wo) const = 0;
 
@@ -98,12 +98,12 @@ public:
 	ColorRGB sampleRadiance(const Vector2f& uSample,
 							const HitRecord& primRec,
 							HitRecord& shadowRec,
-							Vector3f& wi) override;
+							Vector3f& wi) const override;
 	ColorRGB sampleRadianceWithPdf(const Vector2f& uSample,
 								   const HitRecord& primRec,
 								   HitRecord& shadowRec,
 								   Vector3f& wi,
-								   float& pdf) override;
+								   float& pdf) const override;
 	bool isDelta() const override { return true; }
 	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
 
@@ -122,12 +122,12 @@ public:
 	ColorRGB sampleRadiance(const Vector2f& uSample,
 							const HitRecord& primRec,
 							HitRecord& shadowRec,
-							Vector3f& wi) override;
+							Vector3f& wi) const override;
 	ColorRGB sampleRadianceWithPdf(const Vector2f& uSample,
 								   const HitRecord& primRec,
 								   HitRecord& shadowRec,
 								   Vector3f& wi,
-								   float& pdf) override;
+								   float& pdf) const override;
 	bool isDelta() const override;
 	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
 	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,

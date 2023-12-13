@@ -13,14 +13,14 @@ public:
 	Primitive(const std::shared_ptr<Model>& model, const std::shared_ptr<Material>& material);
 	Primitive(const std::shared_ptr<Model>& model,
 			  const std::shared_ptr<Material>& material,
-			  const Transform& localToWorld);
+			  const Transform& modelToWorld);
 	std::shared_ptr<Model> getModel() const { return model; }
 	std::shared_ptr<Material> getMaterial() const { return material; }
 	bool hit(const Ray& ray, HitRecord& rec) const override;
 	float getArea() const override;
 	AABB getAABB() const override;
-	Transform getLocalToWorld() const { return modelToWorld; }
-	Transform getWorldToLocal() const { return worldToModel; }
+	Transform getModelToWorld() const { return modelToWorld; }
+	Transform getWorldToModel() const { return worldToModel; }
 
 protected:
 	std::shared_ptr<Model> model;

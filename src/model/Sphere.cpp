@@ -2,34 +2,62 @@
 // Created by Frank on 2023/8/19.
 //
 #include "AABB.h"
+#include "FloatWithError.h"
 #include "MathUtil.h"
 #include "Model.h"
 #include "Triangle.h"
 using namespace xd;
 
-Sphere::Sphere(const Vector3f& center, double radius)
-	: center(center), radius(radius), radiusInv(1.f / radius)
-{
-}
+Sphere::Sphere(double radius) : radius(radius), radiusInv(1.f / radius) {}
 
 bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 {
-	const Vector3f co = ray.o - center;
-	const float a = 1.f;
-	const float b = 2.f * ray.d.dot(co);
-	const float c = co.squaredNorm() - radius * radius;
-	float t1, t2;
-	const auto count = solveQuadraticReal(a, b, c, t1, t2);
-	float resT = 0.f;
+	const FloatWithError r{radius};
+	const FloatWithError ox{ray.o.x()}, oy{ray.o.y()}, oz{ray.o.z()};
+	const FloatWithError dx{ray.d.x()}, dy{ray.d.y()}, dz{ray.d.z()};
+	const FloatWithError a{1.f};
+	// const float b = 2.f * ray.d.dot(co);
+	const FloatWithError b = 2.f * (dx * ox + dy * oy + dz * oz);
+	// const float c = co.squaredNorm() - radius * radius;
+	const FloatWithError c = sqr(ox) + sqr(oy) + sqr(oz) - r * r;
+
+	FloatWithError t1, t2;
+	FloatWithError resT{};
 	bool hit = false;
+#if 1
+	// specialized method for solving sphere-ray intersection
+	const FloatWithError vx{ox - b / (2.f * a) * dx}, vy{oy - b / (2.f * a) * dy},
+		vz{oz - b / (2.f * a) * dz};
+	const FloatWithError vLen = sqrt(sqr(vx) + sqr(vy) + sqr(vz));
+	const FloatWithError determine = 4.f * a * (r + vLen) * (r - vLen);
+	if (determine.low < 0)
+		return false;
+	const FloatWithError determineSqrt = sqrt(determine);
+	FloatWithError q;
+	if (b < 0) {
+		q = -0.5f * (b - determineSqrt);
+	}
+	else
+		q = -0.5f * (b + determineSqrt);
+	t1 = c / q;
+	t2 = q / a;
+	if (t2 < t1)
+		std::swap(t1, t2);
+	constexpr float tMin = 1e-2f;
+	if (t1 > tMin && t1 < rec.tHit) {
+		hit = true;
+		resT = t1;
+	}
+	else if (t2 > tMin && t2 < rec.tHit) {
+		hit = true;
+		resT = t2;
+	}
+#else
+	// const auto count = solveQuadraticReal(a, b, c, t1, t2);
+	const auto count = solveQuadraticRealWithError(a, b, c, t1, t2);
+
 	if (count == 0)
 		return false;
-	else if (count == 1) {
-		if (t1 > 0 && t1 < rec.tHit) {
-			hit = true;
-			resT = t1;
-		}
-	}
 	else {
 		if (t1 > 0 && t1 < rec.tHit) {
 			hit = true;
@@ -40,25 +68,41 @@ bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 			resT = t2;
 		}
 	}
+#endif
 	if (hit) {
+		if (resT < 1e-5f)
+			return false;
+		rec.frame = FrameCategory::MODEL;
 		rec.tHit = resT;
-		rec.p = ray.getTPoint(resT);
-		const Vector3f hitPoint = ray.getTPoint(rec.tHit);
-		std::tie(rec.dpdu, rec.dpdv, rec.n) = generateDifferentials(hitPoint);
-		rec.uv = generateUV(hitPoint);
+#if 0
+		// handle rounding errors in specialized approach
+		const Vector3f n = (rec.p - center).normalized();
+		rec.p = n * radius + center;
+		rec.pError = floatingGamma<5>() * rec.p;
+
+		Vector3f debug{0, 0, 0};
+		ray.getTPoint(resT, debug);
+#else
+		// handle rouding errors in common approach using Ray::getTPoint
+		Vector3f pError{0, 0, 0};
+		rec.p = ray.getTPoint(resT, pError);
+		rec.pError = pError;
+#endif
+
+		std::tie(rec.dpdu, rec.dpdv, rec.n) = generateDifferentials(rec.p);
+		rec.uv = generateUV(rec.p);
 	}
 	return hit;
 }
 std::tuple<Vector3f, Vector3f, Vector3f> Sphere::generateDifferentials(const Vector3f& point) const
 {
-	const Vector3f cp = point - center;
-	const float cosPhi = cp.x() * radiusInv;
-	const float sinPhi = cp.y() * radiusInv;
-	const float cosTheta = cp.z() * radiusInv;
+	const float cosPhi = point.x() * radiusInv;
+	const float sinPhi = point.y() * radiusInv;
+	const float cosTheta = point.z() * radiusInv;
 	const float sinTheta = std::sqrtf(1 - cosTheta * cosTheta);
-	const Vector3f dpdu = Vector3f{-cp.y(), cp.x(), 0} * 2.f * PI;
-	const Vector3f dpdv = Vector3f{cp.z() * cosPhi, cp.z() * sinPhi, -radius * sinTheta} * PI;
-	const Vector3f n = cp.normalized();
+	const Vector3f dpdu = Vector3f{-point.y(), point.x(), 0} * 2.f * PI;
+	const Vector3f dpdv = Vector3f{point.z() * cosPhi, point.z() * sinPhi, -radius * sinTheta} * PI;
+	const Vector3f n = point.normalized();
 	return {dpdu, dpdv, n};
 }
 Vector2f Sphere::generateUV(const Vector3f& point) const
@@ -68,11 +112,10 @@ Vector2f Sphere::generateUV(const Vector3f& point) const
 }
 std::pair<float, float> Sphere::getThetaPhi(const Vector3f& point) const
 {
-	const Vector3f cp = point - center;
-	float phi = std::atan2(cp.y(), cp.x());
+	float phi = std::atan2(point.y(), point.x());
 	if (phi < 0)
 		phi = TWO_PI + phi;
-	const float theta = std::acos(cp.z() / radius);
+	const float theta = std::acos(point.z() / radius);
 	return {theta, phi};
 }
 float Sphere::getArea() const
@@ -82,7 +125,7 @@ float Sphere::getArea() const
 AABB Sphere::getAABB() const
 {
 	const Vector3f offset{radius, radius, radius};
-	return {center - offset, center + offset};
+	return {-offset, offset};
 }
 
 std::shared_ptr<TriangleMesh> Sphere::triangulate() const
@@ -121,19 +164,18 @@ std::shared_ptr<TriangleMesh> Sphere::triangulate() const
 	// generate per-vertex data
 	{
 		const Vector3f sphereTopDir{0, 0, 1};
-		setVertex(center + radius * Vector3f{0, 0, 1}, sphereTopDir, getSphereUV(sphereTopDir));
+		setVertex(radius * Vector3f{0, 0, 1}, sphereTopDir, getSphereUV(sphereTopDir));
 	}
 	for (auto theta = thetaInterval; theta < PI; theta += thetaInterval) {
 		for (auto phi = 0.f; phi < TWO_PI; phi += phiInterval) {
 			const auto sphereDir = getSphereDirFromThetaPhi(phi, theta);
-			setVertex(center + radius * sphereDir, sphereDir,
+			setVertex(radius * sphereDir, sphereDir,
 					  {std::clamp(phi / TWO_PI, 0.f, 1.f), std::clamp(theta / PI, 0.f, 1.f)});
 		}
 	}
 	{
 		const Vector3f sphereBottomDir{0, 0, 1};
-		setVertex(center - radius * Vector3f{0, 0, 1}, sphereBottomDir,
-				  getSphereUV(sphereBottomDir));
+		setVertex(-radius * Vector3f{0, 0, 1}, sphereBottomDir, getSphereUV(sphereBottomDir));
 	}
 	positions.shrink_to_fit();
 	uvs.shrink_to_fit();

@@ -35,6 +35,9 @@ using VectorNi = typename VecNameHelper<int, N>::Type;
 using Transform = Eigen::Transform<float, 3, 1, 0>;
 typedef Vector4f ColorRGBA;
 typedef Vector3f ColorRGB;
+
+class FloatWithError;
+
 constexpr float PI = 3.14159265f;
 constexpr float TWO_PI = 2 * PI;
 constexpr float INV_PI = 1.f / PI;

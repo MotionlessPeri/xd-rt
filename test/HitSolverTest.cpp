@@ -25,9 +25,10 @@ TEST(HitSolverTestSuite, EmbreeBuildTest)
 		const Vector3f center{dis.sample() * HALF_WIDTH * 2 - HALF_WIDTH,
 							  dis.sample() * HALF_WIDTH * 2 - HALF_WIDTH,
 							  dis.sample() * HALF_WIDTH * 2 - HALF_WIDTH};
-		const auto model = std::make_shared<Sphere>(center, radius);
+		const Transform transform{Eigen::Translation3f{center}};
+		const auto model = std::make_shared<Sphere>(radius);
 		const auto material = std::make_shared<PerfectReflectionMaterial>();
-		const auto prim = std::make_shared<Primitive>(model, material);
+		const auto prim = std::make_shared<Primitive>(model, material, transform);
 		sb.addPrimitive(prim);
 	}
 	EXPECT_NO_THROW(EmbreeHitSolver(sb.build()););
@@ -39,9 +40,7 @@ TEST(HitSolverTestSuite, ConsistencyTest1)
 {
 	const float radius = 400.f;
 	SceneBuilder sceneBuilder;
-	const Vector3f origin{0, 0, 0};
-	const ColorRGB white{1, 1, 1};
-	const auto sphere = std::make_shared<Sphere>(origin, radius);
+	const auto sphere = std::make_shared<Sphere>(radius);
 	const auto triangulated = sphere->getTriangulatedMesh();
 	const auto matte = std::make_shared<MatteMaterial>(Vector3f{1, 1, 1});
 	// const auto primitive = std::make_shared<Primitive>(sphere, matte);
@@ -87,9 +86,8 @@ TEST(HitSolverTestSuite, ConsistencyTest2)
 
 	const float radius = 400.f;
 	SceneBuilder sceneBuilder;
-	const Vector3f origin{0, 0, 0};
 	const ColorRGB white{1, 1, 1};
-	const auto sphere = std::make_shared<Sphere>(origin, radius);
+	const auto sphere = std::make_shared<Sphere>(radius);
 	const auto triangulated = sphere->getTriangulatedMesh();
 	const auto matte = std::make_shared<MatteMaterial>(Vector3f{1, 1, 1});
 	// const auto primitive = std::make_shared<Primitive>(sphere, matte);
@@ -147,9 +145,7 @@ TEST(HitSolverTestSuite, ConsistencyTest3)
 {
 	const float radius = 400.f;
 	SceneBuilder sceneBuilder;
-	const Vector3f origin{0, 0, 0};
-	const ColorRGB white{1, 1, 1};
-	const auto sphere = std::make_shared<Sphere>(origin, radius);
+	const auto sphere = std::make_shared<Sphere>(radius);
 	const auto triangulated = sphere->getTriangulatedMesh();
 	const auto matte = std::make_shared<MatteMaterial>(Vector3f{1, 1, 1});
 	const auto primitive = std::make_shared<Primitive>(sphere, matte);

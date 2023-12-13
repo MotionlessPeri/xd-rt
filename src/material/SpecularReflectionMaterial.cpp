@@ -14,8 +14,9 @@ ColorRGB PerfectReflectionMaterial::getBRDF(const HitRecord& primRec,
 											const Vector3f& wo,
 											const Vector3f& wi) const
 {
-	return brdf->getBRDF((primRec.modelToLocal * wo).normalized(),
-						 (primRec.modelToLocal * wi).normalized());
+	assert(primRec.frame == FrameCategory::WORLD);
+	const auto worldToLocal = primRec.getCurrentFrame().inverse();
+	return brdf->getBRDF((worldToLocal * wo).normalized(), (worldToLocal * wi).normalized());
 }
 
 ColorRGB PerfectReflectionMaterial::sampleBRDF(const Vector2f& uSample,
@@ -23,8 +24,11 @@ ColorRGB PerfectReflectionMaterial::sampleBRDF(const Vector2f& uSample,
 											   const Vector3f& wo,
 											   Vector3f& wi)
 {
-	auto ret = brdf->sampleBRDF(uSample, (primRec.modelToLocal * wo).normalized(), wi);
-	wi = primRec.localToModel * wi;
+	assert(primRec.frame == FrameCategory::WORLD);
+	const auto localToWorld = primRec.getCurrentFrame();
+	const auto worldToLocal = localToWorld.inverse();
+	auto ret = brdf->sampleBRDF(uSample, (worldToLocal * wo).normalized(), wi);
+	wi = localToWorld * wi;
 	wi.normalize();
 	return ret;
 }
@@ -35,29 +39,38 @@ ColorRGB PerfectReflectionMaterial::sampleBRDFWithPdf(const Vector2f& uSample,
 													  Vector3f& wi,
 													  float& pdf)
 {
-	auto ret = brdf->sampleBRDF(uSample, primRec.modelToLocal * wo, wi);
-	wi = primRec.localToModel * wi;
+	assert(primRec.frame == FrameCategory::WORLD);
+	const auto localToWorld = primRec.getCurrentFrame();
+	const auto worldToLocal = localToWorld.inverse();
+	auto ret = brdf->sampleBRDFWithPdf(uSample, worldToLocal * wo, wi, pdf);
+	wi = localToWorld * wi;
 	wi.normalize();
 	return ret;
 }
 
 Vector3f PerfectReflectionMaterial::sampleDirection(const Vector2f& uSample,
-													const Vector3f& wo,
-													const HitRecord& hitRecord) const
+													const HitRecord& primRec,
+													const Vector3f& wo) const
 {
-	return (hitRecord.localToModel * brdf->sampleDirection(uSample, hitRecord.modelToLocal * wo))
-		.normalized();
+	assert(primRec.frame == FrameCategory::WORLD);
+	const auto localToWorld = primRec.getCurrentFrame();
+	const auto worldToLocal = localToWorld.inverse();
+	return (localToWorld * brdf->sampleDirection(uSample, worldToLocal * wo)).normalized();
 }
+
 Vector3f PerfectReflectionMaterial::sampleDirectionWithPdf(const Vector2f& uSample,
+														   const HitRecord& primRec,
 														   const Vector3f& wo,
-														   const HitRecord& hitRecord,
 														   float& pdf) const
 {
-	return (hitRecord.localToModel *
-			brdf->sampleDirectionWithPdf(uSample, hitRecord.modelToLocal * wo, pdf))
+	assert(primRec.frame == FrameCategory::WORLD);
+	const auto localToWorld = primRec.getCurrentFrame();
+	const auto worldToLocal = localToWorld.inverse();
+	return (localToWorld * brdf->sampleDirectionWithPdf(uSample, worldToLocal * wo, pdf))
 		.normalized();
 }
-float PerfectReflectionMaterial::getPdf(const HitRecord& hitRecord, const Vector3f& wo) const
+
+float PerfectReflectionMaterial::getPdf(const HitRecord& primRec, const Vector3f& wo) const
 {
 	return brdf->getPdf(wo);
 }

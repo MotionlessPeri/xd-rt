@@ -17,40 +17,60 @@ ColorRGB EstimateDirect(const Ray& primRay,
 						const Scene& scene)
 {
 	ColorRGB Li{0, 0, 0};
-	HitRecord shadowRec;
-	float lightPdf, bsdfPdf;
 
 	const auto& material = primRec.primitive->getMaterial();
-	const auto calLi = [&](const Vector3f& shadowRayDir) -> Vector3f {
-		const Ray shadowRay{primRec.p, shadowRayDir};
-		if (!scene.hitAnything(shadowRay, shadowRec)) {
-			const float cosTheta = std::clamp(primRec.n.dot(shadowRay.d), 0.f, 1.f);
-			const ColorRGB projectedRadiance = light.getRadiance(primRec, shadowRayDir) * cosTheta;
-			const Vector3f brdf = material->getBRDF(primRec, -primRay.d, shadowRay.d);
-			return projectedRadiance.cwiseProduct(brdf);
-		}
-		else
-			return {0, 0, 0};
-	};
-	const auto lightWi = light.sampleDirectionWithPdf(uLight, primRec, shadowRec, lightPdf);
-	Vector3f lightLi = calLi(lightWi);
-	if (!light.isDelta()) {
-		bsdfPdf = material->getPdf(primRec, lightWi);
-		const auto lightWeight = powerHeuristic(1, lightPdf, 1, bsdfPdf);
-		Li += lightLi * lightWeight / lightPdf;
-		// sample bsdf
-		shadowRec = {};
-		const auto bsdfWi = material->sampleDirectionWithPdf(uBxdf, -primRay.d, primRec, bsdfPdf);
-		constexpr float eps = 1e-5f;
-		if (bsdfWi.cwiseGreater(eps).any()) {
-			Vector3f bsdfLi = calLi(bsdfWi);
-			lightPdf = light.getPdf(primRec, bsdfWi);
-			const auto bsdfWeight = powerHeuristic(1, bsdfPdf, 1, lightPdf);
-			Li += bsdfLi * bsdfWeight / bsdfPdf;
+	// sample from light's direction
+	{
+		Vector3f lightWi;
+		float lightPdf;
+		HitRecord shadowRec;
+		const auto lightRadiance =
+			light.sampleRadianceWithPdf(uLight, primRec, shadowRec, lightWi, lightPdf);
+		if (!isBlack(lightRadiance) && lightPdf > 0) {
+			const auto shadowRay = primRec.spawnRay(lightWi);
+			if (!scene.hitAnything(shadowRay, shadowRec)) {
+				const float cosTheta = std::clamp(primRec.n.dot(shadowRay.d), 0.f, 1.f);
+				const ColorRGB projectedRadiance = lightRadiance * cosTheta;
+				const ColorRGB bsdf = material->getBRDF(primRec, -primRay.d, shadowRay.d);
+				const auto bsdfPdf = material->getPdf(primRec, lightWi);
+				if (!isBlack(bsdf)) {
+					if (light.isDelta()) {
+						Li += projectedRadiance.cwiseProduct(bsdf) / lightPdf;
+					}
+					else {
+						const auto weight = powerHeuristic(1, lightPdf, 1, bsdfPdf);
+						Li += projectedRadiance.cwiseProduct(bsdf) * weight / lightPdf;
+					}
+				}
+			}
 		}
 	}
-	else
-		Li += lightLi / lightPdf;
+
+	// sample from bsdf's direction
+	if (!light.isDelta()) {
+		Vector3f bsdfWi;
+		float bsdfPdf;
+		const auto bsdf = material->sampleBRDFWithPdf(uBxdf, primRec, -primRay.d, bsdfWi, bsdfPdf);
+		if (!isBlack(bsdf) && bsdfPdf > 0) {
+			const auto shadowRay = primRec.spawnRay(bsdfWi);
+			HitRecord shadowRec;
+			if (scene.hitAnything(shadowRay, shadowRec)) {
+				// TODO: handle area light
+			}
+			else {
+				// dome light goes here
+				const auto* dome = dynamic_cast<const DomeLight*>(&light);
+				if (dome != nullptr) {
+					const auto lightRadiance = dome->getRadiance(primRec, bsdfWi);
+					const auto lightPdf = dome->getPdf(primRec, bsdfWi);
+					const float cosTheta = std::clamp(primRec.n.dot(shadowRay.d), 0.f, 1.f);
+					const ColorRGB projectedRadiance = lightRadiance * cosTheta;
+					const auto weight = powerHeuristic(1, bsdfPdf, 1, lightPdf);
+					Li += projectedRadiance.cwiseProduct(bsdf) * weight / bsdfPdf;
+				}
+			}
+		}
+	}
 	return Li;
 }
 }  // namespace xd

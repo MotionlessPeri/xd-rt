@@ -2,20 +2,20 @@
 // Created by Frank on 2023/8/31.
 //
 
-#include "gtest/gtest.h"
-
 #include <oneapi/tbb.h>
 #include <thread>
 #include "Camera.h"
 #include "Film.h"
 #include "Integrator.h"
 #include "Light.h"
+#include "Macros.h"
 #include "Material.h"
 #include "Model.h"
 #include "Primitive.h"
 #include "Scene.h"
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
+#include "gtest/gtest.h"
 #include "sampler/SimpleSampler.h"
 #include "texture/TextureFactory.h"
 using namespace xd;
@@ -23,13 +23,15 @@ TEST(MaterialTestSuite, LambertianTest)
 {
 	const Vector3f origin{0, 0, 0};
 	const float radius = 200.f;
-	auto redSphere = std::make_shared<Sphere>(Vector3f{-200, 0, 0}, radius);
-	auto greenSphere = std::make_shared<Sphere>(Vector3f{200, 0, 0}, radius);
+	auto redSphere = std::make_shared<Sphere>(radius);
+	auto greenSphere = std::make_shared<Sphere>(radius);
 	auto redMatte = std::make_shared<MatteMaterial>(Vector3f{1, 0, 0});
 	auto greenMatte = std::make_shared<MatteMaterial>(Vector3f{0, 1, 0});
 	auto whiteMatte = std::make_shared<MatteMaterial>(Vector3f{1, 1, 1});
-	auto prim1 = std::make_shared<Primitive>(redSphere, redMatte);
-	auto prim2 = std::make_shared<Primitive>(greenSphere, whiteMatte);
+	auto prim1 = std::make_shared<Primitive>(redSphere, redMatte,
+											 Transform{Eigen::Translation3f{-200, 0, 0}});
+	auto prim2 = std::make_shared<Primitive>(greenSphere, whiteMatte,
+											 Transform{Eigen::Translation3f{200, 0, 0}});
 
 	SceneBuilder sceneBuilder;
 	sceneBuilder.addPrimitive(prim1);
@@ -39,7 +41,7 @@ TEST(MaterialTestSuite, LambertianTest)
 
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 800u;
-	const Vector3f center{0, 0, -radius};
+	const Vector3f center{0, 0, -radius - 10.f};
 	const Vector3f right{500, 0, 0};
 	const Vector3f up{0, 400, 0};
 
@@ -57,9 +59,12 @@ TEST(MaterialTestSuite, LambertianTest)
 												up.norm(), width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(1);
-	PathIntegrator integrator{sampler, 5};
+	auto sampler = std::make_shared<SimpleSampler>(5);
+
+	PathIntegrator integrator{sampler, 8};
 	// DebugIntegrator integrator;
+	// integrator.setDebugChannel(DebugChannel::SHADOW_HIT);
+	// integrator.setLightIndex(1);
 	integrator.setCamera(cam);
 	auto scene = sceneBuilder.build();
 	integrator.render(*scene);
@@ -72,14 +77,16 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 {
 	const Vector3f origin{0, 0, 0};
 	const float radius = 200.f;
-	auto redSphere = std::make_shared<Sphere>(Vector3f{-200, 0, 0}, radius);
-	auto greenSphere = std::make_shared<Sphere>(Vector3f{200, 0, 0}, radius);
+	auto redSphere = std::make_shared<Sphere>(radius);
+	auto greenSphere = std::make_shared<Sphere>(radius);
 	auto redMatte = std::make_shared<MatteMaterial>(Vector3f{1, 0, 0});
 	auto greenMatte = std::make_shared<MatteMaterial>(Vector3f{0, 1, 0});
 	auto whiteMatte = std::make_shared<MatteMaterial>(Vector3f{1, 1, 1});
 	const auto spec = std::make_shared<PerfectReflectionMaterial>();
-	auto prim1 = std::make_shared<Primitive>(redSphere, whiteMatte);
-	auto prim2 = std::make_shared<Primitive>(greenSphere, spec);
+	auto prim1 = std::make_shared<Primitive>(redSphere, whiteMatte,
+											 Transform{Eigen::Translation3f{-200, 0, 0}});
+	auto prim2 =
+		std::make_shared<Primitive>(greenSphere, spec, Transform{Eigen::Translation3f{200, 0, 0}});
 
 	const float extent = 1000.f;
 	const float y = -200;
@@ -131,24 +138,21 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 }
 
 #include "MathType.h"
-#include "sampler/DebugSampler.h"
 TEST(MaterialTestSuite, LambertianWithImageTest)
 {
-	const float radius = 400.f;
+	const float radius = 1.f;
 	SceneBuilder sceneBuilder;
-	const Vector3f origin{0, 0, 0};
-	const ColorRGB white = ColorRGB{1, 1, 1} * PI;
-	auto sphere = std::make_shared<Sphere>(origin, radius);
+	auto sphere = std::make_shared<Sphere>(radius);
 	auto diffuse = TextureFactory::loadUVTextureRGB(R"(D:\uv_checker.jpg)");
 	auto matte = std::make_shared<MatteMaterial>(diffuse);
 	auto spec = std::make_shared<PerfectReflectionMaterial>();
 	auto primitive = std::make_shared<Primitive>(sphere, matte);
 	sceneBuilder.addPrimitive(primitive);
 
-	sceneBuilder.setHitSolverType(HitSolverType::EMBREE);
+	sceneBuilder.setHitSolverType(HitSolverType::NAIVE);
 
-	constexpr uint32_t width = 1000u;
-	constexpr uint32_t height = 1000u;
+	constexpr uint32_t width = 500u;
+	constexpr uint32_t height = 500u;
 	const Vector3f center = Vector3f{0, 1.7, 0} * radius;
 	const Vector3f z{0, 0, 1};
 	const Vector3f target{0, 0, 0};
@@ -162,14 +166,22 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 	sceneBuilder.addEnvironment(domeLight);
 
 	const auto verticalFov = toRadians(90.f);
+#if 1
 	auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
 												width, height);
+#else
+	Vector2i topLeft{194, 340};
+	Vector2i bottomRight{244, 365};
+	auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
+												width, height, topLeft, bottomRight);
+#endif
 	// auto cam =
 	//	CameraFactory::createOrthoCamera(center, target, up.normalized(), 500, 500, width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(5);
+	auto sampler = std::make_shared<SimpleSampler>(10);
 
+#if 1
 	{
 		film->clear();
 		MIDirectIntegrator integrator{sampler};
@@ -180,13 +192,28 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 		const std::string hdrPath = R"(D:\matte_with_texture_test_mi_direct.hdr)";
 		EXPECT_NO_THROW(film->saveToFile(hdrPath););
 	}
+#else
 	{
 		film->clear();
-		PathIntegrator integrator{sampler, 1};
+		DebugIntegrator integrator;
+		integrator.setDebugChannel(DebugChannel::TEMP);
+		integrator.setLightIndex(0);
 		integrator.setCamera(cam);
 		const auto scene = sceneBuilder.build();
 		integrator.render(*scene);
-		const std::string hdrPath = R"(D:\matte_with_texture_test_path.hdr)";
+
+		const std::string hdrPath = R"(D:\matte_with_texture_test_mtl_sample_debug.hdr)";
 		EXPECT_NO_THROW(film->saveToFile(hdrPath););
 	}
+#endif
+
+	//{
+	//	film->clear();
+	//	PathIntegrator integrator{sampler, 1};
+	//	integrator.setCamera(cam);
+	//	const auto scene = sceneBuilder.build();
+	//	integrator.render(*scene);
+	//	const std::string hdrPath = R"(D:\matte_with_texture_test_path.hdr)";
+	//	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+	//}
 }

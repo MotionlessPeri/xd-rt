@@ -6,9 +6,10 @@
 #define XD_RT_HITRECORD_H
 
 #include "CoreTypes.h"
+#include "Enums.h"
 #include "MathType.h"
 #include "MathUtil.h"
-
+#include "Ray.h"
 namespace xd {
 struct HitRecord {
 public:
@@ -21,7 +22,6 @@ public:
 		: tHit(t_hit), p(p), uv(uv), n(n), primitive(primitive)
 	{
 		std::tie(dpdu, dpdv) = coordSystem(n);
-		buildFrames();
 	}
 
 	HitRecord(float t_hit,
@@ -33,7 +33,6 @@ public:
 			  const std::shared_ptr<const Primitive>& primitive)
 		: tHit(t_hit), p(p), uv(uv), n(n), dpdu(dpdu), dpdv(dpdv), primitive(primitive)
 	{
-		buildFrames();
 	}
 
 	HitRecord() = default;
@@ -41,15 +40,25 @@ public:
 	HitRecord(HitRecord&& other) noexcept = default;
 	HitRecord& operator=(const HitRecord& other) = default;
 	HitRecord& operator=(HitRecord&& other) noexcept = default;
-	void buildFrames()
+
+	Matrix3f getCurrentFrame() const
 	{
+		Matrix3f res;
 		const Vector3f tx = dpdu.normalized();
 		const Vector3f ty = n.cross(dpdu.normalized());
-		localToModel << tx, ty, n;
-		modelToLocal = localToModel.inverse();
+		res << tx, ty, n;
+		return res;
 	}
+	/**
+	 * \brief spawn a new ray according to direction w, pError is considered to offset ray origin
+	 * \param w the new ray direction in world frame
+	 * \return the new ray
+	 */
+	Ray spawnRay(const Vector3f& w) const { return {offsetRayOrigin(p, pError, n, w), w}; }
+	FrameCategory frame = FrameCategory::MODEL;
 	float tHit = FLT_MAX;
 	Vector3f p;
+	Vector3f pError{0, 0, 0};
 	// param representation
 	Vector2f uv;
 	// local frame
@@ -57,8 +66,6 @@ public:
 	Vector3f dpdu;
 	Vector3f dpdv;
 	std::shared_ptr<const Primitive> primitive = nullptr;
-	Matrix3f localToModel;
-	Matrix3f modelToLocal;
 
 protected:
 };

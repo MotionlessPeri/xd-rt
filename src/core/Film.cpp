@@ -21,7 +21,31 @@ Film::Film(const Vector3f& center,
 	  resolution(width, height),
 	  towards(normedUp.cross(normedRight)),
 	  pixelExtent(right.norm() * 2 / resolution.x(), up.norm() * 2 / resolution.y()),
-	  pixels(width * height)
+	  pixels(width * height),
+	  croppedTopLeft(0, 0),
+	  croppedBottomRight(width - 1, height - 1)
+{
+}
+
+Film::Film(const Vector3f& center,
+		   const Vector3f& right,
+		   const Vector3f& up,
+		   uint32_t width,
+		   uint32_t height,
+		   const Vector2i& croppedTopLeft,
+		   const Vector2i& croppedBottomRight)
+	: center(center),
+	  right(right),
+	  normedRight(right.normalized()),
+	  up(up),
+	  normedUp(up.normalized()),
+	  resolution(width, height),
+	  towards(normedUp.cross(normedRight)),
+	  pixelExtent(right.norm() * 2 / resolution.x(), up.norm() * 2 / resolution.y()),
+	  pixels(width * height),
+	  croppedTopLeft(std::max(0, croppedTopLeft.x()), std::max(0, croppedTopLeft.y())),
+	  croppedBottomRight(std::min<int>(width - 1, croppedBottomRight.x()),
+						 std::min<int>(height - 1, croppedBottomRight.y()))
 {
 }
 
@@ -94,7 +118,13 @@ FilmTile::FilmTile(const Vector2i& topLeft, const Vector2i& bottomRight)
 std::unique_ptr<FilmTile> Film::getTile(const Vector2i& topLeft, const Vector2i& bottomRight) const
 {
 	// TODO: add filter
-	return std::make_unique<FilmTile>(topLeft, bottomRight);
+	const Vector2i tileTopLeft{std::max<int>(croppedTopLeft.x(), topLeft.x()),
+							   std::max<int>(croppedTopLeft.y(), topLeft.y())};
+	const Vector2i tileBottomRight{std::min<int>(croppedBottomRight.x(), bottomRight.x()),
+								   std::min<int>(croppedBottomRight.y(), bottomRight.y())};
+	if (tileTopLeft.cwiseGreater(tileBottomRight).any())
+		return nullptr;
+	return std::make_unique<FilmTile>(tileTopLeft, tileBottomRight);
 }
 void Film::mergeTileToFilm(std::unique_ptr<FilmTile> tile)
 {

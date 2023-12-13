@@ -12,6 +12,11 @@
 namespace xd {
 class FloatWithError {
 public:
+	inline static FloatWithError fromFloatError(float f, float err)
+	{
+		err = std::fabs(err);
+		return {f - err, f + err};
+	}
 	FloatWithError() = default;
 	FloatWithError(const FloatWithError& other) = default;
 	FloatWithError(FloatWithError&& other) noexcept = default;
@@ -147,9 +152,27 @@ public:
 		else
 			return {0.f, std::max(-op.low, op.high)};
 	}
-
-protected:
 	float low, high;
 };
+
+inline uint32_t solveQuadraticRealWithError(const FloatWithError& a,
+											const FloatWithError& b,
+											const FloatWithError& c,
+											FloatWithError& x1,
+											FloatWithError& x2)
+{
+	const auto delta = b * b - 4.f * a * c;
+	constexpr float eps = 1e-6;
+	if (delta.low < 0.f) {
+		return 0;
+	}
+	else {
+		x1 = (-b + sqrt(delta)) / (2.f * a);
+		x2 = (-b - sqrt(delta)) / (2.f * a);
+		if (x1 > x2)
+			std::swap(x1, x2);
+		return 2;
+	}
+}
 }  // namespace xd
 #endif	// XD_RT_FLOATWITHERROR_H

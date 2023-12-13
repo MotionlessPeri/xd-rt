@@ -5,6 +5,7 @@
 #include "Film.h"
 #include "Integrator.h"
 #include "Light.h"
+#include "Macros.h"
 #include "Primitive.h"
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
@@ -13,7 +14,71 @@
 #include "sampler/SimpleSampler.h"
 #include "texture/TextureFactory.h"
 using namespace xd;
-TEST(PrimitiveTestSuite, InstanceTest)
+TEST(PrimitiveTestSuite, InstanceTest0)
+{
+	constexpr uint32_t width = 100u;
+	constexpr uint32_t height = 100u;
+	const Vector3f center{0, 2, 0};
+	const Vector3f z{0, 0, 1};
+	const Vector3f target{0, 0, 0};
+	const float rightNorm = 2.f;
+	const Vector3f towards = (target - center).normalized();
+	const Vector3f right = towards.cross(z).normalized();
+	const Vector3f up = right.cross(towards);
+
+	const auto sphere = std::make_shared<Sphere>(1.f);
+	const Transform transform{Eigen::Translation3f{0.f, 0.f, 0.f}};
+	const auto prim = std::make_shared<Primitive>(sphere, nullptr, transform);
+	auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), rightNorm,
+												rightNorm / width * height, width, height);
+	auto film = cam->getFilm();
+	auto tile = film->getTile({0, 0}, {width - 1, height - 1});
+
+	EMBREE_SERIAL
+	oneapi::tbb::parallel_for(
+		tbb::blocked_range2d<int, int>{0, width, 0, height},
+		[&](const tbb::blocked_range2d<int, int>& range) {
+			const Vector2i topLeft{range.rows().begin(), range.cols().begin()};
+			const Vector2i bottomRight{range.rows().end() - 1, range.cols().end() - 1};
+			auto tile = film->getTile(topLeft, bottomRight);
+
+			for (const auto& pixel : *tile) {
+				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5, 0.5};
+				const auto primRay = cam->generateRay(pixelSample);
+				HitRecord primRec;
+				if (prim->hit(primRay, primRec)) {
+					const auto shadowRayDir = reflected(-primRay.d, primRec.n);
+					const auto shadowRay = primRec.spawnRay(shadowRayDir);
+					HitRecord shadowRec{};
+					if (!prim->hit(shadowRay, shadowRec)) {
+						tile->addSample({0, 0, 1}, pixelSample);
+					}
+					else {
+						EXPECT_TRUE(false);
+#if 0
+						// bad cases
+						HitRecord debugRec;
+						prim->hit(primRay, debugRec);
+						const auto debugDir = debugRec.n;
+						const auto debugRay = debugRec.spawnRay(debugDir);
+						HitRecord debugShadowRec;
+						prim->hit(debugRay, debugShadowRec);
+						tile->addSample({debugShadowRec.tHit, 1, 0}, pixelSample);
+#endif
+					}
+				}
+				else {
+					tile->addSample({0, 0, 1}, pixelSample);
+				}
+			}
+			film->mergeTileToFilm(std::move(tile));
+		});
+
+	const std::string hdrPath = R"(D:\instance_test_0.hdr)";
+	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+}
+
+TEST(PrimitiveTestSuite, InstanceTest1)
 {
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 600u;
@@ -27,7 +92,7 @@ TEST(PrimitiveTestSuite, InstanceTest)
 
 	const float radius = 200.f;
 	SceneBuilder sb;
-	const auto sphere = std::make_shared<Sphere>(Vector3f{0, 0, 0}, radius);
+	const auto sphere = std::make_shared<Sphere>(radius);
 	Vector3f sphereCenter{-rightNorm + radius, 0, 0};
 	const float rotationAngle = 90.f;
 	const uint32_t sphereCount = uint32_t(360.f / rotationAngle);
@@ -54,7 +119,7 @@ TEST(PrimitiveTestSuite, InstanceTest)
 												rightNorm / width * height, width, height);
 	auto film = cam->getFilm();
 
-	constexpr uint32_t SAMPLE_PER_PIXEL = 400u;
+	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
 	constexpr uint32_t MAX_DEPTH = 8u;
 	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
 	PathIntegrator integrator{sampler, MAX_DEPTH};
@@ -63,7 +128,7 @@ TEST(PrimitiveTestSuite, InstanceTest)
 	integrator.setCamera(cam);
 	integrator.render(*scene);
 
-	const std::string hdrPath = R"(D:\instance_test.hdr)";
+	const std::string hdrPath = R"(D:\instance_test_1.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
@@ -122,22 +187,29 @@ TEST(PrimitiveTestSuite, InstanceTest3)
 {
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 600u;
-	const Vector3f center = Vector3f{0, 1, 0} * 400;
+	const Vector3f center = Vector3f{0, 1, 0} * 2;
 	const Vector3f z{0, 0, 1};
 	const Vector3f target{0, 0, 0};
-	const float rightNorm = 500.f;
+	const float rightNorm = 2.5f;
 	const Vector3f towards = (target - center).normalized();
 	const Vector3f right = towards.cross(z).normalized();
 	const Vector3f up = right.cross(towards);
 
-	const float radius = 200.f;
+	auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), rightNorm,
+												rightNorm / width * height, width, height);
+	auto film = cam->getFilm();
+
+	const float radius = 1.f;
 	SceneBuilder sb;
-	const auto sphere = std::make_shared<Sphere>(Vector3f{0, 0, 0}, radius);
+	const auto sphere = std::make_shared<Sphere>(radius);
 
 	auto diffuse = TextureFactory::loadUVTextureRGB(R"(D:\uv_checker.jpg)");
 	auto matte = std::make_shared<MatteMaterial>(diffuse);
 	auto reflect = std::make_shared<PerfectReflectionMaterial>();
-	Transform transform{Eigen::AngleAxis(toRadians(90.f), Vector3f{0, 0, 1})};
+	Matrix4f rotMat;
+	rotMat << 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1;
+	// Transform transform{Eigen::AngleAxis(toRadians(90.f), Vector3f{0, 0, 1})};
+	Transform transform{rotMat};
 	auto prim = std::make_shared<Primitive>(sphere, reflect, transform);
 	sb.addPrimitive(prim);
 
@@ -147,18 +219,15 @@ TEST(PrimitiveTestSuite, InstanceTest3)
 	sb.setHitSolverType(HitSolverType::NAIVE);
 	const auto scene = sb.build();
 
-	auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), rightNorm,
-												rightNorm / width * height, width, height);
-	auto film = cam->getFilm();
-
 	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
 	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
-	// MIDirectIntegrator integrator{sampler};
-	DebugIntegrator integrator;
-	integrator.setDebugChannel(DebugChannel::BXDF);
+
+	// EMBREE_SERIAL
+	MIDirectIntegrator integrator{sampler};
+	// DebugIntegrator integrator;
+	// integrator.setDebugChannel(DebugChannel::TOTAL_RADIANCE);
 	integrator.setCamera(cam);
 	integrator.render(*scene);
-
 	const std::string hdrPath = R"(D:\instance_test_3.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }

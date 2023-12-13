@@ -100,6 +100,13 @@ public:
 		 const Vector3f& up,
 		 uint32_t width,
 		 uint32_t height);
+	Film(const Vector3f& center,
+		 const Vector3f& right,
+		 const Vector3f& up,
+		 uint32_t width,
+		 uint32_t height,
+		 const Vector2i& croppedTopLeft,
+		 const Vector2i& croppedBottomRight);
 	Film(const Film& other);
 	Film(Film&& other) noexcept;
 	Film& operator=(const Film& other);
@@ -222,6 +229,8 @@ protected:
 	Vector3f towards;
 	Vector2i resolution;
 	Vector2f pixelExtent;  // pixel's extent in world frame
+	Vector2i croppedTopLeft;
+	Vector2i croppedBottomRight;
 	std::mutex imageWriteLock;
 	std::vector<FilmPixel> pixels;
 };

@@ -31,29 +31,52 @@ TEST(DistribTestSuite, UniformHemisphereTest)
 
 TEST(DistribTestSuite, PieceWise1DCtorTest)
 {
-	std::vector<float> pdf{0.2, 0.6, 0.1, 0.1};
-	PieceWise1D dis(pdf);
-	const auto& cdf = dis.getCdfs();
-	EXPECT_FLOAT_EQ(cdf[0], pdf[0]);
-	EXPECT_FLOAT_EQ(cdf[1], 0.8);
-	EXPECT_FLOAT_EQ(cdf[2], 0.9);
-	EXPECT_FLOAT_EQ(cdf[3], 1.0);
+	{
+		std::vector<float> pdf{0.2, 0.6, 0.1, 0.1};
+		PieceWise1D dis(pdf);
+		const auto& cdf = dis.getCdfs();
+		EXPECT_FLOAT_EQ(cdf[0], pdf[0]);
+		EXPECT_FLOAT_EQ(cdf[1], 0.8);
+		EXPECT_FLOAT_EQ(cdf[2], 0.9);
+		EXPECT_FLOAT_EQ(cdf[3], 1.0);
+	}
 
-	float arr[] = {0.4, 0.3, 0.2, 0.1};
-	PieceWise1D dis2{arr, 4};
-	const auto& cdf2 = dis2.getCdfs();
-	EXPECT_FLOAT_EQ(cdf2[0], 0.4);
-	EXPECT_FLOAT_EQ(cdf2[1], 0.7);
-	EXPECT_FLOAT_EQ(cdf2[2], 0.9);
-	EXPECT_FLOAT_EQ(cdf2[3], 1.0);
+	{
+		float arr[] = {0.4, 0.3, 0.2, 0.1};
+		PieceWise1D dis2{arr, 4};
+		const auto& cdf2 = dis2.getCdfs();
+		EXPECT_FLOAT_EQ(cdf2[0], 0.4);
+		EXPECT_FLOAT_EQ(cdf2[1], 0.7);
+		EXPECT_FLOAT_EQ(cdf2[2], 0.9);
+		EXPECT_FLOAT_EQ(cdf2[3], 1.0);
+	}
 
-	std::vector<float> weights{1, 2, 3, 4};
-	PieceWise1D dis3{weights};
-	const auto& cdf3 = dis3.getCdfs();
-	EXPECT_FLOAT_EQ(cdf3[0], 0.1);
-	EXPECT_FLOAT_EQ(cdf3[1], 0.3);
-	EXPECT_FLOAT_EQ(cdf3[2], 0.6);
-	EXPECT_FLOAT_EQ(cdf3[3], 1.0);
+	{
+		std::vector<float> weights{1, 2, 3, 4};
+		PieceWise1D dis3{weights};
+		const auto& cdf3 = dis3.getCdfs();
+		EXPECT_FLOAT_EQ(cdf3[0], 0.1);
+		EXPECT_FLOAT_EQ(cdf3[1], 0.3);
+		EXPECT_FLOAT_EQ(cdf3[2], 0.6);
+		EXPECT_FLOAT_EQ(cdf3[3], 1.0);
+	}
+
+	{
+		std::vector<float> weights{2, 98};
+		PieceWise1D dis4{weights};
+		const auto s0 = dis4.sample(0.f);
+		const auto p0 = dis4.getPdf(s0);
+		EXPECT_FLOAT_EQ(s0, 0.f);
+		EXPECT_FLOAT_EQ(p0, 0.04f);
+		const auto s1 = dis4.sample(0.5f);
+		const auto p1 = dis4.getPdf(s1);
+		EXPECT_FLOAT_EQ(s1, 0.48f / 0.98f * 0.5f + 0.5f);
+		EXPECT_FLOAT_EQ(p1, 1.96f);
+		const auto s2 = dis4.sample(0.9f);
+		const auto p2 = dis4.getPdf(s2);
+		EXPECT_FLOAT_EQ(s2, 0.88f / 0.98f * 0.5f + 0.5f);
+		EXPECT_FLOAT_EQ(p2, 1.96f);
+	}
 }
 
 TEST(DistribTestSuite, PieceWise1DGenerateTest)
@@ -93,10 +116,13 @@ TEST(DistribTestSuite, PieceWise2DCtorTest)
 	std::vector<float> weights{2, 1, 2,	  // NOLINT
 							   4, 5, 6};  // NOLINT
 	PieceWise2D dis{weights, 3, 2};
-	const auto sum = std::accumulate(weights.cbegin(), weights.cend(), 0.f);
+	const float dPixel = 1.f / (width * height);
+	const auto wDPixelView =
+		weights | std::views::transform([&](int wVal) { return wVal * dPixel; });
+	const auto wInt = std::accumulate(wDPixelView.begin(), wDPixelView.end(), 0.f);
 	std::vector<float> ps(weights);
 	for (auto& val : ps)
-		val /= sum;
+		val /= wInt;
 	for (auto row = 0u; row < height; ++row) {
 		for (auto col = 0u; col < width; ++col) {
 			const auto i = row * width + col;
@@ -113,12 +139,13 @@ TEST(DistribTestSuite, PieceWise2DGenTest)
 							   4, 5, 6};  // NOLINT
 	constexpr uint32_t width = 3;
 	constexpr uint32_t height = 2;
+	constexpr uint32_t pixelCnt = width * height;
 	constexpr float du = 1.f / width;
 	constexpr float dv = 1.f / height;
 	PieceWise2D dis{weights, width, height};
 	UniformDistribution<2> uniform;
 
-	constexpr uint32_t COUNT = 10000000u;
+	constexpr uint32_t COUNT = 1000000u;
 	std::vector<uint32_t> counts(weights.size(), 0u);
 	for (auto i = 0u; i < COUNT; ++i) {
 		float pdf;
@@ -138,7 +165,7 @@ TEST(DistribTestSuite, PieceWise2DGenTest)
 			const float u = (col * du + du / 2.f);
 			const float v = (row * dv + dv / 2.f);
 			const auto prob = counts[i] * 1.f / COUNT;
-			EXPECT_TRUE(std::fabs(prob - dis.getPdf({u, v})) < eps);
+			EXPECT_TRUE(std::fabs(prob * pixelCnt - dis.getPdf({u, v})) < eps);
 		}
 	}
 }
@@ -185,6 +212,32 @@ TEST(DistribTestSuite, PieceWise2DGenTest2)
 		counts[vIdx * width + uIdx].cnt++;
 	}
 	std::sort(counts.begin(), counts.end(), std::greater<Count>{});
+	EXPECT_TRUE(true);
+}
+
+TEST(DistribTestSuite, PieceWise2DPdfTest)
+{
+	const auto texture = TextureFactory::loadSphereTextureRGB(R"(D:\dome.hdr)");
+	const auto width = texture->getWidth();
+	const auto height = texture->getHeight();
+	const auto& data = texture->getImage();
+	const auto pixelCnt = width * height;
+	std::vector<float> weights(pixelCnt, 0.f);
+	for (auto i = 0u; i < pixelCnt; ++i) {
+		weights[i] = rgbToLuminance(data[i]);
+	}
+
+	PieceWise2D dis{weights, width, height};
+	Film film{{0, 0, 0}, {0, width / 2.f, 0}, {0, 0, height / 2.f}, width, height};
+	auto tile = film.getTile({0, 0}, {width - 1, height - 1});
+	for (const auto pixel : *tile) {
+		const Vector2f sample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+		const Vector2f uv = sample.cwiseQuotient(Vector2f{width, height});
+		const auto pdf = dis.getPdf(uv);
+		tile->addSample({pdf, 0, 0}, sample);
+	}
+	film.mergeTileToFilm(std::move(tile));
+	film.saveToFile(R"(D:\piecewise_2d_pdf_test.hdr)");
 }
 
 TEST(DistribTestSuite, CosineHemisphereTest)

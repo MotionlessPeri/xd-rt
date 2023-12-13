@@ -18,7 +18,7 @@ EmbreeAccel::EmbreeAccel(RTCDevice device, const std::vector<const Primitive*>& 
 		rtcSetGeometryInstancedScene(rtcInstance, rtcDefaultScene);
 		rtcSetGeometryTimeStepCount(rtcInstance, 1);
 		rtcSetGeometryTransform(rtcInstance, 0, RTC_FORMAT_FLOAT4X4_COLUMN_MAJOR,
-								primitive->getLocalToWorld().data());
+								primitive->getModelToWorld().data());
 		rtcCommitGeometry(rtcInstance);
 		auto rtcInstanceSceneId = rtcAttachGeometry(scene, rtcInstance);
 		instanceIdToPrimitiveMap[rtcInstanceSceneId] = primitive;
@@ -34,6 +34,7 @@ bool EmbreeAccel::hit(const Ray& ray, HitRecord& rec) const
 	rtcIntersect1(scene, &rtcRayHit);
 	if (rtcRayHit.hit.geomID == RTC_INVALID_GEOMETRY_ID)
 		return false;
+	const auto rtcInstance = rtcGetGeometry(scene, rtcRayHit.hit.instID[0]);
 	const auto* primitive = instanceIdToPrimitiveMap.at(rtcRayHit.hit.instID[0]);
 	const auto rtcGeom = instanceIdToGeomMap.at(rtcRayHit.hit.instID[0]);
 	rtcInterpolate0(rtcGeom, rtcRayHit.hit.primID, rtcRayHit.hit.u, rtcRayHit.hit.v,
@@ -45,8 +46,15 @@ bool EmbreeAccel::hit(const Ray& ray, HitRecord& rec) const
 	rtcInterpolate0(rtcGeom, rtcRayHit.hit.primID, rtcRayHit.hit.u, rtcRayHit.hit.v,
 					RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, (unsigned int)VertexAttributeSlot::NORMAL,
 					rec.n.data(), 3);
-	// rec.n = {rtcRayHit.hit.Ng_x, rtcRayHit.hit.Ng_y, rtcRayHit.hit.Ng_z};
-	rec.n = (primitive->getLocalToWorld().linear().inverse().transpose() * rec.n).normalized();
+	float rawModelToWorld[16];
+	rtcGetGeometryTransformFromScene(scene, rtcRayHit.hit.instID[0], 0,
+									 RTC_FORMAT_FLOAT4X4_COLUMN_MAJOR, rawModelToWorld);
+	const Transform modelToWorld{Matrix4f{rawModelToWorld}};
+	rec.p = modelToWorld * rec.p;
+	const auto debug = (rec.p - ray.o).norm();
+	rec.frame = FrameCategory::WORLD;
+	rec.pError = {0, 0, 0};
+	rec.n = (modelToWorld.linear().inverse().transpose() * rec.n).normalized();
 	rec.tHit = rtcRayHit.ray.tfar;
 	rec.primitive = std::static_pointer_cast<const Primitive>(primitive->shared_from_this());
 	return true;

@@ -53,24 +53,24 @@ public:
 									   float& pdf) = 0;
 	/**
 	 * \brief get pdf value of given wo
-	 * \param hitRecord the local representation of hit point
+	 * \param primRec the local representation of hit point
 	 * \param wo the outgoing direction. Wo must lies in world frame
 	 * \return the pdf value associate to wo
 	 */
-	virtual float getPdf(const HitRecord& hitRecord, const Vector3f& wo) const = 0;
+	virtual float getPdf(const HitRecord& primRec, const Vector3f& wo) const = 0;
 	/**
 	 * \brief sample wo's direction according to wi and bxdf's distribution
 	 * \param uSample the sampled point used for sampling direction
 	 * \param wo outgoing direction
-	 * \param hitRecord the local representation of hit point
+	 * \param primRec the local representation of hit point
 	 * \return wo's direction. Note that wo is in world frame
 	 */
 	virtual Vector3f sampleDirection(const Vector2f& uSample,
-									 const Vector3f& wo,
-									 const HitRecord& hitRecord) const = 0;
+									 const HitRecord& primRec,
+									 const Vector3f& wo) const = 0;
 	virtual Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
+											const HitRecord& primRec,
 											const Vector3f& wo,
-											const HitRecord& hitRecord,
 											float& pdf) const = 0;
 };
 
@@ -91,13 +91,13 @@ public:
 							   Vector3f& wi,
 							   float& pdf) override;
 	Vector3f sampleDirection(const Vector2f& uSample,
-							 const Vector3f& wo,
-							 const HitRecord& hitRecord) const override;
+							 const HitRecord& primRec,
+							 const Vector3f& wo) const override;
 	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
+									const HitRecord& primRec,
 									const Vector3f& wo,
-									const HitRecord& hitRecord,
 									float& pdf) const override;
-	float getPdf(const HitRecord& hitRecord, const Vector3f& wo) const override;
+	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
 
 protected:
 	std::shared_ptr<Texture2DRGB> color;
@@ -119,13 +119,13 @@ public:
 							   Vector3f& wi,
 							   float& pdf) override;
 	Vector3f sampleDirection(const Vector2f& uSample,
-							 const Vector3f& wo,
-							 const HitRecord& hitRecord) const override;
+							 const HitRecord& primRec,
+							 const Vector3f& wo) const override;
 	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
+									const HitRecord& primRec,
 									const Vector3f& wo,
-									const HitRecord& hitRecord,
 									float& pdf) const override;
-	float getPdf(const HitRecord& hitRecord, const Vector3f& wo) const override;
+	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
 
 protected:
 	std::unique_ptr<PerfectReflection> brdf;

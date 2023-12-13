@@ -37,7 +37,7 @@ TEST(ObjLoaderTestSuite, EmbreeTest)
 	const Vector3f up{0, rightNorm / width * height, 0};
 
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
-												up.norm(), width, height);
+	                                            up.norm(), width, height);
 	auto film = cam->getFilm();
 
 	RTCDevice device = rtcNewDevice(nullptr);
@@ -115,7 +115,7 @@ TEST(ObjLoaderTestSuite, MeshHitTest)
 	const Vector3f up{0, rightNorm / width * height, 0};
 
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
-												up.norm(), width, height);
+	                                            up.norm(), width, height);
 	auto film = cam->getFilm();
 
 	auto start = std::chrono::steady_clock::now();

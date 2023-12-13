@@ -239,3 +239,31 @@ TEST(FilmTestSuite, SampleToWorldTest)
 	EXPECT_TRUE(film.getWorldCoordsFromSample({0.9, 0.6}).isApprox(Vector3f{-0.6, 0.9, 0}));
 	EXPECT_TRUE(film.getWorldCoordsFromSample({1.5, 1.5}).isApprox(Vector3f{0, 0, 0}));
 }
+
+TEST(FilmTestSuite, CroppedTest)
+{
+	const Vector3f center{0, 0, 0};
+	const Vector3f right{1, 0, 0};
+	const Vector3f up{0, 0, 1};
+	const uint32_t width = 1000u;
+	const uint32_t height = 1000u;
+	const Vector2i croppedTopLeft{2, 2};
+	const Vector2i croppedBottomRight{100, 100};
+	Film film{center, right, up, width, height, croppedTopLeft, croppedBottomRight};
+	// cropped a part
+	const Vector2i topLeft0{0, 0};
+	const Vector2i bottomRight0{3, 3};
+	const auto tile0 = film.getTile(topLeft0, bottomRight0);
+	EXPECT_EQ(tile0->topLeft, croppedTopLeft);
+	EXPECT_EQ(tile0->bottomRight, bottomRight0);
+	// illegal tile
+	const Vector2i topLeft1{100, 100};
+	const Vector2i bottomRight1{50, 50};
+	const auto tile1 = film.getTile(topLeft1, bottomRight1);
+	EXPECT_FALSE(tile1);
+	// fully cropped
+	const Vector2i topLeft2{0, 0};
+	const Vector2i bottomRight2{1, 1};
+	const auto tile2 = film.getTile(topLeft2, bottomRight2);
+	EXPECT_FALSE(tile2);
+}

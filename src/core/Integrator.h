@@ -42,21 +42,35 @@ protected:
 	std::shared_ptr<Sampler> sampler;
 };
 
-enum class DebugChannel { HIT_T, POSITION, NORMAL, UV, BXDF };
+enum class DebugChannel {
+	HIT,			  // if primary ray hit, {1, 0, 0} will return
+	SHADOW_HIT,		  // if shadow ray hit sth, {t, 1, 0} will return; else {0, 0, 1} will return
+	HIT_T,			  //
+	POSITION,		  //
+	NORMAL,			  // if hit, geomNormal + Vector3f{1, 1, 1} will return
+	UV,				  //
+	BXDF,			  //
+	SINGLE_RADIANCE,  // radiance emitted by scene.lights[lightIndex]
+	TOTAL_RADIANCE,	  // radiance emitted by all lights in the scene
+	LIGHT_PDF,		  // sample direction and pdf using scene.lights[lightIndes]
+	TEMP			  // use for temporary debug only
+};
 class DebugIntegrator : public Integrator {
 public:
 	void render(const Scene& scene) override;
 	void setDebugChannel(DebugChannel debugChannel) { channel = debugChannel; }
 	void setDebugBreakPixel(const Vector2i& pixel) { debugBreakPixel = pixel; }
-	void setEnableParallel(bool enable) { enableParallel = enable; }
+	void setLightIndex(uint32_t index) { lightIndex = index; }
 
 protected:
-	static ColorRGB getDebugResult(DebugChannel channel,
-								   const HitRecord& primRec,
-								   const Ray& primRay);
+	ColorRGB getDebugResult(DebugChannel channel,
+							const HitRecord& primRec,
+							const Ray& primRay,
+							const Scene& scene,
+							Sampler& sampler) const;
 	DebugChannel channel = DebugChannel::HIT_T;
 	Vector2i debugBreakPixel{-1, -1};
-	bool enableParallel = true;
+	uint32_t lightIndex = 0;
 };
 
 class MIDirectIntegrator : public SamplerIntegrator {

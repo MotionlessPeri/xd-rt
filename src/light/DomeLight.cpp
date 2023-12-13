@@ -6,7 +6,7 @@
 #include "Ray.h"
 #include "Texture.h"
 using namespace xd;
-DomeLight::DomeLight(const std::shared_ptr<SphereTextureRGB>& dome) : Light(4u), dome(dome)
+DomeLight::DomeLight(const std::shared_ptr<SphereTextureRGB>& dome) : Light(1u), dome(dome)
 {
 	const auto width = dome->getWidth();
 	const auto height = dome->getHeight();
@@ -35,7 +35,7 @@ ColorRGB DomeLight::getRadiance(const HitRecord& primRec, const Vector3f& wi) co
 ColorRGB DomeLight::sampleRadiance(const Vector2f& uSample,
 								   const HitRecord& primRec,
 								   HitRecord& shadowRec,
-								   Vector3f& wi)
+								   Vector3f& wi) const
 {
 	wi = sampleDirection(uSample, primRec, shadowRec);
 	return getRadiance(primRec, wi);
@@ -45,7 +45,7 @@ ColorRGB DomeLight::sampleRadianceWithPdf(const Vector2f& uSample,
 										  const HitRecord& primRec,
 										  HitRecord& shadowRec,
 										  Vector3f& wi,
-										  float& pdf)
+										  float& pdf) const
 {
 	wi = sampleDirectionWithPdf(uSample, primRec, shadowRec, pdf);
 	return getRadiance(primRec, wi);
@@ -65,7 +65,12 @@ Vector3f DomeLight::sampleDirectionWithPdf(const Vector2f& uSample,
 										   HitRecord& shadowRec,
 										   float& pdf) const
 {
-	const auto uv = dis->sample(uSample);
+	const auto uv = dis->sampleWithPdf(uSample, pdf);
+	const auto theta = uv[1] * PI;
+	const auto phi = uv[0] * TWO_PI;
+	const auto sinTheta = std::sinf(theta), cosTheta = std::cosf(theta);
+	const auto sinPhi = std::sinf(phi), cosPhi = std::cosf(phi);
+	pdf = pdf / (2 * PI * PI * sinTheta);
 	auto wo = getSphereDirFromUV(uv);
 	return wo;
 }

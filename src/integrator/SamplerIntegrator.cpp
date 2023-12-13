@@ -23,6 +23,8 @@ void SamplerIntegrator::render(const xd::Scene& scene)
 			const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
 			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
 			auto tile = film->getTile(topLeft, bottomRight);
+			if (!tile)
+				return;
 			auto tileSampler = sampler->clone(topLeft.y() * resolution.x() + topLeft.x());
 			for (const auto pixel : *tile) {
 				tileSampler->setCurrentPixel(pixel);

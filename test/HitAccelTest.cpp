@@ -7,9 +7,8 @@
 using namespace xd;
 TEST(HitAccelTestSuite, BVHBuildTest)
 {
-	const Vector3f center{0, 0, 0};
 	const float radius = 100.f;
-	Sphere sphere{center, radius};
+	Sphere sphere{radius};
 	std::vector<const Model*> models;
 	models.emplace_back(&sphere);
 	BVHNode bvh{models};
@@ -29,6 +28,7 @@ TEST(HitAccelTestSuite, BVHBuildTest)
 #include "camera/CameraFactory.h"
 TEST(HitAccelTestSuite, BVHHitTest1)
 {
+	EXPECT_TRUE(false);
 	const float halfLen = 400.f;
 	const float len = 2 * halfLen;
 	const Vector3f maxPoint{halfLen, halfLen, halfLen};
@@ -46,15 +46,16 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 			for (int k = 0u; k < count; ++k) {
 				const float z = firstCenter.z() + 2 * radius * k;
 				const Vector3f center{x, y, z};
-				const auto model = std::make_shared<Sphere>(center, radius);
-				const auto prim = std::make_shared<Primitive>(model, nullptr);
+				const auto model = std::make_shared<Sphere>(radius);
+				Transform transform{Eigen::Translation3f{center}};
+				const auto prim = std::make_shared<Primitive>(model, nullptr, transform);
 				sb.addPrimitive(prim);
 			}
 		}
 	}
 
-	constexpr uint32_t width = 1000u;
-	constexpr uint32_t height = 1000u;
+	constexpr uint32_t width = 100u;
+	constexpr uint32_t height = 100u;
 	const float sqrt3 = std::sqrtf(3);
 	const Vector3f center = Vector3f{1, 1, 1} * halfLen * sqrt3;
 	const Vector3f z{0, 0, 1};
@@ -65,12 +66,16 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 	const Vector3f up = right.cross(towards);
 
 	auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), rightNorm,
-												rightNorm / width * height, width, height);
+	                                            rightNorm / width * height, width, height);
 	auto film = cam->getFilm();
 
 	const auto scene = sb.build();
 	const NaiveHitSolver naiveSolver{scene};
 	const BVHHitSolver bvhSolver{scene};
+
+	// oneapi::tbb::global_control
+	// global_limit(oneapi::tbb::global_control::max_allowed_parallelism,
+	// 1);
 
 	auto start = std::chrono::steady_clock::now();
 	tbb::parallel_for(
@@ -82,7 +87,7 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 			for (const auto pixel : *tile) {
 				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
 				const auto ray = cam->generateRay(pixelSample);
-				HitRecord rec;
+				HitRecord rec{};
 				if (naiveSolver.hit(ray, rec)) {
 					tile->addSample({rec.tHit, 0, 0}, pixelSample);
 				}
@@ -136,7 +141,7 @@ TEST(HitAccelTestSuite, EmbreeHitTest1)
 	const Vector3f up{0, rightNorm / width * height, 0};
 
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
-												up.norm(), width, height);
+	                                            up.norm(), width, height);
 	auto film = cam->getFilm();
 
 	SceneBuilder sb;

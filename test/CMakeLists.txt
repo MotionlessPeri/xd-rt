@@ -35,6 +35,7 @@ add_executable(xd_rt_test
         HitSolverTest.cpp
         FloatWithErrorTest.cpp
         MathUtilTest.cpp
+        Macros.h
 )
 
 target_link_libraries(xd_rt_test xd_rt)

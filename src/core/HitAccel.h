@@ -48,6 +48,8 @@ public:
 	BVHNode(BVHNode&& other) noexcept = delete;
 	BVHNode& operator=(const BVHNode& other) = delete;
 	BVHNode& operator=(BVHNode&& other) noexcept = delete;
+	// TODO: we may need 2 ctors: one for primitives and one for triangles. The triangles can pass
+	// span in
 	explicit BVHNode(std::vector<const Model*>& models);
 	~BVHNode() override;
 	bool hit(const Ray& ray, HitRecord& rec) const override;

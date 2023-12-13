@@ -26,12 +26,14 @@ protected:
 
 class Sphere : public Model, public std::enable_shared_from_this<Sphere> {
 public:
-	Sphere(const Vector3f& center, double radius);
+	Sphere(double radius);
 	bool hit(const Ray& ray, HitRecord& rec) const override;
 	Vector2f generateUV(const Vector3f& point) const;
 	std::tuple<Vector3f, Vector3f, Vector3f> generateDifferentials(const Vector3f& point) const;
 	float getArea() const override;
 	AABB getAABB() const override;
+	float radius;
+	float radiusInv;
 
 protected:
 	std::shared_ptr<TriangleMesh> triangulate() const override;
@@ -42,9 +44,6 @@ protected:
 	 * @return [theta, phi]
 	 */
 	std::pair<float, float> getThetaPhi(const Vector3f& point) const;
-	Vector3f center;
-	float radius;
-	float radiusInv;
 };
 
 // Similar as AABB but is a model

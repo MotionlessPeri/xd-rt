@@ -38,7 +38,6 @@ ColorRGB MIDirectIntegrator::Li(const Ray& ray, const Scene& scene, Sampler& sam
 		return Li;
 	}
 
-	primRec.buildFrames();
 	const auto material = primRec.primitive->getMaterial();
 	const auto& lights = scene.getLights();
 

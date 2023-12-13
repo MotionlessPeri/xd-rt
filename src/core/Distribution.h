@@ -130,14 +130,18 @@ public:
 	float getPdf(const Vector3f& sample) const override;
 };
 
+/**
+ * \brief sample continuous piecewise in [0, 1]
+ */
 class PieceWise1D : public InverseMethodDistribution<1, 1> {
 public:
-	explicit PieceWise1D(const std::vector<float>& f);
-	PieceWise1D(const float* pdf, const uint32_t n);
+	explicit PieceWise1D(const std::span<const float>& f);
+	PieceWise1D(const float* pdf, uint32_t n);
 	float sample(const float& uSample) override;
 	float sampleWithPdf(const float& uSample, float& pdf) override;
 	float sampleWithPdf(const float& uSample, float& pdf, uint32_t& offset);
 	float getPdf(const float& sample) const override;
+	float getPdfFromOffset(uint32_t offset) const;
 	const std::vector<float>& getCdfs() const { return cdfs; }
 	const std::vector<float>& getPdfs() const { return pdfs; }
 
@@ -148,29 +152,31 @@ protected:
 			uint32_t offset;
 			float sample;
 		} ret;
-		const auto sample = uSample;
-		auto rightIt = std::lower_bound(cdfs.begin(), cdfs.end(), sample);
-		float left, right;
+		const int n = cdfs.size();
+		auto rightIt = std::lower_bound(cdfs.begin(), cdfs.end(), uSample);
+		float yLeft, yRight;
 		if (rightIt != cdfs.end())
-			right = *rightIt;
+			yRight = *rightIt;
 		else {
-			right = 1.f;
+			yRight = 1.f;
 		}
 		if (rightIt != cdfs.begin()) {
-			left = *std::prev(rightIt);
+			yLeft = *std::prev(rightIt);
 		}
 		else
-			left = 0.f;
-		const float delta = 1.f / this->pdfs.size();
+			yLeft = 0.f;
 		ret.offset =
-			std::clamp<uint32_t>(std::distance(cdfs.begin(), rightIt), 0u, cdfs.size() - 1);
-		const float xOffset = delta * ret.offset;
-		const float dy = sample - left;
-		const float dx = dy / (right - left) * delta;
-		ret.sample = xOffset + dx;
+			std::clamp<uint32_t>(std::distance(cdfs.begin(), rightIt), 0u,
+								 n - 1);  // distance from begin to rightIt is equivalent to 0 to
+										  // left bound. We do not use leftIt here because it could
+										  // be 0, which is before begin in our implementation
+
+		const float tangent = (yRight - yLeft) * n;
+		const float dx = (uSample - yLeft) / tangent;
+		ret.sample = float(ret.offset) / float(n) + dx;
 		return ret;
 	}
-	float sum;
+	float fInt;	 // the integrated value of f
 	std::vector<float> pdfs;
 	std::vector<float> cdfs;
 };

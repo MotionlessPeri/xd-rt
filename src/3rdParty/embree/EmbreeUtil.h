@@ -33,7 +33,7 @@ inline RTCRayHit rayAndHitRecordToRTCRayHit(const Ray& ray, const HitRecord& rec
 	rtcRayHit.ray.dir_x = ray.d.x();
 	rtcRayHit.ray.dir_y = ray.d.y();
 	rtcRayHit.ray.dir_z = ray.d.z();
-	rtcRayHit.ray.tnear = 0.f;
+	rtcRayHit.ray.tnear = 1e-2f;
 	rtcRayHit.ray.tfar = rec.tHit;
 	rtcRayHit.ray.mask = -1;
 	rtcRayHit.ray.flags = 0;

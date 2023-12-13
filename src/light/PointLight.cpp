@@ -39,7 +39,7 @@ ColorRGB PointLight::getRadiance(const HitRecord& primRec, const Vector3f& wi) c
 ColorRGB PointLight::sampleRadiance(const Vector2f& uSample,
 									const HitRecord& primRec,
 									HitRecord& shadowRec,
-									Vector3f& wi)
+									Vector3f& wi) const
 {
 	wi = sampleDirection(uSample, primRec, shadowRec);
 	return getRadiance(primRec, wi);
@@ -49,7 +49,7 @@ ColorRGB PointLight::sampleRadianceWithPdf(const Vector2f& uSample,
 										   const HitRecord& primRec,
 										   HitRecord& shadowRec,
 										   Vector3f& wi,
-										   float& pdf)
+										   float& pdf) const
 {
 	wi = sampleDirectionWithPdf(uSample, primRec, shadowRec, pdf);
 	return getRadiance(primRec, wi);
