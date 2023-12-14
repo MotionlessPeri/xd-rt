@@ -114,7 +114,8 @@ protected:
 
 class DomeLight : public Light {
 public:
-	DomeLight(const std::shared_ptr<SphereTextureRGB>& dome);
+	explicit DomeLight(const ColorRGB& color);
+	explicit DomeLight(const std::string& imagePath);
 	Vector3f sampleDirection(const Vector2f& uSample,
 							 const HitRecord& primRec,
 							 HitRecord& shadowRec) const override;
@@ -134,10 +135,11 @@ public:
 									const HitRecord& primRec,
 									HitRecord& shadowRec,
 									float& pdf) const override;
+	std::shared_ptr<Texture3D<ColorRGB>> dome;
+	std::unique_ptr<PieceWise2D> dis;
 
 protected:
-	std::shared_ptr<SphereTextureRGB> dome;
-	std::unique_ptr<PieceWise2D> dis;
+	float normalizePdf(float pieceWisePdf, const Vector2f& uv) const;
 };
 }  // namespace xd
 #endif	// XD_RT_LIGHT_H

@@ -108,8 +108,7 @@ TEST(LightTestSuite, DomeLightTest)
 	const Vector3f right = towards.cross(z).normalized();
 	const Vector3f up = right.cross(towards);
 
-	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
-	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
+	const auto domeLight = std::make_shared<DomeLight>(R"(D:/dome.hdr)");
 
 	sceneBuilder.addEnvironment(domeLight);
 	auto scene = sceneBuilder.build();
@@ -187,4 +186,25 @@ TEST(LightTestSuite, DomeLightTest)
 #endif
 	const std::string hdrPath = R"(D:\dome_light_test_2.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+}
+
+TEST(LightTestSuite, DomeLightPdfTest)
+{
+	const auto domeLight = std::make_shared<DomeLight>(R"(D:\dome.hdr)");
+	const auto texture = std::dynamic_pointer_cast<SphereTextureRGB>(domeLight->dome);
+	EXPECT_TRUE(texture);
+	const auto& dis = domeLight->dis;
+	const uint32_t width = dis->getWidth();
+	const uint32_t height = dis->getHeight();
+	Film film{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, width, height};
+	auto tile = film.getTile({0, 0}, {width - 1, height - 1});
+	for (const auto pixel : *tile) {
+		const Vector2f samplePos = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+		const Vector2f uv = samplePos.cwiseQuotient(Vector2f{width, height});
+		const auto dir = getSphereDirFromUV(uv);
+		const auto pdf = domeLight->getPdf({}, dir);
+		tile->addSample({pdf, 0, 0}, samplePos);
+	}
+	film.mergeTileToFilm(std::move(tile));
+	film.saveToFile(R"(D:\dome_light_pdf_test.hdr)");
 }

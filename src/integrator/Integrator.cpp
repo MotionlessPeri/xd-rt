@@ -20,10 +20,11 @@ ColorRGB EstimateDirect(const Ray& primRay,
 
 	const auto& material = primRec.primitive->getMaterial();
 	// sample from light's direction
+#if 1
 	{
 		Vector3f lightWi;
 		float lightPdf;
-		HitRecord shadowRec;
+		HitRecord shadowRec{};
 		const auto lightRadiance =
 			light.sampleRadianceWithPdf(uLight, primRec, shadowRec, lightWi, lightPdf);
 		if (!isBlack(lightRadiance) && lightPdf > 0) {
@@ -45,8 +46,9 @@ ColorRGB EstimateDirect(const Ray& primRay,
 			}
 		}
 	}
-
+#endif
 	// sample from bsdf's direction
+#if 1
 	if (!light.isDelta()) {
 		Vector3f bsdfWi;
 		float bsdfPdf;
@@ -62,15 +64,30 @@ ColorRGB EstimateDirect(const Ray& primRay,
 				const auto* dome = dynamic_cast<const DomeLight*>(&light);
 				if (dome != nullptr) {
 					const auto lightRadiance = dome->getRadiance(primRec, bsdfWi);
-					const auto lightPdf = dome->getPdf(primRec, bsdfWi);
 					const float cosTheta = std::clamp(primRec.n.dot(shadowRay.d), 0.f, 1.f);
 					const ColorRGB projectedRadiance = lightRadiance * cosTheta;
-					const auto weight = powerHeuristic(1, bsdfPdf, 1, lightPdf);
-					Li += projectedRadiance.cwiseProduct(bsdf) * weight / bsdfPdf;
+					if (!material->isDelta()) {
+						const auto lightPdf = dome->getPdf(primRec, bsdfWi);
+						const auto weight = powerHeuristic(1, bsdfPdf, 1, lightPdf);
+						Li += projectedRadiance.cwiseProduct(bsdf) * weight / bsdfPdf;
+					}
+					else {
+						Li += projectedRadiance.cwiseProduct(bsdf) / bsdfPdf;
+					}
+					//
 				}
 			}
 		}
 	}
+#endif
 	return Li;
+}
+
+SamplerIntegrator::SamplerIntegrator(const std::shared_ptr<Sampler>& sampler) : sampler(sampler) {}
+
+SamplerIntegrator::SamplerIntegrator(const IntegratorConfig& config,
+									 const std::shared_ptr<Sampler>& sampler)
+	: Integrator(config), sampler(sampler)
+{
 }
 }  // namespace xd

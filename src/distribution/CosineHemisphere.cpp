@@ -5,10 +5,9 @@
 using namespace xd;
 float CosineHemisphere::getPdf(const Vector3f& sample) const
 {
-	return sample.z() * INV_PI;
+	return std::fabs(sample.z()) * INV_PI;
 }
-InverseMethodDistribution<3, 2>::RetType CosineHemisphere::sample(
-	const InverseMethodDistribution<3, 2>::UniformSampleType& uSample)
+Vector3f CosineHemisphere::sample(const Vector2f& uSample)
 {
 	const auto sample1 = uSample(0);
 	const auto sample2 = uSample(1);
@@ -20,11 +19,10 @@ InverseMethodDistribution<3, 2>::RetType CosineHemisphere::sample(
 	const float z = sqrtOneMinusKsai1;
 	return {x, y, z};
 }
-InverseMethodDistribution<3, 2>::RetType CosineHemisphere::sampleWithPdf(
-	const InverseMethodDistribution<3, 2>::UniformSampleType& uSample,
-	float& pdf)
+Vector3f CosineHemisphere::sampleWithPdf(const Vector2f& uSample,
+																		 float& pdf)
 {
 	const auto s = sample(uSample);
-	pdf = s.z() * INV_PI;
+	pdf = getPdf(s);
 	return s;
 }

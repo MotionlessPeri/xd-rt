@@ -15,6 +15,12 @@ MIDirectIntegrator::MIDirectIntegrator(const std::shared_ptr<Sampler>& sampler)
 {
 }
 
+MIDirectIntegrator::MIDirectIntegrator(const IntegratorConfig& config,
+									   const std::shared_ptr<Sampler>& sampler)
+	: SamplerIntegrator(config, sampler)
+{
+}
+
 void MIDirectIntegrator::render(const Scene& scene)
 {
 	const auto& lights = scene.getLights();

@@ -158,8 +158,8 @@ TEST(HitSolverTestSuite, ConsistencyTest3)
 	sceneBuilder.setHitSolverType(xd::HitSolverType::EMBREE);
 	const auto embreeScene = sceneBuilder.build();
 
-	constexpr uint32_t width = 200u;
-	constexpr uint32_t height = 200u;
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 1000u;
 	const Vector3f center = Vector3f{0, 0, 1.5f * radius};
 	const Vector3f z{0, 0, 1};
 	const Vector3f target{0, 0, 0};

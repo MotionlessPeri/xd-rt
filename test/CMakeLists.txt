@@ -12,30 +12,31 @@ include_directories(${EMBREE_INCLUDE_DIRS})
 set(NON_BUILD_FILES
         ../.clang-format
         ../eigen.natvis
+
 )
 add_executable(xd_rt_test
-        SamplerTest.cpp
-        FilmTest.cpp
-        CameraTest.cpp
-        ModelHitTest.cpp
-        VisibilityTest.cpp
-        DistributionTest.cpp
-        LightTest.cpp
-        MaterialTest.cpp
-        TextureTest.cpp
-        HitRecordTest.cpp
-        TriangleTest.cpp
-        ObjLoaderTest.cpp
-        AABBTest.cpp
-        HitAccelTest.cpp
-        GLTFLoaderTest.cpp
-        PrimitiveTest.cpp
-        #        TriangulateTest.cpp
         ${NON_BUILD_FILES}
-        HitSolverTest.cpp
+        AABBTest.cpp
+        CameraTest.cpp
+        DistributionTest.cpp
+        FilmTest.cpp
         FloatWithErrorTest.cpp
-        MathUtilTest.cpp
+        GLTFLoaderTest.cpp
+        HitAccelTest.cpp
+        HitRecordTest.cpp
+        HitSolverTest.cpp
+        IntegratorTest.cpp
+        LightTest.cpp
         Macros.h
+        MaterialTest.cpp
+        MathUtilTest.cpp
+        ModelHitTest.cpp
+        ObjLoaderTest.cpp
+        PrimitiveTest.cpp
+        SamplerTest.cpp
+        TextureTest.cpp
+        TriangleTest.cpp
+        VisibilityTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)

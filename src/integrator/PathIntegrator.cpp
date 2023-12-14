@@ -13,6 +13,14 @@ PathIntegrator::PathIntegrator(const std::shared_ptr<Sampler>& sampler, int maxD
 	: SamplerIntegrator(sampler), maxDepth(maxDepth)
 {
 }
+
+PathIntegrator::PathIntegrator(const IntegratorConfig& config,
+							   const std::shared_ptr<Sampler>& sampler,
+							   int max_depth)
+	: SamplerIntegrator(config, sampler), maxDepth(max_depth)
+{
+}
+
 ColorRGB PathIntegrator::Li(const Ray& r, const Scene& scene, Sampler& sampler)
 {
 	auto ray = r;

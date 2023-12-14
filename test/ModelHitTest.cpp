@@ -109,7 +109,7 @@ TEST(ModelHitTestSuite, BoxHitTest1)
 	const Vector3f right{500, 0, 0};
 	const Vector3f up{0, 0, 500};
 
-	const Vector3f camPos{0, -1, 0};
+	const Vector3f camPos{0, -1.1, 0};
 	const Vector3f target{0, 0, 0};
 	const float verticalFov = 90.f / 180.f * PI;
 	auto cam = CameraFactory::createPerspCamera(camPos, target, up.normalized(), verticalFov,

@@ -16,8 +16,8 @@
 using namespace xd;
 TEST(PrimitiveTestSuite, InstanceTest0)
 {
-	constexpr uint32_t width = 100u;
-	constexpr uint32_t height = 100u;
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 1000u;
 	const Vector3f center{0, 2, 0};
 	const Vector3f z{0, 0, 1};
 	const Vector3f target{0, 0, 0};
@@ -34,7 +34,6 @@ TEST(PrimitiveTestSuite, InstanceTest0)
 	auto film = cam->getFilm();
 	auto tile = film->getTile({0, 0}, {width - 1, height - 1});
 
-	EMBREE_SERIAL
 	oneapi::tbb::parallel_for(
 		tbb::blocked_range2d<int, int>{0, width, 0, height},
 		[&](const tbb::blocked_range2d<int, int>& range) {
@@ -66,9 +65,6 @@ TEST(PrimitiveTestSuite, InstanceTest0)
 						tile->addSample({debugShadowRec.tHit, 1, 0}, pixelSample);
 #endif
 					}
-				}
-				else {
-					tile->addSample({0, 0, 1}, pixelSample);
 				}
 			}
 			film->mergeTileToFilm(std::move(tile));
@@ -109,8 +105,7 @@ TEST(PrimitiveTestSuite, InstanceTest1)
 		sb.addPrimitive(prim);
 	}
 
-	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
-	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
+	const auto domeLight = std::make_shared<DomeLight>(R"(D:/dome.hdr)");
 	sb.addEnvironment(domeLight);
 	sb.setHitSolverType(HitSolverType::NAIVE);
 	const auto scene = sb.build();
@@ -165,8 +160,7 @@ TEST(PrimitiveTestSuite, InstanceTest2)
 		sb.addPrimitive(prim);
 	}
 
-	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
-	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
+	const auto domeLight = std::make_shared<DomeLight>(R"(D:/dome.hdr)");
 	sb.addEnvironment(domeLight);
 	sb.setHitSolverType(HitSolverType::EMBREE);
 	const auto scene = sb.build();
@@ -213,8 +207,7 @@ TEST(PrimitiveTestSuite, InstanceTest3)
 	auto prim = std::make_shared<Primitive>(sphere, reflect, transform);
 	sb.addPrimitive(prim);
 
-	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
-	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
+	const auto domeLight = std::make_shared<DomeLight>(R"(D:/dome.hdr)");
 	sb.addEnvironment(domeLight);
 	sb.setHitSolverType(HitSolverType::NAIVE);
 	const auto scene = sb.build();
@@ -222,7 +215,7 @@ TEST(PrimitiveTestSuite, InstanceTest3)
 	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
 	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
 
-	// EMBREE_SERIAL
+	// TBB_SERIAL
 	MIDirectIntegrator integrator{sampler};
 	// DebugIntegrator integrator;
 	// integrator.setDebugChannel(DebugChannel::TOTAL_RADIANCE);

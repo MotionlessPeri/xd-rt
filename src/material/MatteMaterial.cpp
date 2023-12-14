@@ -6,9 +6,9 @@
 #include "Material.h"
 #include "Texture.h"
 using namespace xd;
-MatteMaterial::MatteMaterial(const Vector3f& c)
+MatteMaterial::MatteMaterial(const ColorRGB& c)
 {
-	color = std::make_shared<ConstantTexture<Vector3f, Vector2f>>(c);
+	color = std::make_shared<ConstantTexture<ColorRGB, Vector2f>>(c);
 }
 MatteMaterial::MatteMaterial(const std::shared_ptr<Texture2DRGB>& colorTexture)
 	: color(colorTexture)

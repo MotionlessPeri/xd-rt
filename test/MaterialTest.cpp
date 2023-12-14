@@ -151,8 +151,8 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 
 	sceneBuilder.setHitSolverType(HitSolverType::NAIVE);
 
-	constexpr uint32_t width = 500u;
-	constexpr uint32_t height = 500u;
+	constexpr uint32_t width = 100u;
+	constexpr uint32_t height = 100u;
 	const Vector3f center = Vector3f{0, 1.7, 0} * radius;
 	const Vector3f z{0, 0, 1};
 	const Vector3f target{0, 0, 0};
@@ -160,8 +160,7 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 	const Vector3f right = towards.cross(z).normalized();
 	const Vector3f up = right.cross(towards);
 
-	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
-	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
+	const auto domeLight = std::make_shared<DomeLight>(R"(D:/dome.hdr)");
 
 	sceneBuilder.addEnvironment(domeLight);
 
@@ -179,9 +178,8 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 	//	CameraFactory::createOrthoCamera(center, target, up.normalized(), 500, 500, width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(10);
+	auto sampler = std::make_shared<SimpleSampler>(50);
 
-#if 1
 	{
 		film->clear();
 		MIDirectIntegrator integrator{sampler};
@@ -192,28 +190,14 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 		const std::string hdrPath = R"(D:\matte_with_texture_test_mi_direct.hdr)";
 		EXPECT_NO_THROW(film->saveToFile(hdrPath););
 	}
-#else
+
 	{
 		film->clear();
-		DebugIntegrator integrator;
-		integrator.setDebugChannel(DebugChannel::TEMP);
-		integrator.setLightIndex(0);
+		PathIntegrator integrator{sampler, 1};
 		integrator.setCamera(cam);
 		const auto scene = sceneBuilder.build();
 		integrator.render(*scene);
-
-		const std::string hdrPath = R"(D:\matte_with_texture_test_mtl_sample_debug.hdr)";
+		const std::string hdrPath = R"(D:\matte_with_texture_test_path.hdr)";
 		EXPECT_NO_THROW(film->saveToFile(hdrPath););
 	}
-#endif
-
-	//{
-	//	film->clear();
-	//	PathIntegrator integrator{sampler, 1};
-	//	integrator.setCamera(cam);
-	//	const auto scene = sceneBuilder.build();
-	//	integrator.render(*scene);
-	//	const std::string hdrPath = R"(D:\matte_with_texture_test_path.hdr)";
-	//	EXPECT_NO_THROW(film->saveToFile(hdrPath););
-	//}
 }

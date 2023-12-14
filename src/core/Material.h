@@ -72,11 +72,12 @@ public:
 											const HitRecord& primRec,
 											const Vector3f& wo,
 											float& pdf) const = 0;
+	virtual bool isDelta() const = 0;
 };
 
 class MatteMaterial : public Material {
 public:
-	MatteMaterial(const Vector3f& color);
+	MatteMaterial(const ColorRGB& color);
 	MatteMaterial(const std::shared_ptr<Texture2DRGB>& colorTexture);
 	ColorRGB getBRDF(const HitRecord& primRec,
 					 const Vector3f& wo,
@@ -98,6 +99,7 @@ public:
 									const Vector3f& wo,
 									float& pdf) const override;
 	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
+	bool isDelta() const override { return false; }
 
 protected:
 	std::shared_ptr<Texture2DRGB> color;
@@ -126,6 +128,7 @@ public:
 									const Vector3f& wo,
 									float& pdf) const override;
 	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
+	bool isDelta() const override { return true; }
 
 protected:
 	std::unique_ptr<PerfectReflection> brdf;

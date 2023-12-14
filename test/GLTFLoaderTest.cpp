@@ -29,8 +29,7 @@ TEST(GLTFSceneLoaderTestSuite, loadTest)
 	// const Vector3f center{0, 0, 15};
 	const Vector3f target{0, -1, 0};
 	// const Vector3f target{0, 0, 0};
-	const auto sphereTexture = TextureFactory::loadSphereTextureRGB(R"(D:/dome.hdr)");
-	const auto domeLight = std::make_shared<DomeLight>(sphereTexture);
+	const auto domeLight = std::make_shared<DomeLight>(R"(D:/dome.hdr)");
 	builder.addEnvironment(domeLight);
 
 	const auto verticalFov = 90.f / 180.f * PI;
@@ -41,10 +40,8 @@ TEST(GLTFSceneLoaderTestSuite, loadTest)
 
 	auto sampler = std::make_shared<SimpleSampler>(1);
 	const auto scene = builder.build();
-	//	MIDirectIntegrator integrator{sampler};
-	//	integrator.setCamera(cam);
-	//	integrator.render(*scene);
 	DebugIntegrator integrator;
+	integrator.setDebugChannel(DebugChannel::BXDF);
 	integrator.setCamera(cam);
 	integrator.render(*scene);
 	const std::string hdrPath = R"(D:\gltf_load_test_debug.hdr)";

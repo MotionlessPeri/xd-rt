@@ -84,18 +84,29 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			const auto material = primRec.primitive->getMaterial();
 			return material->getBRDF(primRec, wo, wi);
 		}
-		case DebugChannel::SINGLE_RADIANCE: {
+		case DebugChannel::SINGLE_IRRADIANCE: {
 			const auto light = scene.getLights()[lightIndex];
-			HitRecord shadowRec;
-			Vector3f wi;
-			return light->sampleRadiance(sampler.sample2D(), primRec, shadowRec, wi);
-		}
-		case DebugChannel::TOTAL_RADIANCE: {
-			Vector3f radiance{0, 0, 0};
-			for (const auto& light : scene.getLights()) {
-				radiance += light->getRadiance(primRec, primRec.n);
+			ColorRGB res{0, 0, 0};
+			constexpr uint32_t SAMPLE_CNT = 10u;
+			for ([[maybe_unused]] auto i : std::views::iota(0u, SAMPLE_CNT)) {
+				HitRecord shadowRec;
+				Vector3f wi;
+				res += light->sampleRadiance(sampler.sample2D(), primRec, shadowRec, wi);
 			}
-			return radiance;
+			return res / SAMPLE_CNT;
+		}
+		case DebugChannel::TOTAL_IRRADIANCE: {
+			Vector3f radiance{0, 0, 0};
+			constexpr uint32_t SAMPLE_CNT = 10u;
+			for ([[maybe_unused]] auto i : std::views::iota(0u, SAMPLE_CNT)) {
+				for (const auto& light : scene.getLights()) {
+					HitRecord shadowRec;
+					Vector3f wi;
+					radiance += light->sampleRadiance(sampler.sample2D(), primRec, shadowRec, wi);
+				}
+			}
+
+			return radiance / SAMPLE_CNT;
 		}
 		case DebugChannel::LIGHT_PDF: {
 			const auto light = scene.getLights()[lightIndex];
@@ -105,24 +116,7 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			light->sampleRadianceWithPdf(sampler.sample2D(), primRec, shadowRec, wi, pdf);
 			return {pdf, 0, 0};
 		}
-		case DebugChannel::TEMP: {
-#if 0
-			const auto light = scene.getLights()[lightIndex];
-			ColorRGB res{0, 0, 0};
-			constexpr int cnt = 10;
-			for (auto i : std::views::iota(0, cnt)) {
-				HitRecord shadowRec;
-				Vector3f wi;
-				float pdf;
-				const auto radiance =
-					light->sampleRadianceWithPdf(sampler.sample2D(), primRec, shadowRec, wi, pdf);
-				const auto brdf =
-					primRec.primitive->getMaterial()->getBRDF(primRec, -primRay.d, wi);
-				const auto cosTheta = std::clamp(primRec.n.dot(wi), 0.f, 1.f);
-				res += (radiance.cwiseProduct(brdf) * cosTheta / pdf);
-			}
-			return res / cnt;
-#else
+		case DebugChannel::SAMPLE_BRDF_RADIANCE: {
 			const auto light = scene.getLights()[lightIndex];
 			const auto material = primRec.primitive->getMaterial();
 			ColorRGB res{0, 0, 0};
@@ -138,8 +132,44 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 				res += (radiance.cwiseProduct(brdf) * cosTheta / pdf);
 			}
 			return res / cnt;
+		}
+		case DebugChannel::SAMPLE_LIGHT_RADIANCE: {
+			const auto light = scene.getLights()[lightIndex];
+			ColorRGB res{0, 0, 0};
+			constexpr int cnt = 10;
+			for (auto i : std::views::iota(0, cnt)) {
+				HitRecord shadowRec;
+				Vector3f wi;
+				float pdf;
+				const auto radiance =
+					light->sampleRadianceWithPdf(sampler.sample2D(), primRec, shadowRec, wi, pdf);
+				const auto brdf =
+					primRec.primitive->getMaterial()->getBRDF(primRec, -primRay.d, wi);
+				const auto cosTheta = std::clamp(primRec.n.dot(wi), 0.f, 1.f);
+				res += (radiance.cwiseProduct(brdf) * cosTheta / pdf);
+			}
+			return res / cnt;
+		} break;
+		case DebugChannel::TEMP: {
+#if 0
+			const auto light = scene.getLights()[lightIndex];
+			HitRecord shadowRec;
+			Vector3f wi;
+			float pdf;
+			const auto radiance =
+				light->sampleRadianceWithPdf(sampler.sample2D(), primRec, shadowRec, wi, pdf);
+			return {pdf, 0, 0};
+#else
+			const auto material = primRec.primitive->getMaterial();
+			HitRecord shadowRec;
+			Vector3f wi;
+			float pdf;
+			const auto brdf =
+				material->sampleBRDFWithPdf(sampler.sample2D(), primRec, -primRay.d, wi, pdf);
+			return {pdf, 0, 0};
 #endif
 		}
+
 		default:
 			return {0, 0, 0};
 	}

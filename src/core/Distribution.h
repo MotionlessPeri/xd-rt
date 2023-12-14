@@ -183,7 +183,7 @@ protected:
 
 class PieceWise2D : public InverseMethodDistribution<2, 2> {
 public:
-	PieceWise2D(const std::vector<float>& weights, uint32_t width, uint32_t height);
+	PieceWise2D(const std::span<const float>& weights, uint32_t width, uint32_t height);
 	RetType sample(const UniformSampleType& uSample) override;
 	RetType sampleWithPdf(const UniformSampleType& uSample, float& pdf) override;
 	float getPdf(const Vector2f& sample) const override;

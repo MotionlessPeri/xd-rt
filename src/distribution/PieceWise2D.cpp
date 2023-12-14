@@ -4,7 +4,7 @@
 #include <numeric>
 #include "Distribution.h"
 using namespace xd;
-PieceWise2D::PieceWise2D(const std::vector<float>& weights, uint32_t width, uint32_t height)
+PieceWise2D::PieceWise2D(const std::span<const float>& weights, uint32_t width, uint32_t height)
 	: width(width), height(height)
 {
 	std::vector<float> sumV(height, 0.f);
@@ -16,7 +16,6 @@ PieceWise2D::PieceWise2D(const std::vector<float>& weights, uint32_t width, uint
 		conditionals.emplace_back(std::make_unique<PieceWise1D>(&weights[row * width], width));
 	}
 	marginalV = std::make_unique<PieceWise1D>(sumV);
-	float allSum = std::accumulate(sumV.cbegin(), sumV.cend(), 0.f);
 }
 
 float PieceWise2D::getPdf(const Vector2f& sample) const

@@ -57,7 +57,7 @@ TEST(SamplerTestSuite, DebugSamplerTest)
 	const auto array1d = sampler.get1DArray(100u);
 	const auto array2d = sampler.get2DArray(100u);
 	const Vector2f expected{0.5f, 0.5f};
-	for (auto i : std::views::iota(0u, ARRAY_COUNT)) {
+	for (const auto i : std::views::iota(0u, ARRAY_COUNT)) {
 		EXPECT_EQ(sampler.sample1D(), 0.5f);
 		EXPECT_EQ(sampler.sample2D(), expected);
 		EXPECT_EQ(array1d[i], 0.5f);
