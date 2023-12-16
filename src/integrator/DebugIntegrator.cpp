@@ -82,7 +82,7 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			const auto wo = -primRay.d;
 			const auto wi = reflected(wo, primRec.n);
 			const auto material = primRec.primitive->getMaterial();
-			return material->getBRDF(primRec, wo, wi);
+			return material->getBxDF(primRec, wo, wi);
 		}
 		case DebugChannel::SINGLE_IRRADIANCE: {
 			const auto light = scene.getLights()[lightIndex];
@@ -126,7 +126,7 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 				Vector3f wi;
 				float pdf;
 				const auto brdf =
-					material->sampleBRDFWithPdf(sampler.sample2D(), primRec, -primRay.d, wi, pdf);
+					material->sampleBxDFWithPdf(sampler.sample2D(), primRec, -primRay.d, wi, pdf);
 				const auto radiance = light->getRadiance(primRec, wi);
 				const auto cosTheta = std::clamp(primRec.n.dot(wi), 0.f, 1.f);
 				res += (radiance.cwiseProduct(brdf) * cosTheta / pdf);
@@ -144,7 +144,7 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 				const auto radiance =
 					light->sampleRadianceWithPdf(sampler.sample2D(), primRec, shadowRec, wi, pdf);
 				const auto brdf =
-					primRec.primitive->getMaterial()->getBRDF(primRec, -primRay.d, wi);
+					primRec.primitive->getMaterial()->getBxDF(primRec, -primRay.d, wi);
 				const auto cosTheta = std::clamp(primRec.n.dot(wi), 0.f, 1.f);
 				res += (radiance.cwiseProduct(brdf) * cosTheta / pdf);
 			}
@@ -165,7 +165,7 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			Vector3f wi;
 			float pdf;
 			const auto brdf =
-				material->sampleBRDFWithPdf(sampler.sample2D(), primRec, -primRay.d, wi, pdf);
+				material->sampleBxDFWithPdf(sampler.sample2D(), primRec, -primRay.d, wi, pdf);
 			return {pdf, 0, 0};
 #endif
 		}

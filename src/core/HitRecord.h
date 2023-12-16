@@ -44,10 +44,10 @@ public:
 	Matrix3f getCurrentFrame() const
 	{
 		Matrix3f res;
-		const Vector3f tx = dpdu.normalized();
-		const Vector3f ty = n.cross(dpdu.normalized());
-		res << tx, ty, n;
-		return res;
+		const auto& z = n;
+		const auto x = dpdu.normalized();
+		const auto y = coordSystem(n, x);
+		return buildFrameMatrix(x, y, z);
 	}
 	/**
 	 * \brief spawn a new ray according to direction w, pError is considered to offset ray origin

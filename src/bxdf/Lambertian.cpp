@@ -8,30 +8,38 @@ Lambertian::Lambertian(const ColorRGB& color)
 	: color(color), distrib(std::make_unique<CosineHemisphere>())
 {
 }
-ColorRGB Lambertian::getBRDF(const Vector3f& wi, const Vector3f& wo) const
+ColorRGB Lambertian::getBxDF(const Vector3f& wi, const Vector3f& wo) const
 {
 	return color * INV_PI;
 }
 
-ColorRGB Lambertian::sampleBRDF(const Vector2f& uSample, const Vector3f& wo, Vector3f& wi)
+ColorRGB Lambertian::sampleBxDF(const Vector2f& uSample, const Vector3f& wo, Vector3f& wi)
 {
 	wi = sampleDirection(uSample, wo);
-	return getBRDF(wi, wo);
+	return getBxDF(wi, wo);
 }
 
-ColorRGB Lambertian::sampleBRDFWithPdf(const Vector2f& uSample,
+ColorRGB Lambertian::sampleBxDFWithPdf(const Vector2f& uSample,
 									   const Vector3f& wo,
 									   Vector3f& wi,
 									   float& pdf)
 {
 	wi = sampleDirectionWithPdf(uSample, wo, pdf);
-	return getBRDF(wi, wo);
+	return getBxDF(wi, wo);
 }
 
 Vector3f Lambertian::sampleDirection(const Vector2f& uSample, const Vector3f& wo) const
 {
 	return distrib->sample(uSample);
 }
+
+Vector3f Lambertian::sampleDirectionWithPdf(const Vector2f& uSample, const Vector3f& wo, float& pdf)
+{
+	const auto wi = sampleDirection(uSample, wo);
+	pdf = getPdf(wi);
+	return wi;
+}
+
 bool Lambertian::isDelta() const
 {
 	return false;

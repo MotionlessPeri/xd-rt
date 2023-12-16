@@ -90,16 +90,28 @@ inline Vector3f reflected(const Vector3f& i, const Vector3f& n)
 {
 	return 2 * n.dot(i) * n - i;
 }
-inline std::tuple<Vector3f, Vector3f> coordSystem(const Vector3f& v1, bool right = true)
+
+inline Vector3f coordSystem(const Vector3f& z, const Vector3f& x, bool rightHanded = true)
 {
-	Vector3f v2{-v1.z(), 0, v1.x()};
-	v2.normalize();
-	Vector3f v3 = v1.cross(v2);
-	if (!right) {
-		v3 = -v3;
+	Vector3f y = z.cross(x);
+	if (!rightHanded) {
+		y = -y;
 	}
-	return {v2, v3};
+	return y;
 }
+
+inline Matrix3f buildFrameMatrix(const Vector3f& x, const Vector3f& y, const Vector3f& z)
+{
+	Matrix3f ret;
+	ret << x, y, z;
+	return ret;
+}
+inline std::tuple<Vector3f, Vector3f> coordSystem(const Vector3f& z, bool rightHanded = true)
+{
+	Vector3f x{-z.z(), 0, z.x()};
+	return {x, coordSystem(z, x, rightHanded)};
+}
+
 inline float balanceHeuristic(uint32_t numF, float pdfF, uint32_t numG, float pdfG)
 {
 	return (numF * pdfF) / (numF * pdfF + numG * pdfG);

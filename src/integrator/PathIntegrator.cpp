@@ -49,11 +49,11 @@ ColorRGB PathIntegrator::Li(const Ray& r, const Scene& scene, Sampler& sampler)
 			  lightPdf;
 
 		float newWiPdf;
-		const auto newWi =
-			material->sampleDirectionWithPdf(sampler.sample2D(), primRec, -ray.d, newWiPdf);
+		Vector3f newWi;
+		const auto bxdfVal =
+			material->sampleBxDFWithPdf(sampler.sample2D(), primRec, -ray.d, newWi, newWiPdf);
 		ray = primRec.spawnRay(newWi);
-		const auto brdfVal = material->getBRDF(primRec, -ray.d, newWi);
-		weight = weight.cwiseProduct(brdfVal * std::fabs(newWi.dot(primRec.n)) / newWiPdf);
+		weight = weight.cwiseProduct(bxdfVal * std::fabs(newWi.dot(primRec.n)) / newWiPdf);
 
 		constexpr int minDepth = 3;
 		if (depth >= minDepth) {

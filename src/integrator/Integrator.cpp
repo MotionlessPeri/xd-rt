@@ -30,11 +30,11 @@ ColorRGB EstimateDirect(const Ray& primRay,
 		if (!isBlack(lightRadiance) && lightPdf > 0) {
 			const auto shadowRay = primRec.spawnRay(lightWi);
 			if (!scene.hitAnything(shadowRay, shadowRec)) {
-				const float cosTheta = std::clamp(primRec.n.dot(shadowRay.d), 0.f, 1.f);
+				const float cosTheta = std::fabs(primRec.n.dot(shadowRay.d));
 				const ColorRGB projectedRadiance = lightRadiance * cosTheta;
-				const ColorRGB bsdf = material->getBRDF(primRec, -primRay.d, shadowRay.d);
+				const ColorRGB bsdf = material->getBxDF(primRec, -primRay.d, shadowRay.d);
 				const auto bsdfPdf = material->getPdf(primRec, lightWi);
-				if (!isBlack(bsdf)) {
+				if (!isBlack(bsdf) && bsdfPdf > 0) {
 					if (light.isDelta()) {
 						Li += projectedRadiance.cwiseProduct(bsdf) / lightPdf;
 					}
@@ -52,7 +52,7 @@ ColorRGB EstimateDirect(const Ray& primRay,
 	if (!light.isDelta()) {
 		Vector3f bsdfWi;
 		float bsdfPdf;
-		const auto bsdf = material->sampleBRDFWithPdf(uBxdf, primRec, -primRay.d, bsdfWi, bsdfPdf);
+		const auto bsdf = material->sampleBxDFWithPdf(uBxdf, primRec, -primRay.d, bsdfWi, bsdfPdf);
 		if (!isBlack(bsdf) && bsdfPdf > 0) {
 			const auto shadowRay = primRec.spawnRay(bsdfWi);
 			HitRecord shadowRec;
@@ -64,7 +64,7 @@ ColorRGB EstimateDirect(const Ray& primRay,
 				const auto* dome = dynamic_cast<const DomeLight*>(&light);
 				if (dome != nullptr) {
 					const auto lightRadiance = dome->getRadiance(primRec, bsdfWi);
-					const float cosTheta = std::clamp(primRec.n.dot(shadowRay.d), 0.f, 1.f);
+					const float cosTheta = std::fabs(primRec.n.dot(shadowRay.d));
 					const ColorRGB projectedRadiance = lightRadiance * cosTheta;
 					if (!material->isDelta()) {
 						const auto lightPdf = dome->getPdf(primRec, bsdfWi);

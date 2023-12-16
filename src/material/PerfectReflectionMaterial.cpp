@@ -10,16 +10,14 @@ PerfectReflectionMaterial::PerfectReflectionMaterial() : brdf(std::make_unique<P
 {
 }
 
-ColorRGB PerfectReflectionMaterial::getBRDF(const HitRecord& primRec,
+ColorRGB PerfectReflectionMaterial::getBxDF(const HitRecord& primRec,
 											const Vector3f& wo,
 											const Vector3f& wi) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto worldToLocal = primRec.getCurrentFrame().inverse();
-	return brdf->getBRDF((worldToLocal * wo).normalized(), (worldToLocal * wi).normalized());
+	return {0, 0, 0};
 }
 
-ColorRGB PerfectReflectionMaterial::sampleBRDF(const Vector2f& uSample,
+ColorRGB PerfectReflectionMaterial::sampleBxDF(const Vector2f& uSample,
 											   const HitRecord& primRec,
 											   const Vector3f& wo,
 											   Vector3f& wi)
@@ -27,13 +25,13 @@ ColorRGB PerfectReflectionMaterial::sampleBRDF(const Vector2f& uSample,
 	assert(primRec.frame == FrameCategory::WORLD);
 	const auto localToWorld = primRec.getCurrentFrame();
 	const auto worldToLocal = localToWorld.inverse();
-	auto ret = brdf->sampleBRDF(uSample, (worldToLocal * wo).normalized(), wi);
+	auto ret = brdf->sampleBxDF(uSample, (worldToLocal * wo).normalized(), wi);
 	wi = localToWorld * wi;
 	wi.normalize();
 	return ret;
 }
 
-ColorRGB PerfectReflectionMaterial::sampleBRDFWithPdf(const Vector2f& uSample,
+ColorRGB PerfectReflectionMaterial::sampleBxDFWithPdf(const Vector2f& uSample,
 													  const HitRecord& primRec,
 													  const Vector3f& wo,
 													  Vector3f& wi,
@@ -42,7 +40,7 @@ ColorRGB PerfectReflectionMaterial::sampleBRDFWithPdf(const Vector2f& uSample,
 	assert(primRec.frame == FrameCategory::WORLD);
 	const auto localToWorld = primRec.getCurrentFrame();
 	const auto worldToLocal = localToWorld.inverse();
-	auto ret = brdf->sampleBRDFWithPdf(uSample, worldToLocal * wo, wi, pdf);
+	auto ret = brdf->sampleBxDFWithPdf(uSample, worldToLocal * wo, wi, pdf);
 	wi = localToWorld * wi;
 	wi.normalize();
 	return ret;
@@ -72,5 +70,5 @@ Vector3f PerfectReflectionMaterial::sampleDirectionWithPdf(const Vector2f& uSamp
 
 float PerfectReflectionMaterial::getPdf(const HitRecord& primRec, const Vector3f& wo) const
 {
-	return brdf->getPdf(wo);
+	return 0;
 }

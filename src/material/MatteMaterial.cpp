@@ -15,17 +15,17 @@ MatteMaterial::MatteMaterial(const std::shared_ptr<Texture2DRGB>& colorTexture)
 {
 }
 
-ColorRGB MatteMaterial::getBRDF(const HitRecord& primRec,
+ColorRGB MatteMaterial::getBxDF(const HitRecord& primRec,
 								const Vector3f& wo,
 								const Vector3f& wi) const
 {
 	auto sampledColor = color->sample(primRec.uv);
 	Lambertian lambertian(sampledColor);
 	Vector3f dummy;
-	return lambertian.getBRDF(dummy, dummy);
+	return lambertian.getBxDF(dummy, dummy);
 }
 
-ColorRGB MatteMaterial::sampleBRDF(const Vector2f& uSample,
+ColorRGB MatteMaterial::sampleBxDF(const Vector2f& uSample,
 								   const HitRecord& primRec,
 								   const Vector3f& wo,
 								   Vector3f& wi)
@@ -35,12 +35,12 @@ ColorRGB MatteMaterial::sampleBRDF(const Vector2f& uSample,
 	const auto worldToLocal = localToWorld.inverse();
 	auto sampledColor = color->sample(primRec.uv);
 	Lambertian lambertian(sampledColor);
-	auto ret = lambertian.sampleBRDF(uSample, worldToLocal * wo, wi);
+	auto ret = lambertian.sampleBxDF(uSample, worldToLocal * wo, wi);
 	wi = localToWorld * wi;
 	return ret;
 }
 
-ColorRGB MatteMaterial::sampleBRDFWithPdf(const Vector2f& uSample,
+ColorRGB MatteMaterial::sampleBxDFWithPdf(const Vector2f& uSample,
 										  const HitRecord& primRec,
 										  const Vector3f& wo,
 										  Vector3f& wi,
@@ -51,7 +51,7 @@ ColorRGB MatteMaterial::sampleBRDFWithPdf(const Vector2f& uSample,
 	const auto worldToLocal = localToWorld.inverse();
 	auto sampledColor = color->sample(primRec.uv);
 	Lambertian lambertian(sampledColor);
-	auto ret = lambertian.sampleBRDFWithPdf(uSample, worldToLocal * wo, wi, pdf);
+	auto ret = lambertian.sampleBxDFWithPdf(uSample, worldToLocal * wo, wi, pdf);
 	wi = localToWorld * wi;
 	return ret;
 }

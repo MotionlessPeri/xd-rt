@@ -5,22 +5,18 @@
 #include "HitRecord.h"
 #include "MathUtil.h"
 using namespace xd;
-ColorRGB PerfectReflection::getBRDF(const Vector3f& wi, const Vector3f& wo) const
+ColorRGB PerfectReflection::getBxDF(const Vector3f& wi, const Vector3f& wo) const
 {
-	const auto half = wi + wo;
-	if (fuzzyEqual(half.x(), 0) && fuzzyEqual(half.y(), 0))
-		return {1, 1, 1};
-	else
-		return {0, 0, 0};
+	return {0, 0, 0};
 }
 
-ColorRGB PerfectReflection::sampleBRDF(const Vector2f& uSample, const Vector3f& wo, Vector3f& wi)
+ColorRGB PerfectReflection::sampleBxDF(const Vector2f& uSample, const Vector3f& wo, Vector3f& wi)
 {
 	wi = {-wo.x(), -wo.y(), wo.z()};
 	return {1, 1, 1};
 }
 
-ColorRGB PerfectReflection::sampleBRDFWithPdf(const Vector2f& uSample,
+ColorRGB PerfectReflection::sampleBxDFWithPdf(const Vector2f& uSample,
 											  const Vector3f& wo,
 											  Vector3f& wi,
 											  float& pdf)

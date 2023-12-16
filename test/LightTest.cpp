@@ -120,7 +120,6 @@ TEST(LightTestSuite, DomeLightTest)
 	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
 	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
 
-#if 1
 	// EMBREE_SERIAL
 	const auto work = [&](const tbb::blocked_range2d<int, int>& range) {
 		const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
@@ -155,7 +154,7 @@ TEST(LightTestSuite, DomeLightTest)
 							const ColorRGB projectedRadiance =
 								light->getRadiance(primRec, shadowRay.d) * cosTheta;
 							const Vector3f brdf =
-								material->getBRDF(primRec, -primRay.d, shadowRay.d);
+								material->getBxDF(primRec, -primRay.d, shadowRay.d);
 							const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
 							tile->addSample(Lo.cwiseProduct(weight), sample);
 						}
@@ -163,7 +162,7 @@ TEST(LightTestSuite, DomeLightTest)
 					const auto newDirection =
 						material->sampleDirection(tileSampler->sample2D(), primRec, -primRay.d);
 					weight =
-						weight.cwiseProduct(material->getBRDF(primRec, -primRay.d, newDirection));
+						weight.cwiseProduct(material->getBxDF(primRec, -primRay.d, newDirection));
 					primRay = primRec.spawnRay(newDirection);
 					++depth;
 				}
@@ -173,17 +172,7 @@ TEST(LightTestSuite, DomeLightTest)
 	};
 
 	tbb::parallel_for(tbb::blocked_range2d<int, int>(0, width, 0, height), work);
-#else
-	// EMBREE_SERIAL
 
-	// PathIntegrator integrator{sampler, 8};
-	DebugIntegrator integrator;
-	integrator.setDebugChannel(DebugChannel::NORMAL);
-	// integrator.setDebugBreakPixel({31, 29});
-	integrator.setCamera(cam);
-
-	integrator.render(*scene);
-#endif
 	const std::string hdrPath = R"(D:\dome_light_test_2.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }

@@ -24,6 +24,7 @@ set(3RDPARTY_FILES
 set(BXDF_FILES
         src/bxdf/Lambertian.cpp
         src/bxdf/PerfectReflection.cpp
+        src/bxdf/PerfectTransmission.cpp
 )
 set(CAMERA_FILES
         src/camera/Camera.cpp
@@ -101,7 +102,9 @@ set(LOADER_FILES
 )
 set(MATERIAL_FILES
         src/material/MatteMaterial.cpp
-        src/material/SpecularReflectionMaterial.cpp
+        src/material/PerfectReflectionMaterial.cpp
+        src/material/PerfectTransmissionMaterial.cpp
+        src/material/PerfectTransmissionMaterial.h
 )
 set(MODEL_FILES
         src/model/Sphere.cpp
@@ -144,7 +147,6 @@ set(SRC_FILES
         ${SAMPLER_FILES}
         ${TEXTURE_FILES}
         ${MISC_FILES}
-
         ${NON_BUILD_FILES}
         src/integrator/SamplerIntegrator.cpp
 )

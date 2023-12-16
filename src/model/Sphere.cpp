@@ -43,7 +43,7 @@ bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 	t2 = q / a;
 	if (t2 < t1)
 		std::swap(t1, t2);
-	constexpr float tMin = 1e-2f;
+	constexpr float tMin = 1e-4f;
 	if (t1 > tMin && t1 < rec.tHit) {
 		hit = true;
 		resT = t1;
@@ -70,8 +70,6 @@ bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 	}
 #endif
 	if (hit) {
-		if (resT < 1e-5f)
-			return false;
 		rec.frame = FrameCategory::MODEL;
 		rec.tHit = resT;
 #if 0

@@ -20,33 +20,33 @@ public:
 	 * @param primRec the geometric properties around hit point
 	 * @param wo the incoming direction. Wi must lies in world frame.
 	 * @param wi the outgoing direction. Wo must lies in world frame.
-	 * @return the brdf value respected to wi and wo
+	 * @return the bxdf value respected to wi and wo
 	 */
-	virtual ColorRGB getBRDF(const HitRecord& primRec,
+	virtual ColorRGB getBxDF(const HitRecord& primRec,
 							 const Vector3f& wo,
 							 const Vector3f& wi) const = 0;
 	/**
-	 * \brief sample the brdf of a given point
+	 * \brief sample the bxdf of a given point
 	 * \param uSample the sampled point used to sample wo
 	 * \param primRec the local presentation of the hit point
 	 * \param wo the incoming direction. Wo must lies in world frame.
 	 * \param wi the outgoing direction will be assigned to this param. Wi lies in world frame.
-	 * \return the brdf value
+	 * \return the bxdf value
 	 */
-	virtual ColorRGB sampleBRDF(const Vector2f& uSample,
+	virtual ColorRGB sampleBxDF(const Vector2f& uSample,
 								const HitRecord& primRec,
 								const Vector3f& wo,
 								Vector3f& wi) = 0;
 	/**
-	 * \brief sample the brdf of a given point
+	 * \brief sample the bxdf of a given point
 	 * \param uSample the sampled point used to sample wo
 	 * \param primRec the local presentation of the hit point
 	 * \param wo the incoming direction. Wo must lies in world frame.
 	 * \param wi the outgoing direction will be assigned to this param. Wi lies in world frame.
 	 * \param pdf the pdf of wi will be assigned to this param.
-	 * \return the brdf value
+	 * \return the bxdf value
 	 */
-	virtual ColorRGB sampleBRDFWithPdf(const Vector2f& uSample,
+	virtual ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,
 									   const HitRecord& primRec,
 									   const Vector3f& wo,
 									   Vector3f& wi,
@@ -79,14 +79,14 @@ class MatteMaterial : public Material {
 public:
 	MatteMaterial(const ColorRGB& color);
 	MatteMaterial(const std::shared_ptr<Texture2DRGB>& colorTexture);
-	ColorRGB getBRDF(const HitRecord& primRec,
+	ColorRGB getBxDF(const HitRecord& primRec,
 					 const Vector3f& wo,
 					 const Vector3f& wi) const override;
-	ColorRGB sampleBRDF(const Vector2f& uSample,
+	ColorRGB sampleBxDF(const Vector2f& uSample,
 						const HitRecord& primRec,
 						const Vector3f& wo,
 						Vector3f& wi) override;
-	ColorRGB sampleBRDFWithPdf(const Vector2f& uSample,
+	ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,
 							   const HitRecord& primRec,
 							   const Vector3f& wo,
 							   Vector3f& wi,
@@ -108,14 +108,14 @@ protected:
 class PerfectReflectionMaterial : public Material {
 public:
 	PerfectReflectionMaterial();
-	ColorRGB getBRDF(const HitRecord& primRec,
+	ColorRGB getBxDF(const HitRecord& primRec,
 					 const Vector3f& wo,
 					 const Vector3f& wi) const override;
-	ColorRGB sampleBRDF(const Vector2f& uSample,
+	ColorRGB sampleBxDF(const Vector2f& uSample,
 						const HitRecord& primRec,
 						const Vector3f& wo,
 						Vector3f& wi) override;
-	ColorRGB sampleBRDFWithPdf(const Vector2f& uSample,
+	ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,
 							   const HitRecord& primRec,
 							   const Vector3f& wo,
 							   Vector3f& wi,
@@ -133,5 +133,6 @@ public:
 protected:
 	std::unique_ptr<PerfectReflection> brdf;
 };
+
 }  // namespace xd
 #endif	// XD_RT_MATERIAL_H

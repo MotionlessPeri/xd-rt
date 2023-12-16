@@ -165,20 +165,13 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 	sceneBuilder.addEnvironment(domeLight);
 
 	const auto verticalFov = toRadians(90.f);
-#if 1
 	auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
 												width, height);
-#else
-	Vector2i topLeft{194, 340};
-	Vector2i bottomRight{244, 365};
-	auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
-												width, height, topLeft, bottomRight);
-#endif
 	// auto cam =
 	//	CameraFactory::createOrthoCamera(center, target, up.normalized(), 500, 500, width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(50);
+	auto sampler = std::make_shared<SimpleSampler>(10);
 
 	{
 		film->clear();
@@ -200,4 +193,179 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 		const std::string hdrPath = R"(D:\matte_with_texture_test_path.hdr)";
 		EXPECT_NO_THROW(film->saveToFile(hdrPath););
 	}
+}
+
+#include "material/PerfectTransmissionMaterial.h"
+TEST(MaterialTestSuite, PerfectTransmissionBasicTest)
+{
+	const float radius = 1.f;
+	auto sphere = std::make_shared<Sphere>(radius);
+	auto transmission = std::make_shared<PerfectTransmissionMaterial>(1.0f, 1.5f);
+	auto spec = std::make_shared<PerfectReflectionMaterial>();
+	auto primitive = std::make_shared<Primitive>(sphere, transmission);
+	Ray ray{{2, 0, 0}, {-1, 0, 0}};
+	HitRecord rec{};
+	EXPECT_TRUE(primitive->hit(ray, rec));
+	float pdf;
+	Vector3f wi;
+	const auto btdf = transmission->sampleBxDFWithPdf({0, 0}, rec, -ray.d, wi, pdf);
+	EXPECT_EQ(btdf, Vector3f(1, 1, 1));
+	EXPECT_EQ(pdf, 1);
+	EXPECT_TRUE(wi.isApprox(Vector3f{-1, 0, 0}));
+}
+
+TEST(MaterialTestSuite, PerfectTransmissionSceneTest)
+{
+	const float radius = 1.f;
+	SceneBuilder sceneBuilder;
+	auto sphere = std::make_shared<Sphere>(radius);
+	auto matte = std::make_shared<PerfectTransmissionMaterial>(1.0f, 2.5f);
+	auto spec = std::make_shared<PerfectReflectionMaterial>();
+	auto primitive = std::make_shared<Primitive>(sphere, matte);
+	sceneBuilder.addPrimitive(primitive);
+
+	sceneBuilder.setHitSolverType(HitSolverType::NAIVE);
+
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 1000u;
+	const Vector3f center = Vector3f{0, 1.7, 0} * radius;
+	const Vector3f z{0, 0, 1};
+	const Vector3f target{0, 0, 0};
+	const Vector3f towards = (target - center).normalized();
+	const Vector3f right = towards.cross(z).normalized();
+	const Vector3f up = right.cross(towards);
+
+	const auto domeLight = std::make_shared<DomeLight>(R"(D:/dome.hdr)");
+
+	sceneBuilder.addEnvironment(domeLight);
+
+	const auto verticalFov = toRadians(90.f);
+	auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
+												width, height);
+	// auto cam =
+	//	CameraFactory::createOrthoCamera(center, target, up.normalized(), 1, 1, width, height);
+	auto film = cam->getFilm();
+
+	auto sampler = std::make_shared<SimpleSampler>(1);
+
+	//{
+	//	film->clear();
+	//	MIDirectIntegrator integrator{sampler};
+	//	integrator.setCamera(cam);
+	//	const auto scene = sceneBuilder.build();
+	//	integrator.render(*scene);
+
+	//	const std::string hdrPath = R"(D:\perfect_transmission_test_mi_direct.hdr)";
+	//	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+	//}
+
+	{
+		film->clear();
+		PathIntegrator integrator{sampler, 8};
+		integrator.setCamera(cam);
+		const auto scene = sceneBuilder.build();
+		integrator.render(*scene);
+		const std::string hdrPath = R"(D:\perfect_transmission_test_path.hdr)";
+		EXPECT_NO_THROW(film->saveToFile(hdrPath););
+	}
+}
+
+TEST(MaterialTestSuite, PerfectTransmissionSceneTest2)
+{
+	const float halfLen = 400.f;
+	const float len = 2 * halfLen;
+	const Vector3f maxPoint{halfLen, halfLen, halfLen};
+	const Vector3f minPoint{-halfLen, -halfLen, -halfLen};
+
+	const auto transmission = std::make_shared<PerfectTransmissionMaterial>(1.0f, 2.5f);
+	const uint32_t count = 5;
+	const float radius = len / count / 2;
+	const Vector3f firstCenter = minPoint + Vector3f{radius, radius, radius};
+	SceneBuilder sceneBuilder;
+
+	std::vector<std::shared_ptr<Primitive>> prims;
+	for (int i = 0u; i < count; ++i) {
+		const float x = firstCenter.x() + 2 * radius * i;
+		for (int j = 0u; j < count; ++j) {
+			const float y = firstCenter.y() + 2 * radius * j;
+			for (int k = 0u; k < count; ++k) {
+				const float z = firstCenter.z() + 2 * radius * k;
+				const Vector3f center{x, y, z};
+				const auto model = std::make_shared<Sphere>(radius);
+				const Transform transform{Eigen::Translation3f{center}};
+				const auto prim = std::make_shared<Primitive>(model, transmission, transform);
+				sceneBuilder.addPrimitive(prim);
+			}
+		}
+	}
+
+	sceneBuilder.setHitSolverType(HitSolverType::EMBREE);
+
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 1000u;
+	const float sqrt3 = std::sqrtf(3);
+	// const Vector3f center = Vector3f{1, 1, 1} * halfLen * sqrt3;
+	const Vector3f center = Vector3f{2, 0, 0} * halfLen * sqrt3;
+	const Vector3f z{0, 0, 1};
+	const Vector3f target{0, 0, 0};
+	const Vector3f towards = (target - center).normalized();
+	const Vector3f right = towards.cross(z).normalized();
+	const Vector3f up = right.cross(towards);
+
+	const auto domeLight = std::make_shared<DomeLight>(R"(D:/dome.hdr)");
+
+	sceneBuilder.addEnvironment(domeLight);
+	auto scene = sceneBuilder.build();
+	const auto verticalFov = 75.f / 180.f * PI;
+	auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
+												width, height);
+	auto film = cam->getFilm();
+
+	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
+	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
+
+	PathIntegrator integrator{sampler, 20};
+	integrator.setCamera(cam);
+	integrator.render(*scene);
+	EXPECT_NO_THROW(film->saveToFile(R"(D:\perfect_transmission_test2_path.hdr)"));
+}
+
+TEST(MaterialTestSuite, PerfectTransmissionSceneTest3)
+{
+	// const auto transmission = std::make_shared<PerfectTransmissionMaterial>(1.f, 2.5f);
+	const auto transmission = std::make_shared<PerfectReflectionMaterial>();
+	const auto matte = std::make_shared<MatteMaterial>(ColorRGB{1, 1, 1});
+	const auto sphere = std::make_shared<Sphere>(1.f);
+	const auto spherePrim = std::make_shared<Primitive>(sphere, transmission);
+	const auto box = std::make_shared<Box>(Vector3f{-1000, -1000, -2}, Vector3f{1000, 1000, -1});
+	const auto boxPrim = std::make_shared<Primitive>(box, matte);
+
+	const auto dome = std::make_shared<DomeLight>(R"(D:\dome.hdr)");
+	SceneBuilder sb;
+	const auto scene = sb.addPrimitive(spherePrim)
+						   .addPrimitive(boxPrim)
+						   .addEnvironment(dome)
+						   .setHitSolverType(HitSolverType::NAIVE)
+						   .build();
+
+	constexpr uint32_t width = 50u;
+	constexpr uint32_t height = 50u;
+	const Vector3f center = Vector3f{0, -1.7, 0};
+	const Vector3f z{0, 0, 1};
+	const Vector3f target{0, 0, 0};
+	const Vector3f towards = (target - center).normalized();
+	const Vector3f right = towards.cross(z).normalized();
+	const Vector3f up = right.cross(towards);
+	const auto verticalFov = toRadians(90.f);
+	auto cam = CameraFactory::createPerspCamera(center, target, up.normalized(), verticalFov, 1,
+												width, height);
+	auto film = cam->getFilm();
+
+	auto sampler = std::make_shared<SimpleSampler>(50);
+
+	PathIntegrator integrator{sampler, 8};
+	integrator.setCamera(cam);
+	integrator.render(*scene);
+
+	EXPECT_NO_THROW(film->saveToFile(R"(D:\perfect_transmission_test33_path.hdr)"));
 }
