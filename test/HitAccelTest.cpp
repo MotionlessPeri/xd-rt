@@ -1,9 +1,9 @@
 //
 // Created by Frank on 2023/9/12.
 //
-#include "HitAccel.h"
-#include "Model.h"
 #include "gtest/gtest.h"
+#include "hitAccel/BVHNode.h"
+#include "model/Sphere.h"
 using namespace xd;
 TEST(HitAccelTestSuite, BVHBuildTest)
 {
@@ -21,11 +21,12 @@ TEST(HitAccelTestSuite, BVHBuildTest)
 
 #include <oneapi/tbb.h>
 #include <chrono>
-#include "Film.h"
 #include "Primitive.h"
 #include "Scene.h"
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
+#include "hitSolver/BVHHitSolver.h"
+#include "hitSolver/NaiveHitSolver.h"
 TEST(HitAccelTestSuite, BVHHitTest1)
 {
 	EXPECT_TRUE(false);
@@ -40,11 +41,11 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 	SceneBuilder sb;
 	std::vector<std::shared_ptr<Primitive>> prims;
 	for (int i = 0u; i < count; ++i) {
-		const float x = firstCenter.x() + 2 * radius * i;
+		const float x = firstCenter.x() + 2 * radius * (float)i;
 		for (int j = 0u; j < count; ++j) {
-			const float y = firstCenter.y() + 2 * radius * j;
+			const float y = firstCenter.y() + 2 * radius * (float)j;
 			for (int k = 0u; k < count; ++k) {
-				const float z = firstCenter.z() + 2 * radius * k;
+				const float z = firstCenter.z() + 2 * radius * (float)k;
 				const Vector3f center{x, y, z};
 				const auto model = std::make_shared<Sphere>(radius);
 				Transform transform{Eigen::Translation3f{center}};
@@ -66,7 +67,7 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 	const Vector3f up = right.cross(towards);
 
 	auto cam = CameraFactory::createOrthoCamera(center, target, up.normalized(), rightNorm,
-	                                            rightNorm / width * height, width, height);
+												rightNorm / width * height, width, height);
 	auto film = cam->getFilm();
 
 	const auto scene = sb.build();
@@ -124,8 +125,9 @@ TEST(HitAccelTestSuite, BVHHitTest1)
 	EXPECT_NO_THROW(film->saveToFile(R"(D:\bvh_hit_test_bvh_solver.hdr)"););
 }
 
-#include "Loader/MeshLoader.h"
-#include "Triangle.h"
+#include "hitSolver/EmbreeHitSolver.h"
+#include "loader/ObjMeshLoader.h"
+#include "model/Triangle.h"
 TEST(HitAccelTestSuite, EmbreeHitTest1)
 {
 	ObjMeshLoader loader;
@@ -141,7 +143,7 @@ TEST(HitAccelTestSuite, EmbreeHitTest1)
 	const Vector3f up{0, rightNorm / width * height, 0};
 
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
-	                                            up.norm(), width, height);
+												up.norm(), width, height);
 	auto film = cam->getFilm();
 
 	SceneBuilder sb;

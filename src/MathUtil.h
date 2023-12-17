@@ -6,7 +6,7 @@
 #define XD_RT_MATHUTIL_H
 #include <cstdint>
 #include <valarray>
-#include "MathType.h"
+#include "MathTypes.h"
 
 namespace xd {
 /**

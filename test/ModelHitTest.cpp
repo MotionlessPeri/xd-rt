@@ -2,8 +2,8 @@
 // Created by Frank on 2023/8/19.
 //
 
-#include "Model.h"
 #include "gtest/gtest.h"
+#include "model/Sphere.h"
 using namespace xd;
 TEST(ModelHitTestSuite, SphereHitTest)
 {
@@ -82,7 +82,7 @@ TEST(ModelHitTestSuite, SphereHitTest2)
 			const Vector2i bottomRight{range.rows().end() - 1, range.cols().end() - 1};
 			auto tile = film->getTile(topLeft, bottomRight);
 
-			for (auto pixel : *tile) {
+			for (const auto& pixel : *tile) {
 				const Vector2f sample = pixel.cast<float>() + Vector2f{0.5, 0.5};
 				auto ray = cam->generateRay(sample);
 				HitRecord rec;
@@ -96,6 +96,7 @@ TEST(ModelHitTestSuite, SphereHitTest2)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath, {}););
 }
 
+#include "model/Box.h"
 TEST(ModelHitTestSuite, BoxHitTest1)
 {
 	const float extent = 1000.f;
@@ -123,7 +124,7 @@ TEST(ModelHitTestSuite, BoxHitTest1)
 			const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
 			auto tile = film->getTile(topLeft, bottomRight);
 
-			for (auto pixel : *tile) {
+			for (const auto& pixel : *tile) {
 				const Vector2f sample = pixel.cast<float>() + Vector2f{0.5, 0.5};
 				auto ray = cam->generateRay(sample);
 				HitRecord rec;

@@ -6,7 +6,7 @@
 #define XD_RT_RAY_H
 
 #include <ranges>
-#include "MathType.h"
+#include "MathTypes.h"
 #include "MathUtil.h"
 namespace xd {
 inline Vector3f offsetRayOrigin(const Vector3f& origin,

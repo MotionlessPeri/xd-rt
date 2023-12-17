@@ -2,9 +2,10 @@
 // Created by Frank on 2023/8/19.
 //
 
-#include "Camera.h"
 #include "Film.h"
 #include "Ray.h"
+#include "camera/OrthoCamera.h"
+#include "camera/PerspCamera.h"
 #include "gtest/gtest.h"
 using namespace xd;
 
@@ -27,7 +28,6 @@ TEST(CameraTestSuite, PerspectiveCameraTest)
 	for (auto i = 0u; i < width * height; ++i) {
 		const Vector2f sample = (*tile)[i].cast<float>() + Vector2f{0.5, 0.5};
 		const auto ray = camera.generateRay(sample);
-		const auto debug = (centers[i] - camPos).normalized();
 		EXPECT_TRUE(ray.o.isApprox(camPos));
 		EXPECT_TRUE(ray.d.isApprox((centers[i] - camPos).normalized()));
 	}

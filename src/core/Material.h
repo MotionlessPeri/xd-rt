@@ -4,10 +4,9 @@
 
 #ifndef XD_RT_MATERIAL_H
 #define XD_RT_MATERIAL_H
-#include <memory>
 #include "BxDF.h"
 #include "CoreTypes.h"
-#include "MathType.h"
+#include "MathTypes.h"
 namespace xd {
 /**
  * Material is an aggregate of brdfs
@@ -73,65 +72,6 @@ public:
 											const Vector3f& wo,
 											float& pdf) const = 0;
 	virtual bool isDelta() const = 0;
-};
-
-class MatteMaterial : public Material {
-public:
-	MatteMaterial(const ColorRGB& color);
-	MatteMaterial(const std::shared_ptr<Texture2DRGB>& colorTexture);
-	ColorRGB getBxDF(const HitRecord& primRec,
-					 const Vector3f& wo,
-					 const Vector3f& wi) const override;
-	ColorRGB sampleBxDF(const Vector2f& uSample,
-						const HitRecord& primRec,
-						const Vector3f& wo,
-						Vector3f& wi) override;
-	ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,
-							   const HitRecord& primRec,
-							   const Vector3f& wo,
-							   Vector3f& wi,
-							   float& pdf) override;
-	Vector3f sampleDirection(const Vector2f& uSample,
-							 const HitRecord& primRec,
-							 const Vector3f& wo) const override;
-	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
-									const HitRecord& primRec,
-									const Vector3f& wo,
-									float& pdf) const override;
-	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
-	bool isDelta() const override { return false; }
-
-protected:
-	std::shared_ptr<Texture2DRGB> color;
-};
-
-class PerfectReflectionMaterial : public Material {
-public:
-	PerfectReflectionMaterial();
-	ColorRGB getBxDF(const HitRecord& primRec,
-					 const Vector3f& wo,
-					 const Vector3f& wi) const override;
-	ColorRGB sampleBxDF(const Vector2f& uSample,
-						const HitRecord& primRec,
-						const Vector3f& wo,
-						Vector3f& wi) override;
-	ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,
-							   const HitRecord& primRec,
-							   const Vector3f& wo,
-							   Vector3f& wi,
-							   float& pdf) override;
-	Vector3f sampleDirection(const Vector2f& uSample,
-							 const HitRecord& primRec,
-							 const Vector3f& wo) const override;
-	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
-									const HitRecord& primRec,
-									const Vector3f& wo,
-									float& pdf) const override;
-	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
-	bool isDelta() const override { return true; }
-
-protected:
-	std::unique_ptr<PerfectReflection> brdf;
 };
 
 }  // namespace xd

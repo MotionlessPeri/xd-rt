@@ -4,9 +4,10 @@
 #include <oneapi/tbb.h>
 #include <numeric>
 #include "Loader/MeshLoader.h"
-#include "Triangle.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "loader/ObjMeshLoader.h"
+#include "model/Triangle.h"
 using namespace xd;
 TEST(ObjLoaderTestSuite, LoadTest)
 {
@@ -37,7 +38,7 @@ TEST(ObjLoaderTestSuite, EmbreeTest)
 	const Vector3f up{0, rightNorm / width * height, 0};
 
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
-	                                            up.norm(), width, height);
+												up.norm(), width, height);
 	auto film = cam->getFilm();
 
 	RTCDevice device = rtcNewDevice(nullptr);
@@ -61,7 +62,7 @@ TEST(ObjLoaderTestSuite, EmbreeTest)
 	rtcReleaseGeometry(geom);
 	rtcCommitScene(scene);
 
-	RTCBounds rtcBounds;
+	RTCBounds rtcBounds{};
 	rtcGetSceneBounds(scene, &rtcBounds);
 	film->clear();
 	auto start = std::chrono::steady_clock::now();
@@ -74,7 +75,7 @@ TEST(ObjLoaderTestSuite, EmbreeTest)
 			for (const auto pixel : *tile) {
 				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
 				const auto ray = cam->generateRay(pixelSample);
-				RTCRayHit rayhit;
+				RTCRayHit rayhit{};
 				rayhit.ray.org_x = ray.o.x();
 				rayhit.ray.org_y = ray.o.y();
 				rayhit.ray.org_z = ray.o.z();
@@ -115,7 +116,7 @@ TEST(ObjLoaderTestSuite, MeshHitTest)
 	const Vector3f up{0, rightNorm / width * height, 0};
 
 	auto cam = CameraFactory::createOrthoCamera(center, origin, up.normalized(), right.norm(),
-	                                            up.norm(), width, height);
+												up.norm(), width, height);
 	auto film = cam->getFilm();
 
 	auto start = std::chrono::steady_clock::now();
@@ -195,7 +196,7 @@ TEST(ObjLoaderTestSuite, MeshHitTest)
 			for (const auto pixel : *tile) {
 				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
 				const auto ray = cam->generateRay(pixelSample);
-				RTCRayHit rayhit;
+				RTCRayHit rayhit{};
 				rayhit.ray.org_x = ray.o.x();
 				rayhit.ray.org_y = ray.o.y();
 				rayhit.ray.org_z = ray.o.z();

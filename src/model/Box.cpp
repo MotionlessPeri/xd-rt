@@ -1,9 +1,10 @@
 //
 // Created by Frank on 2023/9/19.
 //
+#include "Box.h"
 #include "AABB.h"
 #include "MathUtil.h"
-#include "Model.h"
+#include "Triangle.h"
 using namespace xd;
 Box::Box(const Vector3f& minPoint, const Vector3f& maxPoint)
 	: minPoint(minPoint), maxPoint(maxPoint)

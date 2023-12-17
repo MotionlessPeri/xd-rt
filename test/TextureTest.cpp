@@ -2,9 +2,7 @@
 // Created by Frank on 2023/9/2.
 //
 #include "gtest/gtest.h"
-
-#include "Sampler.h"
-#include "Texture.h"
+#include "texture/ConstantTexture.h"
 using namespace xd;
 TEST(TextureTestSuite, ConstantTextureSampleTest)
 {
@@ -18,10 +16,10 @@ TEST(TextureTestSuite, ConstantTextureSampleTest)
 }
 
 #include <oneapi/tbb.h>
-#include "Film.h"
-#include "Model.h"
+#include "HitRecord.h"
 #include "camera/CameraFactory.h"
 #include "stb_image.h"
+#include "texture/SphereTexture.h"
 TEST(TextureTestSuite, SphereTextureTest)
 {
 	int domeWidth, domeHeight, channels;
@@ -66,7 +64,8 @@ TEST(TextureTestSuite, SphereTextureTest)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
-#include "Triangle.h"
+#include "model/Triangle.h"
+#include "texture/UVTexture.h"
 TEST(TextureTestSuite, UVTextureTest)
 {
 	const float sqrt3 = std::sqrtf(3);

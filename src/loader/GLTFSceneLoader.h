@@ -5,6 +5,7 @@
 #ifndef XD_RT_GLTFSCENELOADER_H
 #define XD_RT_GLTFSCENELOADER_H
 #include "SceneLoader.h"
+#include "texture/TextureTypes.h"
 #include "tiny_gltf.h"
 namespace xd {
 class GLTFTextureLoader {
@@ -70,8 +71,7 @@ protected:
 };
 class GLTFSceneLoader : public SceneLoader {
 public:
-	std::shared_ptr<Scene> load(const std::string& path,
-								const LoadSceneOptions& options = {}) override;
+	std::shared_ptr<Scene> load(const std::string& path, const LoadSceneOptions& options) override;
 	void loadToSceneBuilder(const std::string& path,
 							const LoadSceneOptions& options,
 							SceneBuilder& sceneBuilder) const override;

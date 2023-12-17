@@ -6,6 +6,7 @@
 #define XD_RT_PERFECTTRANSMISSIONMATERIAL_H
 #include "HitRecord.h"
 #include "Material.h"
+#include "bxdf/PerfectTransmission.h"
 namespace xd {
 class PerfectTransmissionMaterial : public Material {
 public:
@@ -49,7 +50,7 @@ protected:
 	}
 	static auto getTransform(const HitRecord& rec, bool flipNormal)
 	{
-		struct {
+		struct Ret {
 			Matrix3f localToWorld;
 			Matrix3f worldToLocal;
 		} ret;

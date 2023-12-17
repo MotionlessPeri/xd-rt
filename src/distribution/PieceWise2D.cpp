@@ -1,8 +1,7 @@
 //
 // Created by Frank on 2023/9/22.
 //
-#include <numeric>
-#include "Distribution.h"
+#include "PieceWise2D.h"
 using namespace xd;
 PieceWise2D::PieceWise2D(const std::span<const float>& weights, uint32_t width, uint32_t height)
 	: width(width), height(height)

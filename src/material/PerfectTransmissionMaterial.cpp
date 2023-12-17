@@ -2,7 +2,6 @@
 // Created by Frank on 2023/12/16.
 //
 #include "PerfectTransmissionMaterial.h"
-#include "BxDF.h"
 #include "HitRecord.h"
 #include "MathUtil.h"
 using namespace xd;

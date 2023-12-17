@@ -1,10 +1,9 @@
 //
 // Created by Frank on 2023/9/18.
 //
-#include "BxDF.h"
+#include "PerfectReflectionMaterial.h"
 #include "HitRecord.h"
-#include "Material.h"
-#include "MathUtil.h"
+#include "bxdf/PerfectReflection.h"
 using namespace xd;
 PerfectReflectionMaterial::PerfectReflectionMaterial() : brdf(std::make_unique<PerfectReflection>())
 {

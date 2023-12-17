@@ -4,11 +4,11 @@
 #include <oneapi/tbb.h>
 #include <atomic>
 #include <numeric>
-
-#include "Distribution.h"
 #include "Film.h"
 #include "gtest/gtest.h"
 using namespace xd;
+
+#include "distribution/UniformHemisphere.h"
 TEST(DistribTestSuite, UniformHemisphereTest)
 {
 	auto dis = std::make_shared<UniformHemisphere>();
@@ -29,6 +29,7 @@ TEST(DistribTestSuite, UniformHemisphereTest)
 	EXPECT_NO_THROW(film->saveToFile(R"(D:\uniform_hemisphere_test.hdr)", {true}));
 }
 
+#include "distribution/PieceWise1D.h"
 TEST(DistribTestSuite, PieceWise1DCtorTest)
 {
 	{
@@ -86,7 +87,6 @@ TEST(DistribTestSuite, PieceWise1DGenerateTest)
 	UniformDistribution<1> uniform;
 	std::vector<uint32_t> counts(pdf.size(), 0u);
 	constexpr uint32_t TOTAL = 100000u;
-	const auto& cdf = dis.getCdfs();
 	const float delta = 1.f / pdf.size();
 	for (auto i = 0u; i < TOTAL; ++i) {
 		uint32_t offset;
@@ -107,6 +107,7 @@ TEST(DistribTestSuite, PieceWise1DGenerateTest)
 	}
 }
 
+#include "distribution/PieceWise2D.h"
 TEST(DistribTestSuite, PieceWise2DCtorTest)
 {
 	constexpr uint32_t width = 3;
@@ -150,10 +151,6 @@ TEST(DistribTestSuite, PieceWise2DGenTest)
 	for (auto i = 0u; i < COUNT; ++i) {
 		float pdf;
 		const auto sample = dis.sampleWithPdf(uniform.sample(), pdf);
-		const auto pdf2 = dis.getPdf(sample);
-		// EXPECT_FLOAT_EQ(pdf, pdf2);
-		const float dv = 1.f / height;
-		const float du = 1.f / width;
 		const uint32_t vIdx = std::clamp((uint32_t)std::floorf(sample.y() / dv), 0u, height - 1);
 		const uint32_t uIdx = std::clamp((uint32_t)std::floorf(sample.x() / du), 0u, width - 1);
 		counts[vIdx * width + uIdx]++;
@@ -170,7 +167,8 @@ TEST(DistribTestSuite, PieceWise2DGenTest)
 	}
 }
 
-#include "texture/TextureFactory.h"
+#include "loader/TextureFactory.h"
+#include "texture/SphereTexture.h"
 TEST(DistribTestSuite, PieceWise2DGenTest2)
 {
 	auto texture = TextureFactory::loadSphereTextureRGB(R"(D:\dome.hdr)");
@@ -196,8 +194,8 @@ TEST(DistribTestSuite, PieceWise2DGenTest2)
 	for (auto row = 0u; row < height; ++row) {
 		for (auto col = 0u; col < width; ++col) {
 			const auto index = row * width + col;
-			counts[row * width + col].row = row;
-			counts[row * width + col].col = col;
+			counts[index].row = row;
+			counts[index].col = col;
 		}
 	}
 	PieceWise2D dis{weights, width, height};
@@ -240,6 +238,7 @@ TEST(DistribTestSuite, PieceWise2DPdfTest)
 	film.saveToFile(R"(D:\piecewise_2d_pdf_test.hdr)");
 }
 
+#include "distribution/CosineHemisphere.h"
 TEST(DistribTestSuite, CosineHemisphereTest)
 {
 	auto dis = std::make_shared<CosineHemisphere>();

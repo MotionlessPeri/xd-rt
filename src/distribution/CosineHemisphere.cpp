@@ -1,7 +1,7 @@
 //
 // Created by Frank on 2023/9/22.
 //
-#include "Distribution.h"
+#include "CosineHemisphere.h"
 using namespace xd;
 float CosineHemisphere::getPdf(const Vector3f& sample) const
 {
@@ -19,8 +19,7 @@ Vector3f CosineHemisphere::sample(const Vector2f& uSample)
 	const float z = sqrtOneMinusKsai1;
 	return {x, y, z};
 }
-Vector3f CosineHemisphere::sampleWithPdf(const Vector2f& uSample,
-																		 float& pdf)
+Vector3f CosineHemisphere::sampleWithPdf(const Vector2f& uSample, float& pdf)
 {
 	const auto s = sample(uSample);
 	pdf = getPdf(s);

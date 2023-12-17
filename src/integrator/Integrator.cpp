@@ -8,6 +8,7 @@
 #include "Primitive.h"
 #include "Ray.h"
 #include "Scene.h"
+#include "light/DomeLight.h"
 namespace xd {
 ColorRGB EstimateDirect(const Ray& primRay,
 						const HitRecord& primRec,
@@ -30,7 +31,7 @@ ColorRGB EstimateDirect(const Ray& primRay,
 		if (!isBlack(lightRadiance) && lightPdf > 0) {
 			const auto shadowRay = primRec.spawnRay(lightWi);
 			if (!scene.hitAnything(shadowRay, shadowRec)) {
-				const float cosTheta = std::fabs(primRec.n.dot(shadowRay.d));
+				const float cosTheta = std::clamp(primRec.n.dot(shadowRay.d), 0.f, 1.f);
 				const ColorRGB projectedRadiance = lightRadiance * cosTheta;
 				const ColorRGB bsdf = material->getBxDF(primRec, -primRay.d, shadowRay.d);
 				const auto bsdfPdf = material->getPdf(primRec, lightWi);
@@ -64,7 +65,7 @@ ColorRGB EstimateDirect(const Ray& primRay,
 				const auto* dome = dynamic_cast<const DomeLight*>(&light);
 				if (dome != nullptr) {
 					const auto lightRadiance = dome->getRadiance(primRec, bsdfWi);
-					const float cosTheta = std::fabs(primRec.n.dot(shadowRay.d));
+					const float cosTheta = std::clamp(primRec.n.dot(shadowRay.d), 0.f, 1.f);
 					const ColorRGB projectedRadiance = lightRadiance * cosTheta;
 					if (!material->isDelta()) {
 						const auto lightPdf = dome->getPdf(primRec, bsdfWi);
@@ -81,13 +82,5 @@ ColorRGB EstimateDirect(const Ray& primRay,
 	}
 #endif
 	return Li;
-}
-
-SamplerIntegrator::SamplerIntegrator(const std::shared_ptr<Sampler>& sampler) : sampler(sampler) {}
-
-SamplerIntegrator::SamplerIntegrator(const IntegratorConfig& config,
-									 const std::shared_ptr<Sampler>& sampler)
-	: Integrator(config), sampler(sampler)
-{
 }
 }  // namespace xd

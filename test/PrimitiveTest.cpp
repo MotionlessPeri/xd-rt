@@ -3,16 +3,14 @@
 //
 #include "Eigen/Geometry"
 #include "Film.h"
-#include "Integrator.h"
-#include "Light.h"
-#include "Macros.h"
 #include "Primitive.h"
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "loader/TextureFactory.h"
+#include "model/Sphere.h"
 #include "oneapi/tbb.h"
 #include "sampler/SimpleSampler.h"
-#include "texture/TextureFactory.h"
 using namespace xd;
 TEST(PrimitiveTestSuite, InstanceTest0)
 {
@@ -74,6 +72,10 @@ TEST(PrimitiveTestSuite, InstanceTest0)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
+#include "integrator/PathIntegrator.h"
+#include "light/DomeLight.h"
+#include "material/MatteMaterial.h"
+#include "material/PerfectReflectionMaterial.h"
 TEST(PrimitiveTestSuite, InstanceTest1)
 {
 	constexpr uint32_t width = 1000u;
@@ -91,14 +93,15 @@ TEST(PrimitiveTestSuite, InstanceTest1)
 	const auto sphere = std::make_shared<Sphere>(radius);
 	Vector3f sphereCenter{-rightNorm + radius, 0, 0};
 	const float rotationAngle = 90.f;
-	const uint32_t sphereCount = uint32_t(360.f / rotationAngle);
-	const Vector3f interval{(2 * rightNorm - 2 * radius) / (sphereCount - 1), 0, 0};
+	const auto sphereCount = uint32_t(360.f / rotationAngle);
+	const Vector3f interval{(2 * rightNorm - 2 * radius) / ((float)sphereCount - 1), 0, 0};
 
 	auto diffuse = TextureFactory::loadUVTextureRGB(R"(D:\uv_checker.jpg)");
 	auto matte = std::make_shared<MatteMaterial>(diffuse);
 	const auto reflect = std::make_shared<PerfectReflectionMaterial>();
 	for (auto i = 0u; i < sphereCount; ++i, sphereCenter += interval) {
-		auto rotation = Eigen::AngleAxis<float>(i * rotationAngle / 180.f * PI, Vector3f{0, 0, 1});
+		auto rotation =
+			Eigen::AngleAxis<float>((float)i * rotationAngle / 180.f * PI, Vector3f{0, 0, 1});
 		auto translation = Eigen::Translation3f(sphereCenter);
 		auto transform = translation * rotation;
 		auto prim = std::make_shared<Primitive>(sphere, matte, transform);
@@ -127,8 +130,9 @@ TEST(PrimitiveTestSuite, InstanceTest1)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
-#include "Loader/MeshLoader.h"
-#include "Triangle.h"
+#include "integrator/DebugIntegrator.h"
+#include "loader/ObjMeshLoader.h"
+#include "model/Triangle.h"
 TEST(PrimitiveTestSuite, InstanceTest2)
 {
 	ObjMeshLoader loader;
@@ -152,12 +156,14 @@ TEST(PrimitiveTestSuite, InstanceTest2)
 	auto matte = std::make_shared<MatteMaterial>(diffuse);
 	constexpr float rotationAngle = 30.f;
 	auto yUpToZUp = Eigen::AngleAxis<float>(PI / 2, Vector3f{1, 0, 0});
-	for (auto i = 0u; i < instanceCount; ++i, meshCenter.x() += delta) {
+	for (auto i = 0u; i < instanceCount; ++i) {
 		auto translation = Eigen::Translation3f(meshCenter);
-		auto rotation = Eigen::AngleAxis<float>(i * rotationAngle / 180.f * PI, Vector3f{0, 0, 1});
+		auto rotation =
+			Eigen::AngleAxis<float>((float)i * rotationAngle / 180.f * PI, Vector3f{0, 0, 1});
 		Transform transform = translation * (rotation * yUpToZUp);
 		auto prim = std::make_shared<Primitive>(mesh, matte, transform);
 		sb.addPrimitive(prim);
+		meshCenter.x() += delta;
 	}
 
 	const auto domeLight = std::make_shared<DomeLight>(R"(D:/dome.hdr)");
@@ -177,6 +183,7 @@ TEST(PrimitiveTestSuite, InstanceTest2)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
+#include "integrator/DirectIntegrator.h"
 TEST(PrimitiveTestSuite, InstanceTest3)
 {
 	constexpr uint32_t width = 1000u;

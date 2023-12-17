@@ -7,7 +7,7 @@
 
 #include "CoreTypes.h"
 #include "Enums.h"
-#include "MathType.h"
+#include "MathTypes.h"
 #include "MathUtil.h"
 #include "Ray.h"
 namespace xd {

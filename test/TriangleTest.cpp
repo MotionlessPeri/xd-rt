@@ -3,10 +3,9 @@
 //
 #include <oneapi/tbb.h>
 #include "Film.h"
-#include "Sampler.h"
-#include "Triangle.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "model/Triangle.h"
 using namespace xd;
 TEST(TriangleTestSuite, BaryCentricCoordTest)
 {
@@ -31,11 +30,6 @@ TEST(TriangleTestSuite, BaryCentricCoordTest)
 	const uint32_t width = 1000u;
 	const uint32_t height = 1000u;
 	auto film = std::make_shared<Film>(center, right, up, width, height);
-
-	const auto transform = [](const Vector2f& sample) -> Vector3f {
-		const auto offsetted = 2 * (sample - Vector2f{0.5, 0.5});
-		return {offsetted.x(), -offsetted.y(), 0};
-	};
 
 	Vector2i resolution{width, height};
 	tbb::parallel_for(

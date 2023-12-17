@@ -4,7 +4,6 @@
 #include <ranges>
 #include "Film.h"
 #include "gtest/gtest.h"
-#include "sampler/DebugSampler.h"
 #include "sampler/SimpleSampler.h"
 using namespace xd;
 TEST(SamplerTestSuite, SimpleSamplerGetTest)
@@ -46,21 +45,4 @@ TEST(SamplerTestSuite, SimpleSamplerGetArrayTest)
 	}
 	film.mergeTileToFilm(std::move(tile));
 	EXPECT_NO_THROW(film.saveToFile(R"(D:\SimpleSampler_get2DArray_test.hdr)", {true}));
-}
-
-TEST(SamplerTestSuite, DebugSamplerTest)
-{
-	DebugSampler sampler{1};
-	constexpr uint32_t ARRAY_COUNT = 100u;
-	sampler.request1DArray(ARRAY_COUNT);
-	sampler.request2DArray(ARRAY_COUNT);
-	const auto array1d = sampler.get1DArray(100u);
-	const auto array2d = sampler.get2DArray(100u);
-	const Vector2f expected{0.5f, 0.5f};
-	for (const auto i : std::views::iota(0u, ARRAY_COUNT)) {
-		EXPECT_EQ(sampler.sample1D(), 0.5f);
-		EXPECT_EQ(sampler.sample2D(), expected);
-		EXPECT_EQ(array1d[i], 0.5f);
-		EXPECT_EQ(array2d[i], expected);
-	}
 }

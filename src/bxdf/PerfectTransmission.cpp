@@ -1,7 +1,7 @@
 //
 // Created by Frank on 2023/12/16.
 //
-#include "BxDF.h"
+#include "PerfectTransmission.h"
 using namespace xd;
 PerfectTransmission::PerfectTransmission(float eta) : eta(eta) {}
 

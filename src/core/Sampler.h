@@ -7,13 +7,17 @@
 
 #include <span>
 #include <vector>
-#include "MathType.h"
+#include "MathTypes.h"
 namespace xd {
 class Sampler {
 public:
-	Sampler(int samplerPerPixel);
+	explicit Sampler(int samplePerPixel) : samplePerPixel(samplePerPixel) {}
 	virtual ~Sampler() = default;
-	virtual void setCurrentPixel(const Vector2i& pixel);
+	virtual void setCurrentPixel(const Vector2i& pixel)
+	{
+		currentPixel = pixel;
+		currentSampleIndex = 0;
+	}
 	virtual void request1DArray(int n) = 0;
 	virtual void request2DArray(int n) = 0;
 	/**
@@ -30,7 +34,11 @@ public:
 	virtual const std::span<const Vector2f> get2DArray(int n) = 0;
 	virtual float sample1D() = 0;
 	virtual Vector2f sample2D() = 0;
-	virtual bool startNextSample();
+	virtual bool startNextSample()
+	{
+		++currentSampleIndex;
+		return currentSampleIndex < samplePerPixel;
+	}
 	virtual std::unique_ptr<Sampler> clone(int seed) const = 0;
 
 protected:

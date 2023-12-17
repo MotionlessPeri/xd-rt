@@ -7,6 +7,7 @@
 #include <string>
 #include "CoreTypes.h"
 #include "Enums.h"
+#include "model/ModelTypes.h"
 namespace xd {
 struct LoadMeshOptions {
 	HitAccelMethod method;
@@ -18,12 +19,6 @@ public:
 											   const LoadMeshOptions& options = {}) = 0;
 
 protected:
-};
-
-class ObjMeshLoader : public MeshLoader {
-public:
-	std::shared_ptr<TriangleMesh> load(const std::string& path,
-									   const LoadMeshOptions& options = {}) override;
 };
 
 }  // namespace xd

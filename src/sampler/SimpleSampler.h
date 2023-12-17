@@ -4,8 +4,9 @@
 
 #ifndef XD_RT_SIMPLESAMPLER_H
 #define XD_RT_SIMPLESAMPLER_H
-#include "Distribution.h"
 #include "Sampler.h"
+#include "distribution/DistributionTypes.h"
+#include "distribution/UniformDistribution.h"
 namespace xd {
 class SimpleSampler : public Sampler {
 public:

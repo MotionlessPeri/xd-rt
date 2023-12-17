@@ -3,6 +3,8 @@
 //
 #include "Triangle.h"
 #include "MathUtil.h"
+#include "hitAccel/BVHNode.h"
+#include "hitAccel/NoAccel.h"
 using namespace xd;
 
 TriangleMesh::TriangleMesh(const std::shared_ptr<const Model>& owner,

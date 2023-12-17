@@ -134,8 +134,6 @@ TEST(FilmTestSuite, saveToFileTest)
 	Film film{center, right, up, width, height};
 	auto tile = film.getTile({0, 0}, {width - 1, height - 1});
 
-	constexpr double oneSixth = 1. / 6.;
-	constexpr double oneQuater = 1. / 4.;
 	const Vector2f sample0{0.5, 0.5};  // should be index 0
 	const ColorRGB red{0.8, 0.1, 0.1};
 	const Vector2f sample4{1.5, 1.5};  // should be index 4
@@ -186,7 +184,7 @@ TEST(FilmTestSuite, FilmWeightTest)
 
 	Vector3f color1{0, 0, 0};
 	float weight1 = 0.f;
-	for (auto i : std::views::iota(0u, 100u)) {
+	for ([[maybe_unused]] auto i : std::views::iota(0u, 100u)) {
 		tile->addSample(color0, {0.5, 0.5});
 
 		const Vector3f tmpColor{uniform_dist(e1), uniform_dist(e1), uniform_dist(e1)};

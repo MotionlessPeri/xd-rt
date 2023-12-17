@@ -5,10 +5,8 @@
 #ifndef XD_RT_LIGHT_H
 #define XD_RT_LIGHT_H
 
-#include <memory>
 #include "CoreTypes.h"
-#include "Distribution.h"
-#include "MathType.h"
+#include "MathTypes.h"
 namespace xd {
 class Light {
 public:
@@ -84,62 +82,5 @@ protected:
 	uint32_t numSamples;
 };
 
-class PointLight : public Light {
-public:
-	PointLight(const Vector3f& position, const ColorRGB& intensity);
-	Vector3f sampleDirection(const Vector2f& uSample,
-							 const HitRecord& primRec,
-							 HitRecord& shadowRec) const override;
-	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
-									const HitRecord& primRec,
-									HitRecord& shadowRec,
-									float& pdf) const override;
-	ColorRGB getRadiance(const HitRecord& primRec, const Vector3f& wi) const override;
-	ColorRGB sampleRadiance(const Vector2f& uSample,
-							const HitRecord& primRec,
-							HitRecord& shadowRec,
-							Vector3f& wi) const override;
-	ColorRGB sampleRadianceWithPdf(const Vector2f& uSample,
-								   const HitRecord& primRec,
-								   HitRecord& shadowRec,
-								   Vector3f& wi,
-								   float& pdf) const override;
-	bool isDelta() const override { return true; }
-	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
-
-protected:
-	Vector3f position;
-	ColorRGB intensity;
-};
-
-class DomeLight : public Light {
-public:
-	explicit DomeLight(const ColorRGB& color);
-	explicit DomeLight(const std::string& imagePath);
-	Vector3f sampleDirection(const Vector2f& uSample,
-							 const HitRecord& primRec,
-							 HitRecord& shadowRec) const override;
-	ColorRGB getRadiance(const HitRecord& primRec, const Vector3f& wi) const override;
-	ColorRGB sampleRadiance(const Vector2f& uSample,
-							const HitRecord& primRec,
-							HitRecord& shadowRec,
-							Vector3f& wi) const override;
-	ColorRGB sampleRadianceWithPdf(const Vector2f& uSample,
-								   const HitRecord& primRec,
-								   HitRecord& shadowRec,
-								   Vector3f& wi,
-								   float& pdf) const override;
-	bool isDelta() const override;
-	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
-	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
-									const HitRecord& primRec,
-									HitRecord& shadowRec,
-									float& pdf) const override;
-	std::shared_ptr<Texture3D<ColorRGB>> dome;
-	std::unique_ptr<PieceWise2D> dis;
-
-protected:
-	float normalizePdf(float pieceWisePdf, const Vector2f& uv) const;
-};
 }  // namespace xd
 #endif	// XD_RT_LIGHT_H

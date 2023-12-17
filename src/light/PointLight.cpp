@@ -1,9 +1,8 @@
 //
 // Created by Frank on 2023/8/29.
 //
+#include "PointLight.h"
 #include "HitRecord.h"
-#include "Light.h"
-#include "Ray.h"
 using namespace xd;
 PointLight::PointLight(const Vector3f& position, const ColorRGB& intensity)
 	: Light(1u), position(position), intensity(intensity)

@@ -1,10 +1,9 @@
 //
 // Created by Frank on 2023/9/22.
 //
+#include "PieceWise1D.h"
 #include <numeric>
-#include "Distribution.h"
-#include "ranges"
-
+#include <ranges>
 using namespace xd;
 
 PieceWise1D::PieceWise1D(const std::span<const float>& f)

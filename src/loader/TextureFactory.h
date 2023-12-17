@@ -5,6 +5,8 @@
 #ifndef XD_RT_TEXTUREFACTORY_H
 #define XD_RT_TEXTUREFACTORY_H
 #include "Texture.h"
+#include "texture/SphereTexture.h"
+#include "texture/UVTexture.h"
 namespace xd {
 class TextureFactory {
 public:

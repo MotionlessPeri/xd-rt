@@ -10,7 +10,7 @@
 #include "CoreTypes.h"
 #include "Enums.h"
 #include "HitAccel.h"
-#include "MathType.h"
+#include "MathTypes.h"
 #include "Model.h"
 namespace xd {
 class Triangle;
@@ -55,6 +55,7 @@ public:
 	AABB getAABB() const override;
 	std::shared_ptr<const Model> triangulateFrom() const;
 	bool isTriangulatedFromOthers() const;
+
 protected:
 	void init(HitAccelMethod method);
 	void initTriangles();

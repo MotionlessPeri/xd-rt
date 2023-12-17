@@ -1,10 +1,10 @@
 //
 // Created by Frank on 2023/8/19.
 //
+#include "Sphere.h"
 #include "AABB.h"
 #include "FloatWithError.h"
 #include "MathUtil.h"
-#include "Model.h"
 #include "Triangle.h"
 using namespace xd;
 

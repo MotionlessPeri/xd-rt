@@ -1,8 +1,9 @@
 //
 // Created by Frank on 2023/8/31.
 //
-#include "BxDF.h"
+#include "Lambertian.h"
 #include "HitRecord.h"
+
 using namespace xd;
 Lambertian::Lambertian(const ColorRGB& color)
 	: color(color), distrib(std::make_unique<CosineHemisphere>())

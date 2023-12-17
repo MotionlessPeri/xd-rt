@@ -10,7 +10,7 @@
 #include <mutex>
 #include <utility>
 #include <vector>
-#include "MathType.h"
+#include "MathTypes.h"
 namespace xd {
 struct FilmPixel {
 	ColorRGB energy{0, 0, 0};

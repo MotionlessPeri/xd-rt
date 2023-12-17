@@ -1,9 +1,9 @@
 //
 // Created by Frank on 2023/11/28.
 //
+#include "DirectIntegrator.h"
 #include "Camera.h"
 #include "Film.h"
-#include "Integrator.h"
 #include "Light.h"
 #include "Primitive.h"
 #include "Sampler.h"

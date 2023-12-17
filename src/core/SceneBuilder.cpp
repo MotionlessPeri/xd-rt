@@ -3,8 +3,10 @@
 //
 
 #include "SceneBuilder.h"
-#include "HitSolver.h"
 #include "Scene.h"
+#include "hitSolver/BVHHitSolver.h"
+#include "hitSolver/EmbreeHitSolver.h"
+#include "hitSolver/NaiveHitSolver.h"
 using namespace xd;
 std::shared_ptr<Scene> SceneBuilder::build() const
 {

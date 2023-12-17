@@ -2,7 +2,8 @@
 // Created by Frank on 2023/9/19.
 //
 #include "TextureFactory.h"
-
+#include "texture/SphereTexture.h"
+#include "texture/UVTexture.h"
 #ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"

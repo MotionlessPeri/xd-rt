@@ -1,9 +1,9 @@
 //
 // Created by Frank on 2023/11/29.
 //
+#include "DebugIntegrator.h"
 #include "Camera.h"
 #include "Film.h"
-#include "Integrator.h"
 #include "Light.h"
 #include "Primitive.h"
 #include "Scene.h"
@@ -121,7 +121,7 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			const auto material = primRec.primitive->getMaterial();
 			ColorRGB res{0, 0, 0};
 			constexpr int cnt = 10;
-			for (auto i : std::views::iota(0, cnt)) {
+			for ([[maybe_unused]] auto i : std::views::iota(0, cnt)) {
 				HitRecord shadowRec;
 				Vector3f wi;
 				float pdf;
@@ -137,7 +137,7 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			const auto light = scene.getLights()[lightIndex];
 			ColorRGB res{0, 0, 0};
 			constexpr int cnt = 10;
-			for (auto i : std::views::iota(0, cnt)) {
+			for ([[maybe_unused]] auto i : std::views::iota(0, cnt)) {
 				HitRecord shadowRec;
 				Vector3f wi;
 				float pdf;
@@ -149,7 +149,7 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 				res += (radiance.cwiseProduct(brdf) * cosTheta / pdf);
 			}
 			return res / cnt;
-		} break;
+		}
 		case DebugChannel::TEMP: {
 #if 0
 			const auto light = scene.getLights()[lightIndex];

@@ -3,11 +3,9 @@
 //
 #include <oneapi/tbb.h>
 #include <thread>
-#include "Camera.h"
-#include "Film.h"
-#include "Model.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "model/Sphere.h"
 using namespace xd;
 TEST(VisibilityTestSuite, OrthoCamVisTest)
 {
@@ -98,7 +96,6 @@ TEST(VisibilityTestSuite, PerspCamVisTestTBB)
 	//	auto film = std::make_shared<Film>(center, right, up, width, height);
 	const Vector3f camPos{0, 0, -2 * radius};
 	//	PerspCamera cam{camPos, film};
-	constexpr float PI = 3.1415927f;
 	const float verticalFov = 60.f / 180.f * PI;
 	auto cam = CameraFactory::createPerspCamera(camPos, sphereCenter, up.normalized(), verticalFov,
 												right.norm() * 1.f / up.norm(), width, height);

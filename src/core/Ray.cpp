@@ -3,7 +3,6 @@
 //
 
 #include "Ray.h"
-#include <ranges>
 #include "FloatWithError.h"
 using namespace xd;
 

@@ -1,7 +1,7 @@
 //
 // Created by Frank on 2023/8/28.
 //
-#include "Distribution.h"
+#include "UniformHemisphere.h"
 #include "MathUtil.h"
 using namespace xd;
 float UniformHemisphere::getPdf(const Vector3f& sample) const

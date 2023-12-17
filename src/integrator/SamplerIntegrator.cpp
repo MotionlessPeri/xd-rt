@@ -1,15 +1,22 @@
 //
 // Created by Frank on 2023/12/1.
 //
+#include "SamplerIntegrator.h"
 #include "Camera.h"
 #include "Film.h"
-#include "Integrator.h"
 #include "Light.h"
 #include "Sampler.h"
 #include "Scene.h"
 #include "oneapi/tbb.h"
 using namespace xd;
 
+SamplerIntegrator::SamplerIntegrator(const std::shared_ptr<Sampler>& sampler) : sampler(sampler) {}
+
+SamplerIntegrator::SamplerIntegrator(const IntegratorConfig& config,
+									 const std::shared_ptr<Sampler>& sampler)
+	: Integrator(config), sampler(sampler)
+{
+}
 void SamplerIntegrator::render(const xd::Scene& scene)
 {
 	auto film = camera->getFilm();

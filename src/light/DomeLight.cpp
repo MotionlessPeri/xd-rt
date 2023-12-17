@@ -1,10 +1,11 @@
 //
 // Created by Frank on 2023/9/19.
 //
+#include "DomeLight.h"
 #include "HitRecord.h"
-#include "Light.h"
-#include "Texture.h"
-#include "texture/TextureFactory.h"
+#include "loader/TextureFactory.h"
+#include "texture/ConstantTexture.h"
+#include "texture/SphereTexture.h"
 using namespace xd;
 DomeLight::DomeLight(const ColorRGB& color) : Light(1u)
 {

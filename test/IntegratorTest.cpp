@@ -1,20 +1,19 @@
 //
 // Created by Frank on 2023/12/13.
 //
-#include "Camera.h"
+
 #include "Film.h"
-#include "Integrator.h"
-#include "Light.h"
 #include "Macros.h"
-#include "Material.h"
-#include "Model.h"
 #include "Primitive.h"
 #include "SceneBuilder.h"
-#include "Texture.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "integrator/DirectIntegrator.h"
+#include "light/DomeLight.h"
+#include "loader/TextureFactory.h"
+#include "material/MatteMaterial.h"
+#include "model/Sphere.h"
 #include "sampler/SimpleSampler.h"
-#include "texture/TextureFactory.h"
 using namespace xd;
 TEST(IntegratorTestSuite, AnalyticalSceneTest)
 {
@@ -181,7 +180,6 @@ TEST(IntegratorTestSuite, PureColorTest)
 	const Vector3f camPos{0, 1.7, 0};
 	const Vector3f camTarget{0, 0, 0};
 	const Vector3f camUp{0, 0, 1};
-	const Vector3f camRight{0, 1, 0};
 	const auto camVerticalFov = toRadians(90.f);
 	const uint32_t width = 100u;
 	const uint32_t height = 100u;
@@ -200,7 +198,6 @@ TEST(IntegratorTestSuite, PureColorTest)
 #else
 	// direct
 	{
-		// TBB_SERIAL
 		film->clear();
 		MIDirectIntegrator integrator{sampler};
 		integrator.setCamera(cam);

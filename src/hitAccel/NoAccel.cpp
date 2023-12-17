@@ -1,7 +1,7 @@
 //
 // Created by Frank on 2023/9/13.
 //
-#include "HitAccel.h"
+#include "NoAccel.h"
 #include "Model.h"
 #include "Primitive.h"
 using namespace xd;

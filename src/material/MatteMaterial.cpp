@@ -1,10 +1,11 @@
 //
 // Created by Frank on 2023/9/2.
 //
+#include "MatteMaterial.h"
 #include "BxDF.h"
 #include "HitRecord.h"
-#include "Material.h"
-#include "Texture.h"
+#include "bxdf/Lambertian.h"
+#include "texture/ConstantTexture.h"
 using namespace xd;
 MatteMaterial::MatteMaterial(const ColorRGB& c)
 {

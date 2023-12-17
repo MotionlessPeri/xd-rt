@@ -26,7 +26,7 @@ bool Primitive::hit(const Ray& ray, HitRecord& rec) const
 	// We might need better approach to build transform than using Eigen's
 	applyTransformToRay(worldToModel, localRay);
 	if (model->hit(localRay, rec)) {
-		rec.primitive = shared_from_this();
+		rec.primitive = std::dynamic_pointer_cast<const Primitive>(shared_from_this());
 		rec.frame = FrameCategory::WORLD;
 		applyTransformToPoint(modelToWorld, rec.p, &rec.pError);
 		rec.n = modelToWorld.linear().inverse().transpose() * rec.n;

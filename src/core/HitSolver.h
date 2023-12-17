@@ -16,41 +16,12 @@ namespace xd {
  */
 class HitSolver : public HitAccel {
 public:
-	HitSolver(const std::shared_ptr<Scene>& scene);
+	HitSolver(const std::shared_ptr<Scene>& scene) : sceneRef(scene) {}
 	virtual ~HitSolver() = default;
 
 protected:
 	std::weak_ptr<Scene> sceneRef;
 };
 
-class NaiveHitSolver : public HitSolver {
-public:
-	explicit NaiveHitSolver(const std::shared_ptr<Scene>& scene);
-	bool hit(const Ray& ray, HitRecord& rec) const override;
-	bool hitAnything(const Ray& ray, HitRecord& rec) const override;
-
-protected:
-	std::unique_ptr<NoAccel> accel;
-};
-
-class BVHHitSolver : public HitSolver {
-public:
-	explicit BVHHitSolver(const std::shared_ptr<Scene>& scene);
-	bool hit(const Ray& ray, HitRecord& rec) const override;
-	bool hitAnything(const Ray& ray, HitRecord& rec) const override;
-
-protected:
-	BVHNode* root;
-};
-
-class EmbreeHitSolver : public HitSolver {
-public:
-	explicit EmbreeHitSolver(const std::shared_ptr<Scene>& scene);
-	bool hit(const Ray& ray, HitRecord& rec) const override;
-	bool hitAnything(const Ray& ray, HitRecord& rec) const override;
-
-protected:
-	std::shared_ptr<EmbreeAccel> accel;
-};
 }  // namespace xd
 #endif	// XD_RT_HITSOLVER_H

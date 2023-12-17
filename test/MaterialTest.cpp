@@ -4,20 +4,18 @@
 
 #include <oneapi/tbb.h>
 #include <thread>
-#include "Camera.h"
 #include "Film.h"
-#include "Integrator.h"
-#include "Light.h"
-#include "Macros.h"
-#include "Material.h"
-#include "Model.h"
 #include "Primitive.h"
 #include "Scene.h"
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "integrator/PathIntegrator.h"
+#include "light/PointLight.h"
+#include "loader/TextureFactory.h"
+#include "material/MatteMaterial.h"
+#include "model/Sphere.h"
 #include "sampler/SimpleSampler.h"
-#include "texture/TextureFactory.h"
 using namespace xd;
 TEST(MaterialTestSuite, LambertianTest)
 {
@@ -73,6 +71,8 @@ TEST(MaterialTestSuite, LambertianTest)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
+#include "material/PerfectReflectionMaterial.h"
+#include "model/Box.h"
 TEST(MaterialTestSuite, SpecularReflectionTest1)
 {
 	const Vector3f origin{0, 0, 0};
@@ -137,7 +137,8 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
-#include "MathType.h"
+#include "integrator/DirectIntegrator.h"
+#include "light/DomeLight.h"
 TEST(MaterialTestSuite, LambertianWithImageTest)
 {
 	const float radius = 1.f;
@@ -285,11 +286,11 @@ TEST(MaterialTestSuite, PerfectTransmissionSceneTest2)
 
 	std::vector<std::shared_ptr<Primitive>> prims;
 	for (int i = 0u; i < count; ++i) {
-		const float x = firstCenter.x() + 2 * radius * i;
+		const float x = firstCenter.x() + 2 * radius * (float)i;
 		for (int j = 0u; j < count; ++j) {
-			const float y = firstCenter.y() + 2 * radius * j;
+			const float y = firstCenter.y() + 2 * radius * (float)j;
 			for (int k = 0u; k < count; ++k) {
-				const float z = firstCenter.z() + 2 * radius * k;
+				const float z = firstCenter.z() + 2 * radius * (float)k;
 				const Vector3f center{x, y, z};
 				const auto model = std::make_shared<Sphere>(radius);
 				const Transform transform{Eigen::Translation3f{center}};
@@ -332,8 +333,7 @@ TEST(MaterialTestSuite, PerfectTransmissionSceneTest2)
 
 TEST(MaterialTestSuite, PerfectTransmissionSceneTest3)
 {
-	// const auto transmission = std::make_shared<PerfectTransmissionMaterial>(1.f, 2.5f);
-	const auto transmission = std::make_shared<PerfectReflectionMaterial>();
+	const auto transmission = std::make_shared<PerfectTransmissionMaterial>(1.f, 2.5f);
 	const auto matte = std::make_shared<MatteMaterial>(ColorRGB{1, 1, 1});
 	const auto sphere = std::make_shared<Sphere>(1.f);
 	const auto spherePrim = std::make_shared<Primitive>(sphere, transmission);
@@ -348,8 +348,8 @@ TEST(MaterialTestSuite, PerfectTransmissionSceneTest3)
 						   .setHitSolverType(HitSolverType::NAIVE)
 						   .build();
 
-	constexpr uint32_t width = 50u;
-	constexpr uint32_t height = 50u;
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 1000u;
 	const Vector3f center = Vector3f{0, -1.7, 0};
 	const Vector3f z{0, 0, 1};
 	const Vector3f target{0, 0, 0};
@@ -361,11 +361,11 @@ TEST(MaterialTestSuite, PerfectTransmissionSceneTest3)
 												width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(50);
+	auto sampler = std::make_shared<SimpleSampler>(1);
 
 	PathIntegrator integrator{sampler, 8};
 	integrator.setCamera(cam);
 	integrator.render(*scene);
 
-	EXPECT_NO_THROW(film->saveToFile(R"(D:\perfect_transmission_test33_path.hdr)"));
+	EXPECT_NO_THROW(film->saveToFile(R"(D:\perfect_transmission_test3_path.hdr)"));
 }

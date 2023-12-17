@@ -5,10 +5,9 @@
 
 #include "Film.h"
 #include "HitRecord.h"
-#include "Material.h"
-#include "Model.h"
 #include "Primitive.h"
 #include "gtest/gtest.h"
+#include "model/Sphere.h"
 using namespace xd;
 TEST(HitRecordTestSuite, DifferentialTest)
 {
@@ -17,7 +16,7 @@ TEST(HitRecordTestSuite, DifferentialTest)
 	constexpr uint32_t TIMES = 1000u;
 	uint32_t cnt = 0u;
 	std::uniform_real_distribution<float> distrib;
-	std::mt19937 generator;
+	std::mt19937 generator(std::chrono::steady_clock::now().time_since_epoch().count());
 	while (cnt < TIMES) {
 		Vector3f dir =
 			Vector3f{distrib(generator), distrib(generator), distrib(generator)}.normalized();
@@ -32,6 +31,8 @@ TEST(HitRecordTestSuite, DifferentialTest)
 	}
 }
 #include "camera/CameraFactory.h"
+#include "camera/OrthoCamera.h"
+#include "material/MatteMaterial.h"
 TEST(HitRecordTestSuite, FrameCategoryTest)
 {
 	Vector3f center{0, 0, 0};

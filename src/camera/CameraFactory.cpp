@@ -3,13 +3,14 @@
 //
 #include "CameraFactory.h"
 #include "Film.h"
+
 using namespace xd;
 
 std::shared_ptr<OrthoCamera> CameraFactory::createOrthoCamera(const Vector3f& position,
 															  const Vector3f& target,
 															  const Vector3f& upUnit,
-															  const float rightNorm,
-															  const float upNorm,
+															  float rightNorm,
+															  float upNorm,
 															  uint32_t width,
 															  uint32_t height)
 {
@@ -20,8 +21,8 @@ std::shared_ptr<OrthoCamera> CameraFactory::createOrthoCamera(const Vector3f& po
 std::shared_ptr<OrthoCamera> CameraFactory::createOrthoCamera(const Vector3f& position,
 															  const Vector3f& target,
 															  const Vector3f& upUnit,
-															  const float rightNorm,
-															  const float upNorm,
+															  float rightNorm,
+															  float upNorm,
 															  uint32_t width,
 															  uint32_t height,
 															  const Vector2i& croppedTopLeft,
@@ -39,8 +40,8 @@ std::shared_ptr<OrthoCamera> CameraFactory::createOrthoCamera(const Vector3f& po
 std::shared_ptr<OrthoCamera> CameraFactory::createOrthoCamera(const Vector3f& position,
 															  const Vector3f& target,
 															  const Vector3f& upUnit,
-															  const float rightNorm,
-															  const float upNorm,
+															  float rightNorm,
+															  float upNorm,
 															  uint32_t width)
 {
 	const uint32_t height = std::floorf(float(width) / rightNorm * upNorm);
@@ -51,8 +52,8 @@ std::shared_ptr<OrthoCamera> CameraFactory::createOrthoCamera(const Vector3f& po
 std::shared_ptr<OrthoCamera> CameraFactory::createOrthoCamera(const Vector3f& position,
 															  const Vector3f& target,
 															  const Vector3f& upUnit,
-															  const float rightNorm,
-															  const float upNorm,
+															  float rightNorm,
+															  float upNorm,
 															  uint32_t width,
 															  const Vector2i& croppedTopLeft,
 															  const Vector2i& croppedBottomRight)
@@ -65,8 +66,8 @@ std::shared_ptr<OrthoCamera> CameraFactory::createOrthoCamera(const Vector3f& po
 std::shared_ptr<PerspCamera> CameraFactory::createPerspCamera(const Vector3f& position,
 															  const Vector3f& target,
 															  const Vector3f& upUnit,
-															  const float verticalFov,
-															  const float aspect,
+															  float verticalFov,
+															  float aspect,
 															  uint32_t width,
 															  uint32_t height,
 															  const Vector2i& croppedTopLeft,
@@ -88,8 +89,8 @@ std::shared_ptr<PerspCamera> CameraFactory::createPerspCamera(const Vector3f& po
 std::shared_ptr<PerspCamera> CameraFactory::createPerspCamera(const Vector3f& position,
 															  const Vector3f& target,
 															  const Vector3f& upUnit,
-															  const float verticalFov,
-															  const float aspect,
+															  float verticalFov,
+															  float aspect,
 															  uint32_t width,
 															  uint32_t height)
 {
@@ -100,8 +101,8 @@ std::shared_ptr<PerspCamera> CameraFactory::createPerspCamera(const Vector3f& po
 std::shared_ptr<PerspCamera> CameraFactory::createPerspCamera(const Vector3f& position,
 															  const Vector3f& target,
 															  const Vector3f& upUnit,
-															  const float verticalFov,
-															  const float aspect,
+															  float verticalFov,
+															  float aspect,
 															  uint32_t width,
 															  const Vector2i& croppedTopLeft,
 															  const Vector2i& croppedBottomRight)
@@ -114,8 +115,8 @@ std::shared_ptr<PerspCamera> CameraFactory::createPerspCamera(const Vector3f& po
 std::shared_ptr<PerspCamera> CameraFactory::createPerspCamera(const Vector3f& position,
 															  const Vector3f& target,
 															  const Vector3f& upUnit,
-															  const float verticalFov,
-															  const float aspect,
+															  float verticalFov,
+															  float aspect,
 															  uint32_t width)
 {
 	const uint32_t height = width / aspect;

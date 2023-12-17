@@ -4,7 +4,7 @@
 #include "EmbreeGeomManager.h"
 #include "EmbreeGlobal.h"
 #include "Primitive.h"
-#include "Triangle.h"
+#include "model/Triangle.h"
 using namespace xd;
 EmbreeGeomManager::EmbreeGeomManager()
 {

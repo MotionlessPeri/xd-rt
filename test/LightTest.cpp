@@ -2,17 +2,16 @@
 // Created by Frank on 2023/8/29.
 //
 #include <oneapi/tbb.h>
-#include "Camera.h"
 #include "Film.h"
-#include "Integrator.h"
-#include "Light.h"
-#include "Macros.h"
-#include "Model.h"
 #include "Primitive.h"
 #include "Scene.h"
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "integrator/DirectIntegrator.h"
+#include "light/PointLight.h"
+#include "material/MatteMaterial.h"
+#include "model/Sphere.h"
 #include "sampler/SimpleSampler.h"
 using namespace xd;
 TEST(LightTestSuite, PointLightTest)
@@ -63,9 +62,9 @@ TEST(LightTestSuite, PointLightTest)
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }
 
-#include "BxDF.h"
-#include "Material.h"
-#include "texture/TextureFactory.h"
+#include "light/DomeLight.h"
+#include "loader/TextureFactory.h"
+#include "material/PerfectReflectionMaterial.h"
 TEST(LightTestSuite, DomeLightTest)
 {
 	const float halfLen = 400.f;
@@ -126,7 +125,7 @@ TEST(LightTestSuite, DomeLightTest)
 		const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
 		auto tile = film->getTile(topLeft, bottomRight);
 		auto tileSampler = sampler->clone(topLeft.y() * width + topLeft.x());
-		for (auto pixel : *tile) {
+		for (const auto pixel : *tile) {
 			tileSampler->setCurrentPixel(pixel);
 			do {
 				const auto sample = pixel.cast<float>() + tileSampler->sample2D();
@@ -145,7 +144,7 @@ TEST(LightTestSuite, DomeLightTest)
 					const auto material = primRec.primitive->getMaterial();
 					const auto [dpdu, dpdv, n] = std::tie(primRec.dpdu, primRec.dpdv, primRec.n);
 
-					for (const auto light : scene->getLights()) {
+					for (const auto& light : scene->getLights()) {
 						HitRecord shadowRec;
 						const auto shadowRay = primRec.spawnRay(material->sampleDirection(
 							tileSampler->sample2D(), primRec, -primRay.d));

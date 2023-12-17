@@ -8,7 +8,7 @@
 #include "Material.h"
 #include "Model.h"
 namespace xd {
-class Primitive : public Model, public std::enable_shared_from_this<Primitive> {
+class Primitive : public Model {
 public:
 	Primitive(const std::shared_ptr<Model>& model, const std::shared_ptr<Material>& material);
 	Primitive(const std::shared_ptr<Model>& model,

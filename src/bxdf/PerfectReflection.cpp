@@ -1,8 +1,7 @@
 //
 // Created by Frank on 2023/11/26.
 //
-#include "BxDF.h"
-#include "HitRecord.h"
+#include "PerfectReflection.h"
 #include "MathUtil.h"
 using namespace xd;
 ColorRGB PerfectReflection::getBxDF(const Vector3f& wi, const Vector3f& wo) const

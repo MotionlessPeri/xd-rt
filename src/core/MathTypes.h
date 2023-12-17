@@ -2,9 +2,10 @@
 // Created by Frank on 2023/8/16.
 //
 
-#ifndef XD_RT_MATHTYPE_H
-#define XD_RT_MATHTYPE_H
+#ifndef XD_RT_MATHTYPES_H
+#define XD_RT_MATHTYPES_H
 
+#include <cstdint>
 #include <type_traits>
 #include "Eigen/Dense"
 #include "Eigen/Geometry"
@@ -43,4 +44,4 @@ constexpr float TWO_PI = 2 * PI;
 constexpr float INV_PI = 1.f / PI;
 constexpr float INV_TWO_PI = 1.f / TWO_PI;
 }  // namespace xd
-#endif	// XD_RT_MATHTYPE_H
+#endif	// XD_RT_MATHTYPES_H

@@ -1,17 +1,16 @@
 //
 // Created by Frank on 2023/12/5.
 //
-#include "Distribution.h"
 #include "Film.h"
-#include "HitSolver.h"
-#include "Integrator.h"
-#include "Material.h"
-#include "Model.h"
 #include "Primitive.h"
 #include "Scene.h"
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
+#include "distribution/UniformDistribution.h"
 #include "gtest/gtest.h"
+#include "hitSolver/EmbreeHitSolver.h"
+#include "material/PerfectReflectionMaterial.h"
+#include "model/Sphere.h"
 using namespace xd;
 
 TEST(HitSolverTestSuite, EmbreeBuildTest)
@@ -20,7 +19,7 @@ TEST(HitSolverTestSuite, EmbreeBuildTest)
 	SceneBuilder sb;
 	constexpr float MAX_RADIUS = 100;
 	constexpr float HALF_WIDTH = 1000;
-	for (auto i : std::views::iota(0u, 100u)) {
+	for ([[maybe_unused]] auto i : std::views::iota(0u, 100u)) {
 		const auto radius = dis.sample() * MAX_RADIUS;
 		const Vector3f center{dis.sample() * HALF_WIDTH * 2 - HALF_WIDTH,
 							  dis.sample() * HALF_WIDTH * 2 - HALF_WIDTH,
@@ -35,7 +34,10 @@ TEST(HitSolverTestSuite, EmbreeBuildTest)
 }
 
 #include "HitRecord.h"
-#include "Triangle.h"
+#include "hitSolver/BVHHitSolver.h"
+#include "hitSolver/NaiveHitSolver.h"
+#include "material/MatteMaterial.h"
+#include "model/Triangle.h"
 TEST(HitSolverTestSuite, ConsistencyTest1)
 {
 	const float radius = 400.f;
@@ -79,6 +81,7 @@ TEST(HitSolverTestSuite, ConsistencyTest1)
 	}
 }
 
+#include "integrator/DebugIntegrator.h"
 #include "oneapi/tbb.h"
 TEST(HitSolverTestSuite, ConsistencyTest2)
 {

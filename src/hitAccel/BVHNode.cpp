@@ -1,8 +1,9 @@
 //
 // Created by Frank on 2023/9/11.
 //
+#include "BVHNode.h"
 #include <numeric>
-#include "HitAccel.h"
+#include "AABB.h"
 #include "Model.h"
 using namespace xd;
 

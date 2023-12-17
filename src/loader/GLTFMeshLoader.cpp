@@ -3,7 +3,7 @@
 //
 #include "GLTFMeshLoader.h"
 #include "3rdParty/tinygltf/TinyGLTFUtil.h"
-#include "Triangle.h"
+#include "model/Triangle.h"
 using namespace xd;
 std::shared_ptr<TriangleMesh> GLTFMeshLoader::load(const std::string& path,
 												   const LoadMeshOptions& options)

@@ -2,15 +2,15 @@
 // Created by Frank on 2023/10/1.
 //
 #include "GLTFSceneLoader.h"
-#include "Texture.h"
+#include "texture/UVTexture.h"
 using namespace xd;
 
 std::shared_ptr<UVTextureF> GLTFTextureLoader::loadTexture2DF(const tinygltf::Texture& texture,
 															  const tinygltf::Image& image)
 {
-	// Note: for now, tinygltf only support 8bit and 16bit unsigned int file
-	// so we don't need to consider floating type image(exr, hdr, etc) for now
-	// Note: the current implmentation of tinygltf cast 16 bit unsigned into 8-bit containers
+	// Note: for now, tinygltf only support 8bit and 16bit unsigned int file, so we don't need to
+	// consider floating type image(exr, hdr, etc) for now Note: the current implmentation of
+	// tinygltf cast 16 bit unsigned into 8-bit containers
 	assert(image.component == 1);
 	return std::make_shared<UVTextureF>(getImageData(texture, image), (uint32_t)image.width,
 										(uint32_t)image.height);
@@ -22,14 +22,15 @@ std::shared_ptr<UVTextureF> GLTFTextureLoader::loadTexture2DF(const tinygltf::Te
 {
 	// TODO: implement me
 	assert(false);
-	return std::shared_ptr<UVTextureF>();
+	return nullptr;
 }
 std::shared_ptr<UVTextureRGB> GLTFTextureLoader::loadTexture2DRGB(const tinygltf::Texture& texture,
 																  const tinygltf::Image& image)
 {
-	// Note: for now, tinygltf only support 8bit and 16bit unsigned int file
-	// so we don't need to consider floating type image(exr, hdr, etc) for now
-	// Note: the current implmentation of tinygltf cast 16 bit unsigned into 8-bit containers
+	// Note: for now, tinygltf only support 8bit and 16bit unsigned int file, so we don't need to
+	// consider floating type image(exr, hdr, etc) for now
+	// Note: the current implmentation of
+	// tinygltf cast 16 bit unsigned into 8-bit containers
 	assert(image.component == 3);
 	return std::make_shared<UVTextureRGB>(getImageData(texture, image), (uint32_t)image.width,
 										  (uint32_t)image.height);
@@ -41,7 +42,7 @@ std::shared_ptr<UVTextureRGB> GLTFTextureLoader::loadTexture2DRGB(const tinygltf
 {
 	// TODO: implement me
 	assert(false);
-	return std::shared_ptr<UVTextureRGB>();
+	return nullptr;
 }
 std::shared_ptr<UVTextureRGBA> GLTFTextureLoader::loadTexture2DRGBA(
 	const tinygltf::Texture& texture,
@@ -143,7 +144,7 @@ GLTFTextureLoader::RGBATextureSplitRes GLTFTextureLoader::splitRGBAImage(
 	return res;
 }
 
-#include "../core/Material.h"
+#include "material/MatteMaterial.h"
 GLTFMaterialLoader::GLTFMaterialLoader(
 	const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>>& floatTextures,
 	const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>& rgbTextures,
@@ -173,7 +174,7 @@ std::shared_ptr<Material> GLTFMaterialLoader::loadMaterial(const tinygltf::Mater
 #include "Primitive.h"
 #include "Scene.h"
 #include "SceneBuilder.h"
-#include "Triangle.h"
+#include "model/Triangle.h"
 std::shared_ptr<Scene> GLTFSceneLoader::load(const std::string& path,
 											 const LoadSceneOptions& options)
 {

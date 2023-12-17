@@ -1,11 +1,12 @@
 //
 // Created by Frank on 2023/9/8.
 //
+
+#include "ObjMeshLoader.h"
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include "MeshLoader.h"
-#include "Triangle.h"
+#include "model/Triangle.h"
 using namespace xd;
 static Vector2f parseVector2(const std::string& aString)
 {

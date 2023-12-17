@@ -1,9 +1,9 @@
 //
 // Created by Frank on 2023/9/30.
 //
+#include "EmbreeHitAccel.h"
 #include "3rdParty/embree/EmbreeGeomManager.h"
 #include "3rdParty/embree/EmbreeUtil.h"
-#include "HitAccel.h"
 #include "Primitive.h"
 using namespace xd;
 EmbreeAccel::EmbreeAccel(RTCDevice device, const std::vector<const Primitive*>& primitives)

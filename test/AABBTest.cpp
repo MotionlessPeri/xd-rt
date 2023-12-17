@@ -10,13 +10,13 @@ TEST(AABBTestSuite, hitWithParamTest)
 	const Vector3f maxPoint{1, 1, 1};
 	AABB aabb{minPoint, maxPoint};
 
-	const Vector3f o0 = minPoint;
+	const Vector3f& o0 = minPoint;
 	const Vector3f d0{0, 0, -1};
 	const Ray ray0{o0, d0};
 	const auto res0 = aabb.hitWithParams(ray0);
 	EXPECT_FALSE(res0.hit);
 
-	const Vector3f o1 = minPoint;
+	const Vector3f& o1 = minPoint;
 	const Vector3f d1 = Vector3f{1, 1, 1}.normalized();
 	const Ray ray1{o1, d1};
 	const auto res1 = aabb.hitWithParams(ray1);
