@@ -12,26 +12,37 @@ include_directories(src/core)
 include_directories(external)
 
 set(3RDPARTY_FILES
-        src/3rdParty/embree/EmbreeGeomManager.h
         src/3rdParty/embree/EmbreeGeomManager.cpp
-        src/3rdParty/embree/EmbreeUtil.h
-        src/3rdParty/embree/EmbreeGlobal.h
+        src/3rdParty/embree/EmbreeGeomManager.h
         src/3rdParty/embree/EmbreeGlobal.cpp
+        src/3rdParty/embree/EmbreeGlobal.h
+        src/3rdParty/embree/EmbreeUtil.h
+        src/3rdParty/stb/STBWrapper.cpp
         src/3rdParty/tinygltf/TinyGLTFUtil.h
         src/3rdParty/tinygltf/TinyGLTFWrapper.cpp
-        src/3rdParty/stb/STBWrapper.cpp
 )
 set(BXDF_FILES
+        src/bxdf/BxDFTypes.h
         src/bxdf/Lambertian.cpp
+        src/bxdf/Lambertian.h
         src/bxdf/PerfectReflection.cpp
+        src/bxdf/PerfectReflection.h
         src/bxdf/PerfectTransmission.cpp
+        src/bxdf/PerfectTransmission.h
+        src/bxdf/Fresnel.h
 )
 set(CAMERA_FILES
-        src/camera/Camera.cpp
-        src/camera/CameraFactory.h
         src/camera/CameraFactory.cpp
+        src/camera/CameraFactory.h
+        src/camera/CameraTypes.h
+        src/camera/OrthoCamera.cpp
+        src/camera/OrthoCamera.h
+        src/camera/PerspCamera.cpp
+        src/camera/PerspCamera.h
 )
 set(CORE_FILES
+        src/core/AABB.cpp
+        src/core/AABB.h
         src/core/BxDF.h
         src/core/Camera.h
         src/core/CoreTypes.h
@@ -39,6 +50,7 @@ set(CORE_FILES
         src/core/Enums.h
         src/core/Film.cpp
         src/core/Film.h
+        src/core/FloatWithError.h
         src/core/HitAccel.h
         src/core/HitRecord.h
         src/core/HitSolver.h
@@ -54,74 +66,104 @@ set(CORE_FILES
         src/core/Sampler.h
         src/core/Scene.cpp
         src/core/Scene.h
-        src/core/Texture.h
-        src/core/Triangle.h
         src/core/SceneBuilder.cpp
         src/core/SceneBuilder.h
-        src/core/FloatWithError.h
+        src/core/Texture.h
 )
 set(DISTRIBUTION_FILES
-        src/distribution/PieceWise1D.cpp
-        src/distribution/PieceWise2D.cpp
         src/distribution/CosineHemisphere.cpp
+        src/distribution/CosineHemisphere.h
+        src/distribution/DiscreteUniformDistribution.h
+        src/distribution/DistributionTypes.h
+        src/distribution/InverseMethodDistribution.h
+        src/distribution/PieceWise1D.cpp
+        src/distribution/PieceWise1D.h
+        src/distribution/PieceWise2D.cpp
+        src/distribution/PieceWise2D.h
+        src/distribution/UniformDistribution.h
         src/distribution/UniformHemisphere.cpp
+        src/distribution/UniformHemisphere.h
 )
 set(HITACCEL_FILES
-        src/core/AABB.h
-
-        src/hitAccel/AABB.cpp
         src/hitAccel/BVHNode.cpp
-        src/hitAccel/NoAccel.cpp
+        src/hitAccel/BVHNode.h
         src/hitAccel/EmbreeHitAccel.cpp
+        src/hitAccel/EmbreeHitAccel.h
+        src/hitAccel/HitAccelTypes.h
+        src/hitAccel/NoAccel.cpp
+        src/hitAccel/NoAccel.h
 )
 set(HITSOLVER_FILES
-        src/hitSolver/HitSolver.cpp
+        src/hitSolver/BVHHitSolver.cpp
+        src/hitSolver/BVHHitSolver.h
+        src/hitSolver/EmbreeHitSolver.cpp
+        src/hitSolver/EmbreeHitSolver.h
+        src/hitSolver/HitSolverTypes.h
+        src/hitSolver/NaiveHitSolver.cpp
+        src/hitSolver/NaiveHitSolver.h
 )
 set(INTEGRATOR_FILES
-        src/integrator/DirectIntegrator.cpp
         src/integrator/DebugIntegrator.cpp
-        src/integrator/PathIntegrator.cpp
-        src/integrator/SamplerIntegrator.cpp
+        src/integrator/DebugIntegrator.h
+        src/integrator/DirectIntegrator.cpp
+        src/integrator/DirectIntegrator.h
         src/integrator/Integrator.cpp
+        src/integrator/IntegratorTypes.h
+        src/integrator/PathIntegrator.cpp
+        src/integrator/PathIntegrator.h
+        src/integrator/SamplerIntegrator.cpp
+        src/integrator/SamplerIntegrator.cpp
+        src/integrator/SamplerIntegrator.h
 )
 set(LIGHT_FILES
-        src/light/PointLight.cpp
         src/light/DomeLight.cpp
+        src/light/DomeLight.h
+        src/light/LightTypes.h
+        src/light/PointLight.cpp
+        src/light/PointLight.h
 )
 set(LOADER_FILES
+        src/loader/GLTFMaterialLoader.cpp
+        src/loader/GLTFMaterialLoader.h
+        src/loader/GLTFMeshLoader.cpp
+        src/loader/GLTFMeshLoader.h
+        src/loader/GLTFSceneLoader.cpp
+        src/loader/GLTFSceneLoader.h
+        src/loader/MaterialLoader.h
         src/loader/MeshLoader.h
         src/loader/ObjMeshLoader.cpp
+        src/loader/ObjMeshLoader.h
         src/loader/SceneLoader.h
-        src/loader/MaterialLoader.h
-        src/loader/GLTFMaterialLoader.h
-        src/loader/GLTFMaterialLoader.cpp
-        src/loader/GLTFMeshLoader.h
-        src/loader/GLTFMeshLoader.cpp
-        src/loader/GLTFSceneLoader.h
-        src/loader/GLTFSceneLoader.cpp
+        src/loader/TextureFactory.cpp
+        src/loader/TextureFactory.h
 )
 set(MATERIAL_FILES
         src/material/MatteMaterial.cpp
+        src/material/MatteMaterial.h
         src/material/PerfectReflectionMaterial.cpp
+        src/material/PerfectReflectionMaterial.h
         src/material/PerfectTransmissionMaterial.cpp
         src/material/PerfectTransmissionMaterial.h
 )
 set(MODEL_FILES
-        src/model/Sphere.cpp
-        src/model/Triangle.cpp
-        src/model/Box.cpp
         src/core/Model.cpp
+        src/model/Box.cpp
+        src/model/Box.h
+        src/model/ModelTypes.h
+        src/model/Sphere.cpp
+        src/model/Sphere.h
+        src/model/Triangle.cpp
+        src/model/Triangle.h
 )
 set(SAMPLER_FILES
-        src/core/Sampler.cpp
-        src/sampler/SimpleSampler.h
         src/sampler/SimpleSampler.cpp
-        src/sampler/DebugSampler.cpp
-        src/sampler/DebugSampler.h
+        src/sampler/SimpleSampler.h
 )
 set(TEXTURE_FILES
-        src/texture/TextureFactory.h
-        src/texture/TextureFactory.cpp
+        src/texture/ConstantTexture.h
+        src/texture/SphereTexture.h
+        src/texture/TextureTypes.h
+        src/texture/UVTexture.h
 )
 set(MISC_FILES
         src/MathUtil.h
@@ -138,9 +180,9 @@ set(SRC_FILES
         ${DISTRIBUTION_FILES}
         ${HITACCEL_FILES}
         ${HITSOLVER_FILES}
+        ${HITSOLVER_FILES}
         ${INTEGRATOR_FILES}
         ${LIGHT_FILES}
-        ${HITSOLVER_FILES}
         ${LOADER_FILES}
         ${MATERIAL_FILES}
         ${MODEL_FILES}
@@ -148,7 +190,6 @@ set(SRC_FILES
         ${TEXTURE_FILES}
         ${MISC_FILES}
         ${NON_BUILD_FILES}
-        src/integrator/SamplerIntegrator.cpp
 )
 add_executable(xd_rt_playground main.cpp)
 add_library(xd_rt STATIC ${SRC_FILES})

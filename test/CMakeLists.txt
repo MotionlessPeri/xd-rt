@@ -17,6 +17,7 @@ set(NON_BUILD_FILES
 add_executable(xd_rt_test
         ${NON_BUILD_FILES}
         AABBTest.cpp
+        BxDFTest.cpp
         CameraTest.cpp
         DistributionTest.cpp
         FilmTest.cpp
