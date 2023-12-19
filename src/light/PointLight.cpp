@@ -4,8 +4,8 @@
 #include "PointLight.h"
 #include "HitRecord.h"
 using namespace xd;
-PointLight::PointLight(const Vector3f& position, const ColorRGB& intensity)
-	: Light(1u), position(position), intensity(intensity)
+PointLight::PointLight(Vector3f position, ColorRGB intensity)
+	: Light(1u), position(std::move(position)), intensity(std::move(intensity))
 {
 }
 

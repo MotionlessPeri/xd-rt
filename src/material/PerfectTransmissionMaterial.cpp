@@ -2,6 +2,7 @@
 // Created by Frank on 2023/12/16.
 //
 #include "PerfectTransmissionMaterial.h"
+#include <cassert>
 #include "HitRecord.h"
 #include "MathUtil.h"
 using namespace xd;
@@ -20,7 +21,7 @@ ColorRGB PerfectTransmissionMaterial::getBxDF(const HitRecord& primRec,
 ColorRGB PerfectTransmissionMaterial::sampleBxDF(const Vector2f& uSample,
 												 const HitRecord& primRec,
 												 const Vector3f& wo,
-												 Vector3f& wi)
+												 Vector3f& wi) const
 {
 	assert(primRec.frame == FrameCategory::WORLD);
 	const auto [btdf, flipNormal] = chooseBtdf(primRec.n, wo);
@@ -34,7 +35,7 @@ ColorRGB PerfectTransmissionMaterial::sampleBxDFWithPdf(const Vector2f& uSample,
 														const HitRecord& primRec,
 														const Vector3f& wo,
 														Vector3f& wi,
-														float& pdf)
+														float& pdf) const
 {
 	assert(primRec.frame == FrameCategory::WORLD);
 	const auto [btdf, flipNormal] = chooseBtdf(primRec.n, wo);

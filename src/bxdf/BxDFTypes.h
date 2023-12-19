@@ -8,5 +8,6 @@ namespace xd {
 class Lambertian;
 class PerfectReflection;
 class PerfectTransmission;
+class PerfectFresnel;
 }  // namespace xd
 #endif	// XD_RT_BXDFTYPES_H

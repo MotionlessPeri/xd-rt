@@ -6,7 +6,7 @@
 #include "FloatWithError.h"
 using namespace xd;
 
-Ray::Ray(const Vector3f& o, const Vector3f& d) : o(o), d(d) {}
+Ray::Ray(Vector3f o, Vector3f d) : o(std::move(o)), d(std::move(d)) {}
 Vector3f Ray::getTPoint(const FloatWithError& t, Vector3f& pError) const
 {
 	const auto deltaT = t.extent() / 2.f;

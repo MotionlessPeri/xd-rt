@@ -9,7 +9,7 @@
 namespace xd {
 class Lambertian : public BxDF {
 public:
-	explicit Lambertian(const ColorRGB& color);
+	explicit Lambertian(ColorRGB color);
 	ColorRGB getBxDF(const Vector3f& wi, const Vector3f& wo) const override;
 	ColorRGB sampleBxDF(const Vector2f& uSample, const Vector3f& wo, Vector3f& wi) override;
 	ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,

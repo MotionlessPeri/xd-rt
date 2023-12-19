@@ -5,8 +5,8 @@
 #include "HitRecord.h"
 
 using namespace xd;
-Lambertian::Lambertian(const ColorRGB& color)
-	: color(color), distrib(std::make_unique<CosineHemisphere>())
+Lambertian::Lambertian(ColorRGB color)
+	: color(std::move(color)), distrib(std::make_unique<CosineHemisphere>())
 {
 }
 ColorRGB Lambertian::getBxDF(const Vector3f& wi, const Vector3f& wo) const

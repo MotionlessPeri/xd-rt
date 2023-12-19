@@ -144,6 +144,9 @@ set(MATERIAL_FILES
         src/material/PerfectReflectionMaterial.h
         src/material/PerfectTransmissionMaterial.cpp
         src/material/PerfectTransmissionMaterial.h
+        src/material/MaterialTypes.h
+        src/material/PerfectFresnelMaterial.cpp
+        src/material/PerfectFresnelMaterial.h
 )
 set(MODEL_FILES
         src/core/Model.cpp

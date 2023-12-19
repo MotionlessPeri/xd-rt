@@ -10,11 +10,13 @@
 #include "oneapi/tbb.h"
 using namespace xd;
 
-SamplerIntegrator::SamplerIntegrator(const std::shared_ptr<Sampler>& sampler) : sampler(sampler) {}
+SamplerIntegrator::SamplerIntegrator(std::shared_ptr<Sampler> sampler) : sampler(std::move(sampler))
+{
+}
 
 SamplerIntegrator::SamplerIntegrator(const IntegratorConfig& config,
-									 const std::shared_ptr<Sampler>& sampler)
-	: Integrator(config), sampler(sampler)
+									 std::shared_ptr<Sampler> sampler)
+	: Integrator(config), sampler(std::move(sampler))
 {
 }
 void SamplerIntegrator::render(const xd::Scene& scene)

@@ -5,8 +5,8 @@
 #include "Film.h"
 #include "Ray.h"
 using namespace xd;
-PerspCamera::PerspCamera(const Vector3f& position, const std::shared_ptr<Film>& film)
-	: Camera(film), pos(position)
+PerspCamera::PerspCamera(Vector3f position, const std::shared_ptr<Film>& film)
+	: Camera(film), pos(std::move(position))
 {
 }
 

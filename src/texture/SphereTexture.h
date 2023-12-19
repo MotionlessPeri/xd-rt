@@ -16,6 +16,10 @@ public:
 		: data(data), width(width), height(height)
 	{
 	}
+	SphereTexture(std::vector<ReturnType>&& data, uint32_t width, uint32_t height)
+		: data(data), width(width), height(height)
+	{
+	}
 	ReturnType sample(const Vector3f& sample) override
 	{
 		const auto uv = getSphereUV(sample);

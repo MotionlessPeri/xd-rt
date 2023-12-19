@@ -11,8 +11,8 @@ MatteMaterial::MatteMaterial(const ColorRGB& c)
 {
 	color = std::make_shared<ConstantTexture<ColorRGB, Vector2f>>(c);
 }
-MatteMaterial::MatteMaterial(const std::shared_ptr<Texture2DRGB>& colorTexture)
-	: color(colorTexture)
+MatteMaterial::MatteMaterial(std::shared_ptr<Texture2DRGB> colorTexture)
+	: color(std::move(colorTexture))
 {
 }
 
@@ -29,7 +29,7 @@ ColorRGB MatteMaterial::getBxDF(const HitRecord& primRec,
 ColorRGB MatteMaterial::sampleBxDF(const Vector2f& uSample,
 								   const HitRecord& primRec,
 								   const Vector3f& wo,
-								   Vector3f& wi)
+								   Vector3f& wi) const
 {
 	assert(primRec.frame == FrameCategory::WORLD);
 	const auto localToWorld = primRec.getCurrentFrame();
@@ -45,7 +45,7 @@ ColorRGB MatteMaterial::sampleBxDFWithPdf(const Vector2f& uSample,
 										  const HitRecord& primRec,
 										  const Vector3f& wo,
 										  Vector3f& wi,
-										  float& pdf)
+										  float& pdf) const
 {
 	assert(primRec.frame == FrameCategory::WORLD);
 	const auto localToWorld = primRec.getCurrentFrame();

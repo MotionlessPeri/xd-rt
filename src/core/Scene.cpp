@@ -3,9 +3,10 @@
 //
 #include "Scene.h"
 using namespace xd;
-Scene::Scene(const std::vector<std::shared_ptr<Primitive>>& primitives,
-			 const std::vector<std::shared_ptr<Light>>& lights)
-	: primitives(primitives), lights(lights)
+
+Scene::Scene(std::vector<std::shared_ptr<Primitive>> primitives,
+             std::vector<std::shared_ptr<Light>> lights)
+	: primitives(std::move(primitives)), lights(std::move(lights))
 {
 }
 

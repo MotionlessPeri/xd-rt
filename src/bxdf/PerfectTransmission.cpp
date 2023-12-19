@@ -14,7 +14,7 @@ ColorRGB PerfectTransmission::getBxDF(const Vector3f& wi, const Vector3f& wo) co
 ColorRGB PerfectTransmission::sampleBxDF(const Vector2f& uSample, const Vector3f& wo, Vector3f& wi)
 {
 	Vector3f& wt = wi;
-	const auto [total, sin2ThetaT] = checkTotalReflection(wo);
+	const auto [total, sin2ThetaT] = checkTotalReflection(eta, wo.z());
 	if (total)
 		return {0, 0, 0};
 	const float cosThetaT = std::sqrtf(1 - sin2ThetaT);
@@ -31,7 +31,7 @@ ColorRGB PerfectTransmission::sampleBxDFWithPdf(const Vector2f& uSample,
 }
 Vector3f PerfectTransmission::sampleDirection(const Vector2f& uSample, const Vector3f& wo) const
 {
-	const auto [total, sin2ThetaT] = checkTotalReflection(wo);
+	const auto [total, sin2ThetaT] = checkTotalReflection(eta, wo.z());
 	if (total)
 		return {0, 0, 0};
 	const float cosThetaT = std::sqrtf(1 - sin2ThetaT);

@@ -21,8 +21,8 @@ public:
 	std::shared_ptr<Light> getEnvironment() const { return environment; }
 
 protected:
-	Scene(const std::vector<std::shared_ptr<Primitive>>& primitives,
-		  const std::vector<std::shared_ptr<Light>>& lights);
+	Scene(std::vector<std::shared_ptr<Primitive>> primitives,
+	      std::vector<std::shared_ptr<Light>> lights);
 	void setHitSolver(std::unique_ptr<HitSolver> solver) { hitSolver = std::move(solver); }
 	void setEnvironment(const std::shared_ptr<Light>& env) { environment = env; }
 	std::vector<std::shared_ptr<Primitive>> primitives;

@@ -11,7 +11,7 @@ namespace xd {
 // Similar as AABB but is a model
 class Box : public Model {
 public:
-	Box(const Vector3f& minPoint, const Vector3f& maxPoint);
+	Box(Vector3f minPoint, Vector3f maxPoint);
 	bool hit(const Ray& ray, HitRecord& rec) const override;
 	float getArea() const override;
 	AABB getAABB() const override;

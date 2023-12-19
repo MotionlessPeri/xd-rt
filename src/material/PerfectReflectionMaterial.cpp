@@ -2,6 +2,7 @@
 // Created by Frank on 2023/9/18.
 //
 #include "PerfectReflectionMaterial.h"
+#include <cassert>
 #include "HitRecord.h"
 #include "bxdf/PerfectReflection.h"
 using namespace xd;
@@ -19,7 +20,7 @@ ColorRGB PerfectReflectionMaterial::getBxDF(const HitRecord& primRec,
 ColorRGB PerfectReflectionMaterial::sampleBxDF(const Vector2f& uSample,
 											   const HitRecord& primRec,
 											   const Vector3f& wo,
-											   Vector3f& wi)
+											   Vector3f& wi) const
 {
 	assert(primRec.frame == FrameCategory::WORLD);
 	const auto localToWorld = primRec.getCurrentFrame();
@@ -34,7 +35,7 @@ ColorRGB PerfectReflectionMaterial::sampleBxDFWithPdf(const Vector2f& uSample,
 													  const HitRecord& primRec,
 													  const Vector3f& wo,
 													  Vector3f& wi,
-													  float& pdf)
+													  float& pdf) const
 {
 	assert(primRec.frame == FrameCategory::WORLD);
 	const auto localToWorld = primRec.getCurrentFrame();

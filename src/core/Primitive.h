@@ -10,10 +10,10 @@
 namespace xd {
 class Primitive : public Model {
 public:
-	Primitive(const std::shared_ptr<Model>& model, const std::shared_ptr<Material>& material);
-	Primitive(const std::shared_ptr<Model>& model,
-			  const std::shared_ptr<Material>& material,
-			  const Transform& modelToWorld);
+	Primitive(std::shared_ptr<Model> model, std::shared_ptr<Material> material);
+	Primitive(std::shared_ptr<Model> model,
+	          std::shared_ptr<Material> material,
+	          const Transform& modelToWorld);
 	std::shared_ptr<Model> getModel() const { return model; }
 	std::shared_ptr<Material> getMaterial() const { return material; }
 	bool hit(const Ray& ray, HitRecord& rec) const override;

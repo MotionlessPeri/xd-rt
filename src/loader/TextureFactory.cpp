@@ -25,7 +25,7 @@ std::shared_ptr<SphereTexture<Vector3f>> TextureFactory::loadSphereTextureRGB(
 		textureData.emplace_back(rawData[channels * i], rawData[channels * i + 1],
 								 rawData[channels * i + 2]);
 	}
-	return std::make_shared<SphereTexture<Vector3f>>(textureData, (uint32_t)width,
+	return std::make_shared<SphereTexture<Vector3f>>(std::move(textureData), (uint32_t)width,
 													 (uint32_t)height);
 }
 std::shared_ptr<UVTexture<ColorRGB>> TextureFactory::loadUVTextureRGB(const std::string& path)
@@ -38,5 +38,6 @@ std::shared_ptr<UVTexture<ColorRGB>> TextureFactory::loadUVTextureRGB(const std:
 		textureData.emplace_back(rawData[i]);
 		textureData.back() /= 255.f;
 	}
-	return std::make_shared<UVTextureRGB>(textureData, (uint32_t)width, (uint32_t)height);
+	return std::make_shared<UVTextureRGB>(std::move(textureData), (uint32_t)width,
+										  (uint32_t)height);
 }

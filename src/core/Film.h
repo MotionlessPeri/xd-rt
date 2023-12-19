@@ -53,7 +53,7 @@ public:
 
 	class TilePixelIterator {
 	public:
-		TilePixelIterator(const Vector2i& p, const FilmTile* tile);
+		TilePixelIterator(Vector2i p, const FilmTile* tile);
 		TilePixelIterator operator++()
 		{
 			p.x()++;
@@ -95,18 +95,18 @@ public:
 class Film {
 public:
 	Film() = default;
-	Film(const Vector3f& center,
-		 const Vector3f& right,
-		 const Vector3f& up,
-		 uint32_t width,
-		 uint32_t height);
-	Film(const Vector3f& center,
-		 const Vector3f& right,
-		 const Vector3f& up,
-		 uint32_t width,
-		 uint32_t height,
-		 const Vector2i& croppedTopLeft,
-		 const Vector2i& croppedBottomRight);
+	Film(Vector3f center,
+	     const Vector3f& right,
+	     const Vector3f& up,
+	     uint32_t width,
+	     uint32_t height);
+	Film(Vector3f center,
+	     const Vector3f& right,
+	     const Vector3f& up,
+	     uint32_t width,
+	     uint32_t height,
+	     const Vector2i& croppedTopLeft,
+	     const Vector2i& croppedBottomRight);
 	Film(const Film& other);
 	Film(Film&& other) noexcept;
 	Film& operator=(const Film& other);

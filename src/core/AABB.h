@@ -10,7 +10,7 @@ namespace xd {
 class AABB : public Hitable {
 public:
 	AABB();
-	AABB(const Vector3f& minPoint, const Vector3f& maxPoint);
+	AABB(Vector3f minPoint, Vector3f maxPoint);
 	void merge(const AABB& rhs);
 	bool isInside(const Vector3f& point) const;
 	bool isIntersected(const AABB& rhs) const;

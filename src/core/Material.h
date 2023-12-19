@@ -35,7 +35,7 @@ public:
 	virtual ColorRGB sampleBxDF(const Vector2f& uSample,
 								const HitRecord& primRec,
 								const Vector3f& wo,
-								Vector3f& wi) = 0;
+								Vector3f& wi) const = 0;
 	/**
 	 * \brief sample the bxdf of a given point
 	 * \param uSample the sampled point used to sample wo
@@ -49,7 +49,7 @@ public:
 									   const HitRecord& primRec,
 									   const Vector3f& wo,
 									   Vector3f& wi,
-									   float& pdf) = 0;
+									   float& pdf) const = 0;
 	/**
 	 * \brief get pdf value of given wo
 	 * \param primRec the local representation of hit point

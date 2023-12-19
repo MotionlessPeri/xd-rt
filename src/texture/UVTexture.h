@@ -24,6 +24,10 @@ public:
 		: data(data), width(width), height(height)
 	{
 	}
+	UVTexture(std::vector<float>&& data, uint32_t width, uint32_t height)
+		: data(data), width(width), height(height)
+	{
+	}
 	float sample(const Vector2f& sample) override
 	{
 		const uint32_t col = sample.x() * width;
@@ -40,8 +44,8 @@ protected:
 template <>
 class UVTexture<ColorRGB> : public Texture2D<ColorRGB> {
 public:
-	UVTexture(const std::vector<float>& data, uint32_t width, uint32_t height)
-		: data(data), width(width), height(height)
+	UVTexture(std::vector<float> data, uint32_t width, uint32_t height)
+		: data(std::move(data)), width(width), height(height)
 	{
 	}
 	ColorRGB sample(const Vector2f& sample) override
@@ -60,8 +64,8 @@ protected:
 template <>
 class UVTexture<ColorRGBA> : public Texture2D<ColorRGBA> {
 public:
-	UVTexture(const std::vector<float>& data, uint32_t width, uint32_t height)
-		: data(data), width(width), height(height)
+	UVTexture(std::vector<float> data, uint32_t width, uint32_t height)
+		: data(std::move(data)), width(width), height(height)
 	{
 	}
 	ColorRGBA sample(const Vector2f& sample) override

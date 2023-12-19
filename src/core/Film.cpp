@@ -8,12 +8,12 @@
 #include "stb_image_write.h"
 using namespace xd;
 
-Film::Film(const Vector3f& center,
-		   const Vector3f& right,
-		   const Vector3f& up,
-		   uint32_t width,
-		   uint32_t height)
-	: center(center),
+Film::Film(Vector3f center,
+           const Vector3f& right,
+           const Vector3f& up,
+           uint32_t width,
+           uint32_t height)
+	: center(std::move(center)),
 	  right(right),
 	  normedRight(right.normalized()),
 	  up(up),
@@ -28,14 +28,14 @@ Film::Film(const Vector3f& center,
 {
 }
 
-Film::Film(const Vector3f& center,
-		   const Vector3f& right,
-		   const Vector3f& up,
-		   uint32_t width,
-		   uint32_t height,
-		   const Vector2i& croppedTopLeft,
-		   const Vector2i& croppedBottomRight)
-	: center(center),
+Film::Film(Vector3f center,
+           const Vector3f& right,
+           const Vector3f& up,
+           uint32_t width,
+           uint32_t height,
+           const Vector2i& croppedTopLeft,
+           const Vector2i& croppedBottomRight)
+	: center(std::move(center)),
 	  right(right),
 	  normedRight(right.normalized()),
 	  up(up),
@@ -241,7 +241,7 @@ Vector2i FilmTile::getSampleCoordFromIndex(int index) const
 	const int col = index % tileExtent.x() + topLeft.y();
 	return {col, row};
 }
-FilmTile::TilePixelIterator::TilePixelIterator(const Vector2i& p, const FilmTile* tile)
-	: p(p), tile(tile)
+FilmTile::TilePixelIterator::TilePixelIterator(Vector2i p, const FilmTile* tile)
+	: p(std::move(p)), tile(tile)
 {
 }

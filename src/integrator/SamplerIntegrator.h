@@ -8,9 +8,9 @@
 namespace xd {
 class SamplerIntegrator : public Integrator {
 public:
-	explicit SamplerIntegrator(const std::shared_ptr<Sampler>& sampler);
+	explicit SamplerIntegrator(std::shared_ptr<Sampler> sampler);
 
-	SamplerIntegrator(const IntegratorConfig& config, const std::shared_ptr<Sampler>& sampler);
+	SamplerIntegrator(const IntegratorConfig& config, std::shared_ptr<Sampler> sampler);
 
 	virtual ColorRGB Li(const Ray& ray, const Scene& scene, Sampler& sampler) = 0;
 	void render(const Scene& scene) override;

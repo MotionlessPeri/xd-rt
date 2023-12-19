@@ -6,8 +6,8 @@
 #include "MathUtil.h"
 #include "Triangle.h"
 using namespace xd;
-Box::Box(const Vector3f& minPoint, const Vector3f& maxPoint)
-	: minPoint(minPoint), maxPoint(maxPoint)
+Box::Box(Vector3f minPoint, Vector3f maxPoint)
+	: minPoint(std::move(minPoint)), maxPoint(std::move(maxPoint))
 {
 }
 bool Box::hit(const Ray& ray, HitRecord& rec) const

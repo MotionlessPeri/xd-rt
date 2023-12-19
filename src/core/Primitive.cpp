@@ -4,15 +4,15 @@
 #include "Primitive.h"
 #include "AABB.h"
 using namespace xd;
-Primitive::Primitive(const std::shared_ptr<Model>& model, const std::shared_ptr<Material>& material)
-	: model(model), material(material)
+Primitive::Primitive(std::shared_ptr<Model> model, std::shared_ptr<Material> material)
+	: model(std::move(model)), material(std::move(material))
 {
 }
-Primitive::Primitive(const std::shared_ptr<Model>& model,
-					 const std::shared_ptr<Material>& material,
-					 const Transform& modelToWorld)
-	: model(model),
-	  material(material),
+Primitive::Primitive(std::shared_ptr<Model> model,
+                     std::shared_ptr<Material> material,
+                     const Transform& modelToWorld)
+	: model(std::move(model)),
+	  material(std::move(material)),
 	  modelToWorld(modelToWorld),
 	  worldToModel(modelToWorld.inverse())
 {

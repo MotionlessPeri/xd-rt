@@ -58,10 +58,10 @@ protected:
 class GLTFMaterialLoader {
 public:
 	GLTFMaterialLoader(
-		const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>>& floatTextures,
-		const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>& rgbTextures,
-		const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>&
-			rgbaTextures);
+		std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>> floatTextures,
+		std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>> rgbTextures,
+		std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>
+		rgbaTextures);
 	std::shared_ptr<Material> loadMaterial(const tinygltf::Material& material);
 
 protected:

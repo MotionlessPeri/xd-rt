@@ -5,7 +5,7 @@
 #include "Model.h"
 #include "Primitive.h"
 using namespace xd;
-NoAccel::NoAccel(const std::vector<const Model*>& models) : models(models) {}
+NoAccel::NoAccel(std::vector<const Model*> models) : models(std::move(models)) {}
 bool NoAccel::hit(const Ray& ray, HitRecord& rec) const
 {
 	bool hit = false;

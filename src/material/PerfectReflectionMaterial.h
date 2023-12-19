@@ -17,12 +17,12 @@ public:
 	ColorRGB sampleBxDF(const Vector2f& uSample,
 						const HitRecord& primRec,
 						const Vector3f& wo,
-						Vector3f& wi) override;
+						Vector3f& wi) const override;
 	ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,
 							   const HitRecord& primRec,
 							   const Vector3f& wo,
 							   Vector3f& wi,
-							   float& pdf) override;
+							   float& pdf) const override;
 	Vector3f sampleDirection(const Vector2f& uSample,
 							 const HitRecord& primRec,
 							 const Vector3f& wo) const override;

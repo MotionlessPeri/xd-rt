@@ -252,5 +252,16 @@ inline bool isBlack(const ColorRGB& color, float eps = 1e-5f)
 {
 	return color.cwiseLess(eps).all();
 }
+
+/**
+ * check if v lies in the hemisphere defined by n.
+ * @param v the vector to be judged.
+ * @param n the normal that determines the hemisphere.
+ * @return true if v lies in the hemisphere n defines; false otherwise.
+ */
+inline bool sameHemisphere(const Vector3f& v, const Vector3f& n)
+{
+	return v.dot(n) > 0;
+}
 }  // namespace xd
 #endif	// XD_RT_MATHUTIL_H

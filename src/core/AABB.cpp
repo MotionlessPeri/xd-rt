@@ -5,8 +5,8 @@
 using namespace xd;
 AABB::AABB() : minPoint(FLT_MAX, FLT_MAX, FLT_MAX), maxPoint(-FLT_MAX, -FLT_MAX, -FLT_MAX) {}
 
-AABB::AABB(const Vector3f& minPoint, const Vector3f& maxPoint)
-	: minPoint(minPoint), maxPoint(maxPoint)
+AABB::AABB(Vector3f minPoint, Vector3f maxPoint)
+	: minPoint(std::move(minPoint)), maxPoint(std::move(maxPoint))
 {
 }
 

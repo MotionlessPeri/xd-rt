@@ -11,27 +11,35 @@
 #include "MathUtil.h"
 #include "Ray.h"
 namespace xd {
+// Note: we make an appointment that when HitRecord is filled by shape's hit method, the normal
+// orientation is always pointing to "outside" of the model, if possible
 struct HitRecord {
 public:
 	explicit HitRecord(float t_hit) : tHit(t_hit) {}
 	HitRecord(float t_hit,
-			  const Vector3f& p,
-			  const Vector2f& uv,
+			  Vector3f p,
+			  Vector2f uv,
 			  const Vector3f& n,
-			  const std::shared_ptr<const Primitive>& primitive)
-		: tHit(t_hit), p(p), uv(uv), n(n), primitive(primitive)
+			  std::shared_ptr<const Primitive> primitive)
+		: tHit(t_hit), p(std::move(p)), uv(std::move(uv)), n(n), primitive(std::move(primitive))
 	{
 		std::tie(dpdu, dpdv) = coordSystem(n);
 	}
 
 	HitRecord(float t_hit,
-			  const Vector3f& p,
-			  const Vector2f& uv,
-			  const Vector3f& n,
-			  const Vector3f& dpdu,
-			  const Vector3f& dpdv,
-			  const std::shared_ptr<const Primitive>& primitive)
-		: tHit(t_hit), p(p), uv(uv), n(n), dpdu(dpdu), dpdv(dpdv), primitive(primitive)
+			  Vector3f p,
+			  Vector2f uv,
+			  Vector3f n,
+			  Vector3f dpdu,
+			  Vector3f dpdv,
+			  std::shared_ptr<const Primitive> primitive)
+		: tHit(t_hit),
+		  p(std::move(p)),
+		  uv(std::move(uv)),
+		  n(std::move(n)),
+		  dpdu(std::move(dpdu)),
+		  dpdv(std::move(dpdv)),
+		  primitive(std::move(primitive))
 	{
 	}
 

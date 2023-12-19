@@ -32,7 +32,7 @@ inline Vector3f offsetRayOrigin(const Vector3f& origin,
 class Ray {
 public:
 	Ray() = default;
-	Ray(const Vector3f& o, const Vector3f& d);
+	Ray(Vector3f o, Vector3f d);
 	Vector3f getTPoint(float t) const { return o + t * d; }
 	Vector3f getTPoint(const FloatWithError& t, Vector3f& pError) const;
 	Vector3f o;

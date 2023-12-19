@@ -11,7 +11,7 @@ namespace xd {
  */
 class NoAccel : public HitAccel {
 public:
-	explicit NoAccel(const std::vector<const Model*>& models);
+	explicit NoAccel(std::vector<const Model*> models);
 	~NoAccel() = default;
 	NoAccel(const NoAccel& other) = delete;
 	NoAccel(NoAccel&& other) noexcept = delete;

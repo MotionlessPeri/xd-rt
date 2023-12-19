@@ -8,7 +8,7 @@
 namespace xd {
 class PointLight : public Light {
 public:
-	PointLight(const Vector3f& position, const ColorRGB& intensity);
+	PointLight(Vector3f position, ColorRGB intensity);
 	Vector3f sampleDirection(const Vector2f& uSample,
 							 const HitRecord& primRec,
 							 HitRecord& shadowRec) const override;

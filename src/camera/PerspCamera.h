@@ -8,7 +8,7 @@
 namespace xd {
 class PerspCamera : public Camera {
 public:
-	PerspCamera(const Vector3f& position, const std::shared_ptr<Film>& film);
+	PerspCamera(Vector3f position, const std::shared_ptr<Film>& film);
 	Ray generateRay(const Vector2f& sample) const override;
 
 protected:

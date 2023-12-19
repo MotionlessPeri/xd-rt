@@ -7,7 +7,7 @@
 #include "BxDF.h"
 namespace xd {
 /**
- * Perfect transmission respect of eta = eta_i / eta_t.
+ * Perfect transmission respect of eta = eta_t / eta_i.
  * The implementation assumes the normal is in the same hemisphere of wi.
  * If the light travels into less dense medium, the ray will be neglected. Notice that because of
  * this, this bxdf is not energy preserved(it is energy conserved though)
@@ -28,27 +28,27 @@ public:
 									float& pdf) override;
 	float getPdf(const Vector3f& wi) const override;
 	bool isDelta() const override;
-
-protected:
-	Vector3f refract(const Vector3f& wo, float cosThetaT) const;
 	/**
 	 * \brief check if total reflection is reached. If reached, isTotal is set to true; otherwise
 	 * sin2ThetaT is provided
-	 * \param wo the incident direction
+	 * \param cosThetaI the cosine of wo and n
 	 * \return {isTotal, sin2ThetaT}
 	 */
-	auto checkTotalReflection(const Vector3f& wo) const
+	static auto checkTotalReflection(float eta, float cosThetaI)
 	{
 		struct Ret {
 			bool isTotalReflection;
 			float sin2ThetaT;
 		} ret;
-		const float cosThetaI = wo.z();
 		const float sin2ThetaI = 1 - cosThetaI * cosThetaI;
 		ret.sin2ThetaT = sin2ThetaI / (eta * eta);
 		ret.isTotalReflection = ret.sin2ThetaT > 1;
 		return ret;
 	}
+
+protected:
+	Vector3f refract(const Vector3f& wo, float cosThetaT) const;
+
 	float eta;
 };
 }  // namespace xd

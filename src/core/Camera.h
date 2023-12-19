@@ -14,7 +14,7 @@
 namespace xd {
 class Camera {
 public:
-	explicit Camera(const std::shared_ptr<Film>& pFilm) : film(pFilm){};
+	explicit Camera(std::shared_ptr<Film> pFilm) : film(std::move(pFilm)){};
 	[[nodiscard]] virtual Ray generateRay(const Vector2f& sample) const = 0;
 	[[nodiscard]] std::shared_ptr<Film> getFilm() const { return film; }
 
