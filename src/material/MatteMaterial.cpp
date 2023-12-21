@@ -2,6 +2,7 @@
 // Created by Frank on 2023/9/2.
 //
 #include "MatteMaterial.h"
+#include <cassert>
 #include "BxDF.h"
 #include "HitRecord.h"
 #include "bxdf/Lambertian.h"

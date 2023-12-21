@@ -2,10 +2,11 @@
 // Created by Frank on 2023/8/25.
 //
 #include "Scene.h"
+#include <cassert>
 using namespace xd;
 
 Scene::Scene(std::vector<std::shared_ptr<Primitive>> primitives,
-             std::vector<std::shared_ptr<Light>> lights)
+			 std::vector<std::shared_ptr<Light>> lights)
 	: primitives(std::move(primitives)), lights(std::move(lights))
 {
 }

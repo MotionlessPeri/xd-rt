@@ -2,6 +2,7 @@
 // Created by Frank on 2023/9/19.
 //
 #include "Box.h"
+#include <cassert>
 #include "AABB.h"
 #include "MathUtil.h"
 #include "Triangle.h"

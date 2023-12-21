@@ -2,6 +2,7 @@
 // Created by Frank on 2023/8/19.
 //
 #include "Sphere.h"
+#include <cassert>
 #include "AABB.h"
 #include "FloatWithError.h"
 #include "MathUtil.h"

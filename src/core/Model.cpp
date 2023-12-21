@@ -2,6 +2,7 @@
 // Created by Frank on 2023/12/4.
 //
 #include "Model.h"
+#include <cassert>
 #include "model/Triangle.h"
 using namespace xd;
 std::shared_ptr<TriangleMesh> Model::getTriangulatedMesh()

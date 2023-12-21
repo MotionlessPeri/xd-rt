@@ -6,7 +6,7 @@
 #define XD_RT_FILM_H
 
 #include <MathUtil.h>
-
+#include <cassert>
 #include <mutex>
 #include <utility>
 #include <vector>
@@ -96,17 +96,17 @@ class Film {
 public:
 	Film() = default;
 	Film(Vector3f center,
-	     const Vector3f& right,
-	     const Vector3f& up,
-	     uint32_t width,
-	     uint32_t height);
+		 const Vector3f& right,
+		 const Vector3f& up,
+		 uint32_t width,
+		 uint32_t height);
 	Film(Vector3f center,
-	     const Vector3f& right,
-	     const Vector3f& up,
-	     uint32_t width,
-	     uint32_t height,
-	     const Vector2i& croppedTopLeft,
-	     const Vector2i& croppedBottomRight);
+		 const Vector3f& right,
+		 const Vector3f& up,
+		 uint32_t width,
+		 uint32_t height,
+		 const Vector2i& croppedTopLeft,
+		 const Vector2i& croppedBottomRight);
 	Film(const Film& other);
 	Film(Film&& other) noexcept;
 	Film& operator=(const Film& other);
