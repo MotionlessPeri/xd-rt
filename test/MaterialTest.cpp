@@ -404,7 +404,8 @@ TEST(MaterialTestSuite, PerfectFresnelTest1)
 	//	CameraFactory::createOrthoCamera(center, target, up.normalized(), 1, 1, width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(10);
+	auto sampler = std::make_shared<SimpleSampler>(100);
+	const auto timeStart = std::chrono::steady_clock::now();
 	{
 		// TBB_SERIAL
 		film->clear();
@@ -415,6 +416,9 @@ TEST(MaterialTestSuite, PerfectFresnelTest1)
 		const std::string hdrPath = R"(D:\perfect_fresnel_test_path.hdr)";
 		EXPECT_NO_THROW(film->saveToFile(hdrPath););
 	}
+	const auto timeEnd = std::chrono::steady_clock::now();
+	const std::chrono::duration<double> duration = timeEnd - timeStart;
+	std::cout << "rendering fresnel sphere costing " << duration << " seconds.\n";
 }
 
 TEST(MaterialTestSuite, PerfectFresnelSceneTest2)

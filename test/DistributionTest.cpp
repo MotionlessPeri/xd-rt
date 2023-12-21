@@ -119,7 +119,7 @@ TEST(DistribTestSuite, PieceWise2DCtorTest)
 	PieceWise2D dis{weights, 3, 2};
 	const float dPixel = 1.f / (width * height);
 	const auto wDPixelView =
-		weights | std::views::transform([&](int wVal) { return wVal * dPixel; });
+		weights | std::views::transform([&](float wVal) { return wVal * dPixel; });
 	const auto wInt = std::accumulate(wDPixelView.begin(), wDPixelView.end(), 0.f);
 	std::vector<float> ps(weights);
 	for (auto& val : ps)
