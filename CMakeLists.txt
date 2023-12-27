@@ -69,6 +69,10 @@ set(CORE_FILES
         src/core/SceneBuilder.cpp
         src/core/SceneBuilder.h
         src/core/Texture.h
+        src/core/Material.cpp
+        src/core/HitRecord.cpp
+        src/core/LightSampler.cpp
+        src/core/LightSampler.h
 )
 set(DISTRIBUTION_FILES
         src/distribution/CosineHemisphere.cpp
@@ -183,7 +187,6 @@ set(SRC_FILES
         ${DISTRIBUTION_FILES}
         ${HITACCEL_FILES}
         ${HITSOLVER_FILES}
-        ${HITSOLVER_FILES}
         ${INTEGRATOR_FILES}
         ${LIGHT_FILES}
         ${LOADER_FILES}
@@ -194,6 +197,23 @@ set(SRC_FILES
         ${MISC_FILES}
         ${NON_BUILD_FILES}
 )
+source_group(3rdParty FILES ${3RDPARTY_FILES})
+source_group(bxdf FILES ${BXDF_FILES})
+source_group(camera FILES ${CAMERA_FILES})
+source_group(core FILES ${CORE_FILES})
+source_group(distribution FILES ${DISTRIBUTION_FILES})
+source_group(hitAccel FILES ${HITACCEL_FILES})
+source_group(hitSolver FILES ${HITSOLVER_FILES})
+source_group(integrator FILES ${INTEGRATOR_FILES})
+source_group(light FILES ${LIGHT_FILES})
+source_group(loader FILES ${LOADER_FILES})
+source_group(material FILES ${MATERIAL_FILES})
+source_group(model FILES ${MODEL_FILES})
+source_group(sampler FILES ${SAMPLER_FILES})
+source_group(texture FILES ${TEXTURE_FILES})
+source_group(misc FILES ${MISC_FILES})
+source_group(non-build FILES ${NON_BUILD_FILES})
+
 add_executable(xd_rt_playground main.cpp)
 add_library(xd_rt STATIC ${SRC_FILES})
 

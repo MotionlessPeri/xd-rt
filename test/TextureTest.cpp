@@ -107,7 +107,7 @@ TEST(TextureTestSuite, UVTextureTest)
 				const auto ray = cam->generateRay(pixelSample);
 				HitRecord rec;
 				if (mesh.hit(ray, rec)) {
-					const auto color = texture.sample(rec.uv);
+					const auto color = texture.sample(rec.geom.uv);
 					tile->addSample(color, pixelSample);
 				}
 			}

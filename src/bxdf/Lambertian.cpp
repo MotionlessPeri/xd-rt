@@ -14,19 +14,16 @@ ColorRGB Lambertian::getBxDF(const Vector3f& wi, const Vector3f& wo) const
 	return color * INV_PI;
 }
 
-ColorRGB Lambertian::sampleBxDF(const Vector2f& uSample, const Vector3f& wo, Vector3f& wi)
+SampleBxDFResult Lambertian::sampleBxDF(const Vector2f& uSample, const Vector3f& wo) const
 {
-	wi = sampleDirection(uSample, wo);
-	return getBxDF(wi, wo);
+	const auto wi = sampleDirection(uSample, wo);
+	return {wi, getBxDF(wi, wo)};
 }
 
-ColorRGB Lambertian::sampleBxDFWithPdf(const Vector2f& uSample,
-									   const Vector3f& wo,
-									   Vector3f& wi,
-									   float& pdf)
+SampleBxDFPdfResult Lambertian::sampleBxDFWithPdf(const Vector2f& uSample, const Vector3f& wo) const
 {
-	wi = sampleDirectionWithPdf(uSample, wo, pdf);
-	return getBxDF(wi, wo);
+	const auto wiPdf = sampleDirectionWithPdf(uSample, wo);
+	return {getBxDF(wiPdf.dir, wo), wiPdf.dir, wiPdf.pdf};
 }
 
 Vector3f Lambertian::sampleDirection(const Vector2f& uSample, const Vector3f& wo) const
@@ -34,11 +31,11 @@ Vector3f Lambertian::sampleDirection(const Vector2f& uSample, const Vector3f& wo
 	return distrib->sample(uSample);
 }
 
-Vector3f Lambertian::sampleDirectionWithPdf(const Vector2f& uSample, const Vector3f& wo, float& pdf)
+SampleDirPdfResult Lambertian::sampleDirectionWithPdf(const Vector2f& uSample,
+													  const Vector3f& wo) const
 {
 	const auto wi = sampleDirection(uSample, wo);
-	pdf = getPdf(wi);
-	return wi;
+	return {wi, getPdf(wi)};
 }
 
 bool Lambertian::isDelta() const

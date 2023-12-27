@@ -36,7 +36,7 @@ void DebugIntegrator::render(const Scene& scene)
 				if (!scene.hit(primRay, primRec)) {
 					const auto env = scene.getEnvironment();
 					if (env) {
-						tile->addSample(env->getRadiance(primRec, primRay.d), pixelSample);
+						tile->addSample(env->getRadiance(primRec.geom, primRay.d), pixelSample);
 					}
 					continue;
 				}
@@ -61,10 +61,10 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			return {1, 0, 0};
 		case DebugChannel::SHADOW_HIT: {
 			HitRecord shadowRec;
-			const auto wi = primRec.n;
+			const auto wi = primRec.geom.derivatives.n;
 			const auto shadowRay = primRec.spawnRay(wi);
 			if (scene.hit(shadowRay, shadowRec)) {
-				return {shadowRec.tHit * 1e9f, 1, 0};
+				return {shadowRec.tHit, 1, 0};
 			}
 			else {
 				return {0, 0, 1};
@@ -73,16 +73,20 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 		case DebugChannel::HIT_T:
 			return {primRec.tHit, 0, 0};
 		case DebugChannel::POSITION:
-			return primRec.p;
-		case DebugChannel::NORMAL:
-			return primRec.n + Vector3f{1, 1, 1};
+			return primRec.geom.p;
+		case DebugChannel::GEOM_NORMAL:
+			return primRec.geom.derivatives.n + Vector3f{1, 1, 1};
+		case DebugChannel::SHADING_NORMAL: {
+			const auto shadingGeom = primRec.getShadingGeomParams();
+			return shadingGeom.derivatives.n + Vector3f{1, 1, 1};
+		}
 		case DebugChannel::UV:
-			return {primRec.uv.x(), primRec.uv.y(), 0};
+			return {primRec.geom.uv.x(), primRec.geom.uv.y(), 0};
 		case DebugChannel::BXDF: {
 			const auto wo = -primRay.d;
-			const auto wi = reflected(wo, primRec.n);
+			const auto wi = reflected(wo, primRec.geom.derivatives.n);
 			const auto material = primRec.primitive->getMaterial();
-			return material->getBxDF(primRec, wo, wi);
+			return primRec.getBxDF(wo, wi);
 		}
 		case DebugChannel::SINGLE_IRRADIANCE: {
 			const auto light = scene.getLights()[lightIndex];
@@ -91,7 +95,8 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			for ([[maybe_unused]] auto i : std::views::iota(0u, SAMPLE_CNT)) {
 				HitRecord shadowRec;
 				Vector3f wi;
-				res += light->sampleRadiance(sampler.sample2D(), primRec, shadowRec, wi);
+				res += light->sampleRadiance(sampler.sample2D(), primRec.getShadingGeomParams())
+						   .radiance;
 			}
 			return res / SAMPLE_CNT;
 		}
@@ -102,7 +107,9 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 				for (const auto& light : scene.getLights()) {
 					HitRecord shadowRec;
 					Vector3f wi;
-					radiance += light->sampleRadiance(sampler.sample2D(), primRec, shadowRec, wi);
+					radiance +=
+						light->sampleRadiance(sampler.sample2D(), primRec.getShadingGeomParams())
+							.radiance;
 				}
 			}
 
@@ -111,10 +118,9 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 		case DebugChannel::LIGHT_PDF: {
 			const auto light = scene.getLights()[lightIndex];
 			HitRecord shadowRec;
-			Vector3f wi;
-			float pdf;
-			light->sampleRadianceWithPdf(sampler.sample2D(), primRec, shadowRec, wi, pdf);
-			return {pdf, 0, 0};
+			return {light->sampleRadianceWithPdf(sampler.sample2D(), primRec.getShadingGeomParams())
+						.pdf,
+					0, 0};
 		}
 		case DebugChannel::SAMPLE_BRDF_RADIANCE: {
 			const auto light = scene.getLights()[lightIndex];
@@ -122,14 +128,12 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			ColorRGB res{0, 0, 0};
 			constexpr int cnt = 10;
 			for ([[maybe_unused]] auto i : std::views::iota(0, cnt)) {
-				HitRecord shadowRec;
-				Vector3f wi;
-				float pdf;
-				const auto brdf =
-					material->sampleBxDFWithPdf(sampler.sample2D(), primRec, -primRay.d, wi, pdf);
-				const auto radiance = light->getRadiance(primRec, wi);
-				const auto cosTheta = std::clamp(primRec.n.dot(wi), 0.f, 1.f);
-				res += (radiance.cwiseProduct(brdf) * cosTheta / pdf);
+				const auto shadingGeomParams = primRec.getShadingGeomParams();
+				const auto brdfPdf = primRec.sampleBxDFPdf(sampler.sample2D(), -primRay.d);
+				const auto radiance = light->getRadiance(shadingGeomParams, brdfPdf.dir);
+				const auto cosTheta =
+					std::clamp(shadingGeomParams.derivatives.n.dot(brdfPdf.dir), 0.f, 1.f);
+				res += (radiance.cwiseProduct(brdfPdf.bxdf) * cosTheta / brdfPdf.pdf);
 			}
 			return res / cnt;
 		}
@@ -138,15 +142,13 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			ColorRGB res{0, 0, 0};
 			constexpr int cnt = 10;
 			for ([[maybe_unused]] auto i : std::views::iota(0, cnt)) {
-				HitRecord shadowRec;
-				Vector3f wi;
-				float pdf;
-				const auto radiance =
-					light->sampleRadianceWithPdf(sampler.sample2D(), primRec, shadowRec, wi, pdf);
-				const auto brdf =
-					primRec.primitive->getMaterial()->getBxDF(primRec, -primRay.d, wi);
-				const auto cosTheta = std::clamp(primRec.n.dot(wi), 0.f, 1.f);
-				res += (radiance.cwiseProduct(brdf) * cosTheta / pdf);
+				const auto shadingGeom = primRec.getShadingGeomParams();
+				const auto radianceDirPdf =
+					light->sampleRadianceWithPdf(sampler.sample2D(), shadingGeom);
+				const auto wi = radianceDirPdf.geomToLight.normalized();
+				const auto brdf = primRec.getBxDF(-primRay.d, wi);
+				const auto cosTheta = std::clamp(shadingGeom.derivatives.n.dot(wi), 0.f, 1.f);
+				res += (radianceDirPdf.radiance.cwiseProduct(brdf) * cosTheta / radianceDirPdf.pdf);
 			}
 			return res / cnt;
 		}
@@ -160,13 +162,8 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 				light->sampleRadianceWithPdf(sampler.sample2D(), primRec, shadowRec, wi, pdf);
 			return {pdf, 0, 0};
 #else
-			const auto material = primRec.primitive->getMaterial();
-			HitRecord shadowRec;
-			Vector3f wi;
-			float pdf;
-			const auto brdf =
-				material->sampleBxDFWithPdf(sampler.sample2D(), primRec, -primRay.d, wi, pdf);
-			return {pdf, 0, 0};
+			const auto brdfDirPdf = primRec.sampleBxDFPdf(sampler.sample2D(), -primRay.d);
+			return {brdfDirPdf.pdf, 0, 0};
 #endif
 		}
 

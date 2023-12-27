@@ -11,7 +11,8 @@ enum class DebugChannel {
 	SHADOW_HIT,			// if shadow ray hit sth, {t, 1, 0} will return; else {0, 0, 1} will return
 	HIT_T,				//
 	POSITION,			//
-	NORMAL,				// if hit, geomNormal + Vector3f{1, 1, 1} will return
+	GEOM_NORMAL,		// if hit, geomNormal + Vector3f{1, 1, 1} will return
+	SHADING_NORMAL,		// if hit, shadingNormal + Vector3f{1, 1, 1} will return
 	UV,					//
 	BXDF,				//
 	SINGLE_IRRADIANCE,	// radiance emitted by scene.lights[lightIndex]

@@ -12,62 +12,64 @@ PerfectTransmissionMaterial::PerfectTransmissionMaterial(float etaOutside, float
 {
 }
 
-ColorRGB PerfectTransmissionMaterial::getBxDF(const HitRecord& primRec,
+ColorRGB PerfectTransmissionMaterial::getBxDF(const LocalGeomParams& shadingGeom,
 											  const Vector3f& wo,
 											  const Vector3f& wi) const
 {
 	return {0, 0, 0};
 }
-ColorRGB PerfectTransmissionMaterial::sampleBxDF(const Vector2f& uSample,
-												 const HitRecord& primRec,
-												 const Vector3f& wo,
-												 Vector3f& wi) const
+
+SampleBxDFResult PerfectTransmissionMaterial::sampleBxDF(const Vector2f& uSample,
+														 const LocalGeomParams& shadingGeom,
+														 const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto [btdf, flipNormal] = chooseBtdf(primRec.n, wo);
-	const auto [localToWorld, worldToLocal] = getTransform(primRec, flipNormal);
-	auto ret = btdf->sampleBxDF(uSample, (worldToLocal * wo).normalized(), wi);
-	wi = localToWorld * wi;
-	wi.normalize();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto [btdf, flipNormal] = chooseBtdf(shadingGeom.derivatives.n, wo);
+	const auto [localToWorld, worldToLocal] = getTransform(shadingGeom, flipNormal);
+	auto ret = btdf->sampleBxDF(uSample, (worldToLocal * wo).normalized());
+	ret.dir = applyTransformToDirection(localToWorld, ret.dir);
 	return ret;
 }
-ColorRGB PerfectTransmissionMaterial::sampleBxDFWithPdf(const Vector2f& uSample,
-														const HitRecord& primRec,
-														const Vector3f& wo,
-														Vector3f& wi,
-														float& pdf) const
+
+SampleBxDFPdfResult PerfectTransmissionMaterial::sampleBxDFWithPdf(
+	const Vector2f& uSample,
+	const LocalGeomParams& shadingGeom,
+	const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto [btdf, flipNormal] = chooseBtdf(primRec.n, wo);
-	const auto [localToWorld, worldToLocal] = getTransform(primRec, flipNormal);
-	auto ret = btdf->sampleBxDFWithPdf(uSample, worldToLocal * wo, wi, pdf);
-	wi = localToWorld * wi;
-	wi.normalize();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto [btdf, flipNormal] = chooseBtdf(shadingGeom.derivatives.n, wo);
+	const auto [localToWorld, worldToLocal] = getTransform(shadingGeom, flipNormal);
+	auto ret = btdf->sampleBxDFWithPdf(uSample, worldToLocal * wo);
+	ret.dir = applyTransformToDirection(localToWorld, ret.dir);
 	return ret;
 }
-float PerfectTransmissionMaterial::getPdf(const HitRecord& primRec, const Vector3f& wo) const
+float PerfectTransmissionMaterial::getPdf(const LocalGeomParams& shadingGeom,
+										  const Vector3f& wo) const
 {
 	return 0;
 }
 Vector3f PerfectTransmissionMaterial::sampleDirection(const Vector2f& uSample,
-													  const HitRecord& primRec,
+													  const LocalGeomParams& shadingGeom,
 													  const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto [btdf, flipNormal] = chooseBtdf(primRec.n, wo);
-	const auto [localToWorld, worldToLocal] = getTransform(primRec, flipNormal);
-	return (localToWorld * btdf->sampleDirection(uSample, worldToLocal * wo)).normalized();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto [btdf, flipNormal] = chooseBtdf(shadingGeom.derivatives.n, wo);
+	const auto [localToWorld, worldToLocal] = getTransform(shadingGeom, flipNormal);
+	return applyTransformToDirection(localToWorld,
+									 btdf->sampleDirection(uSample, worldToLocal * wo));
 }
-Vector3f PerfectTransmissionMaterial::sampleDirectionWithPdf(const Vector2f& uSample,
-															 const HitRecord& primRec,
-															 const Vector3f& wo,
-															 float& pdf) const
+
+SampleDirPdfResult PerfectTransmissionMaterial::sampleDirectionWithPdf(
+	const Vector2f& uSample,
+	const LocalGeomParams& shadingGeom,
+	const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto [btdf, flipNormal] = chooseBtdf(primRec.n, wo);
-	const auto [localToWorld, worldToLocal] = getTransform(primRec, flipNormal);
-	return (localToWorld * btdf->sampleDirectionWithPdf(uSample, worldToLocal * wo, pdf))
-		.normalized();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto [btdf, flipNormal] = chooseBtdf(shadingGeom.derivatives.n, wo);
+	const auto [localToWorld, worldToLocal] = getTransform(shadingGeom, flipNormal);
+	auto ret = btdf->sampleDirectionWithPdf(uSample, worldToLocal * wo);
+	ret.dir = applyTransformToDirection(localToWorld, ret.dir);
+	return ret;
 }
 bool PerfectTransmissionMaterial::isDelta() const
 {

@@ -9,8 +9,8 @@ Primitive::Primitive(std::shared_ptr<Model> model, std::shared_ptr<Material> mat
 {
 }
 Primitive::Primitive(std::shared_ptr<Model> model,
-                     std::shared_ptr<Material> material,
-                     const Transform& modelToWorld)
+					 std::shared_ptr<Material> material,
+					 const Transform& modelToWorld)
 	: model(std::move(model)),
 	  material(std::move(material)),
 	  modelToWorld(modelToWorld),
@@ -20,19 +20,13 @@ Primitive::Primitive(std::shared_ptr<Model> model,
 
 bool Primitive::hit(const Ray& ray, HitRecord& rec) const
 {
-	Ray localRay = ray;
 	// Note: seems the transform itself(worldToModel) suffers from precision issues
 	// for example, rotate around z axis for 90 degree will cuz a minor scale
 	// We might need better approach to build transform than using Eigen's
-	applyTransformToRay(worldToModel, localRay);
+	const auto localRay = applyTransformToRay(worldToModel, ray);
 	if (model->hit(localRay, rec)) {
 		rec.primitive = std::dynamic_pointer_cast<const Primitive>(shared_from_this());
-		rec.frame = FrameCategory::WORLD;
-		applyTransformToPoint(modelToWorld, rec.p, &rec.pError);
-		rec.n = modelToWorld.linear().inverse().transpose() * rec.n;
-		rec.n.normalize();
-		rec.dpdu = modelToWorld.linear() * rec.dpdu;
-		rec.dpdv = modelToWorld.linear() * rec.dpdv;
+		rec.applyTransform(FrameCategory::WORLD, modelToWorld);
 		return true;
 	}
 	return false;

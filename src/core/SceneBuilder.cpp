@@ -10,7 +10,7 @@
 using namespace xd;
 std::shared_ptr<Scene> SceneBuilder::build() const
 {
-	auto scene = std::shared_ptr<Scene>(new Scene{primitives, lights});
+	auto scene = std::shared_ptr<Scene>(new Scene{primitives, lights, infiniteLights});
 	scene->setHitSolver(buildHitSolver(scene, hitSolverType));
 	scene->setEnvironment(environment);
 	return scene;

@@ -76,8 +76,8 @@ TEST(HitSolverTestSuite, ConsistencyTest1)
 	bvhHitSolver.hit(ray, records[1]);
 	embreeHitSolver.hit(ray, records[2]);
 	for (const auto& rec : records) {
-		EXPECT_TRUE(rec.p.isApprox(expectedPos));
-		EXPECT_TRUE(rec.uv.isApprox(expectedUV));
+		EXPECT_TRUE(rec.geom.p.isApprox(expectedPos));
+		EXPECT_TRUE(rec.geom.uv.isApprox(expectedUV));
 	}
 }
 

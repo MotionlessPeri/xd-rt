@@ -3,11 +3,13 @@
 //
 #include <oneapi/tbb.h>
 #include "Film.h"
+#include "Macros.h"
 #include "Primitive.h"
 #include "Scene.h"
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "integrator/DebugIntegrator.h"
 #include "integrator/DirectIntegrator.h"
 #include "light/PointLight.h"
 #include "material/MatteMaterial.h"
@@ -56,6 +58,9 @@ TEST(LightTestSuite, PointLightTest)
 	auto sampler = std::make_shared<SimpleSampler>(1);
 	MIDirectIntegrator integrator{sampler};
 	// DebugIntegrator integrator;
+	// TBB_SERIAL
+	// integrator.setDebugBreakPixel({39, 33});
+	// integrator.setDebugChannel(DebugChannel::SHADOW_HIT);
 	integrator.setCamera(cam);
 	integrator.render(*scene);
 	const std::string hdrPath = R"(D:\point_light_test.hdr)";
@@ -96,8 +101,8 @@ TEST(LightTestSuite, DomeLightTest)
 
 	sceneBuilder.setHitSolverType(xd::HitSolverType::EMBREE);
 
-	constexpr uint32_t width = 1000u;
-	constexpr uint32_t height = 1000u;
+	constexpr uint32_t width = 2000u;
+	constexpr uint32_t height = 2000u;
 	const float sqrt3 = std::sqrtf(3);
 	// const Vector3f center = Vector3f{1, 1, 1} * halfLen * sqrt3;
 	const Vector3f center = Vector3f{2, 0, 0} * halfLen * sqrt3;
@@ -119,7 +124,6 @@ TEST(LightTestSuite, DomeLightTest)
 	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
 	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
 
-	// EMBREE_SERIAL
 	const auto work = [&](const tbb::blocked_range2d<int, int>& range) {
 		const Vector2i topLeft{range.cols().begin(), range.rows().begin()};
 		const Vector2i bottomRight{range.cols().end() - 1, range.rows().end() - 1};
@@ -130,38 +134,37 @@ TEST(LightTestSuite, DomeLightTest)
 			do {
 				const auto sample = pixel.cast<float>() + tileSampler->sample2D();
 				auto primRay = cam->generateRay(sample);
-				constexpr uint32_t MAX_DEPTH = 8u;
+				constexpr uint32_t MAX_DEPTH = 10u;
 				int depth = 0;
 				Vector3f weight{1.f, 1.f, 1.f};
 				while (depth < MAX_DEPTH) {
 					HitRecord primRec;
 					if (!scene->hit(primRay, primRec)) {
-						tile->addSample(domeLight->getRadiance(primRec, primRay.d), sample);
+						tile->addSample(domeLight->getRadiance({}, primRay.d), sample);
 						break;
 					}
 
-					const auto model = primRec.primitive->getModel();
-					const auto material = primRec.primitive->getMaterial();
-					const auto [dpdu, dpdv, n] = std::tie(primRec.dpdu, primRec.dpdv, primRec.n);
+					const auto shadingGeom = primRec.getShadingGeomParams();
+					const auto [dpdu, dpdv, n] =
+						std::tie(primRec.geom.derivatives.dpdu, primRec.geom.derivatives.dpdv,
+								 primRec.geom.derivatives.n);
 
 					for (const auto& light : scene->getLights()) {
 						HitRecord shadowRec;
-						const auto shadowRay = primRec.spawnRay(material->sampleDirection(
-							tileSampler->sample2D(), primRec, -primRay.d));
+						const auto shadowRay = primRec.spawnRay(
+							primRec.sampleMaterialWi(tileSampler->sample2D(), -primRay.d));
 						const float cosTheta = std::clamp(n.dot(shadowRay.d), 0.f, 1.f);
 						if (!scene->hit(shadowRay, shadowRec)) {
 							const ColorRGB projectedRadiance =
-								light->getRadiance(primRec, shadowRay.d) * cosTheta;
-							const Vector3f brdf =
-								material->getBxDF(primRec, -primRay.d, shadowRay.d);
+								light->getRadiance(shadingGeom, shadowRay.d) * cosTheta;
+							const Vector3f brdf = primRec.getBxDF(-primRay.d, shadowRay.d);
 							const Vector3f Lo = projectedRadiance.cwiseProduct(brdf);
 							tile->addSample(Lo.cwiseProduct(weight), sample);
 						}
 					}
 					const auto newDirection =
-						material->sampleDirection(tileSampler->sample2D(), primRec, -primRay.d);
-					weight =
-						weight.cwiseProduct(material->getBxDF(primRec, -primRay.d, newDirection));
+						primRec.sampleMaterialWi(tileSampler->sample2D(), -primRay.d);
+					weight = weight.cwiseProduct(primRec.getBxDF(-primRay.d, newDirection));
 					primRay = primRec.spawnRay(newDirection);
 					++depth;
 				}
@@ -172,6 +175,10 @@ TEST(LightTestSuite, DomeLightTest)
 
 	tbb::parallel_for(tbb::blocked_range2d<int, int>(0, width, 0, height), work);
 
+	// DebugIntegrator integrator;
+	// integrator.setDebugChannel(DebugChannel::NORMAL);
+	// integrator.setCamera(cam);
+	// integrator.render(*scene);
 	const std::string hdrPath = R"(D:\dome_light_test_2.hdr)";
 	EXPECT_NO_THROW(film->saveToFile(hdrPath););
 }

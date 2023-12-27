@@ -20,7 +20,7 @@ TEST(ModelHitTestSuite, SphereHitTest)
 	auto b0 = sphere->hit(ray0, hit0);
 	EXPECT_TRUE(b0);
 	EXPECT_FLOAT_EQ(hit0.tHit, 1.);
-	EXPECT_TRUE(hit0.uv.isApprox(Vector2f{1.f / 8.f, v0}));
+	EXPECT_TRUE(hit0.geom.uv.isApprox(Vector2f{1.f / 8.f, v0}));
 
 	// tangency but not intersect
 	const Vector3f origin1{0, 0, 1};
@@ -38,8 +38,8 @@ TEST(ModelHitTestSuite, SphereHitTest)
 	auto b2 = sphere->hit(ray2, hit2);
 	EXPECT_TRUE(b2);
 	EXPECT_TRUE(fuzzyEqual(hit2.tHit, std::sqrtf(2), 1e-3f));
-	EXPECT_TRUE(fuzzyEqual(hit2.uv.x(), 0.125f, 1e-3f));
-	EXPECT_TRUE(fuzzyEqual(hit2.uv.y(), 0.f, 1e-3f));
+	EXPECT_TRUE(fuzzyEqual(hit2.geom.uv.x(), 0.125f, 1e-3f));
+	EXPECT_TRUE(fuzzyEqual(hit2.geom.uv.y(), 0.f, 1e-3f));
 
 	// not intersect at all
 	const Vector3f origin3{0, 0, 2};
@@ -87,7 +87,7 @@ TEST(ModelHitTestSuite, SphereHitTest2)
 				auto ray = cam->generateRay(sample);
 				HitRecord rec;
 				if (sphere.hit(ray, rec)) {
-					tile->addSample({rec.uv.x(), rec.uv.y(), 1}, sample);
+					tile->addSample({rec.geom.uv.x(), rec.geom.uv.y(), 1}, sample);
 				}
 			}
 			film->mergeTileToFilm(std::move(tile));

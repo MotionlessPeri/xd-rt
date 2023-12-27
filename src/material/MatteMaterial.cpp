@@ -17,71 +17,73 @@ MatteMaterial::MatteMaterial(std::shared_ptr<Texture2DRGB> colorTexture)
 {
 }
 
-ColorRGB MatteMaterial::getBxDF(const HitRecord& primRec,
+ColorRGB MatteMaterial::getBxDF(const LocalGeomParams& shadingGeom,
 								const Vector3f& wo,
 								const Vector3f& wi) const
 {
-	auto sampledColor = color->sample(primRec.uv);
-	Lambertian lambertian(sampledColor);
+	const auto sampledColor = color->sample(shadingGeom.uv);
+	const Lambertian lambertian(sampledColor);
 	Vector3f dummy;
 	return lambertian.getBxDF(dummy, dummy);
 }
 
-ColorRGB MatteMaterial::sampleBxDF(const Vector2f& uSample,
-								   const HitRecord& primRec,
-								   const Vector3f& wo,
-								   Vector3f& wi) const
+SampleBxDFResult MatteMaterial::sampleBxDF(const Vector2f& uSample,
+										   const LocalGeomParams& shadingGeom,
+										   const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto localToWorld = primRec.getCurrentFrame();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto localToWorld = shadingGeom.getCurrentFrame();
 	const auto worldToLocal = localToWorld.inverse();
-	auto sampledColor = color->sample(primRec.uv);
-	Lambertian lambertian(sampledColor);
-	auto ret = lambertian.sampleBxDF(uSample, worldToLocal * wo, wi);
-	wi = localToWorld * wi;
+	auto sampledColor = color->sample(shadingGeom.uv);
+	const Lambertian lambertian(sampledColor);
+	auto ret = lambertian.sampleBxDF(uSample, worldToLocal * wo);
+	ret.dir = applyTransformToDirection(localToWorld, ret.dir);
 	return ret;
 }
 
-ColorRGB MatteMaterial::sampleBxDFWithPdf(const Vector2f& uSample,
-										  const HitRecord& primRec,
-										  const Vector3f& wo,
-										  Vector3f& wi,
-										  float& pdf) const
+SampleBxDFPdfResult MatteMaterial::sampleBxDFWithPdf(const Vector2f& uSample,
+													 const LocalGeomParams& shadingGeom,
+													 const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto localToWorld = primRec.getCurrentFrame();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto localToWorld = shadingGeom.getCurrentFrame();
 	const auto worldToLocal = localToWorld.inverse();
-	auto sampledColor = color->sample(primRec.uv);
-	Lambertian lambertian(sampledColor);
-	auto ret = lambertian.sampleBxDFWithPdf(uSample, worldToLocal * wo, wi, pdf);
-	wi = localToWorld * wi;
+	auto sampledColor = color->sample(shadingGeom.uv);
+	const Lambertian lambertian(sampledColor);
+	auto ret = lambertian.sampleBxDFWithPdf(uSample, worldToLocal * wo);
+	ret.dir = applyTransformToDirection(localToWorld, ret.dir);
 	return ret;
 }
 
 Vector3f MatteMaterial::sampleDirection(const Vector2f& uSample,
-										const HitRecord& primRec,
+										const LocalGeomParams& shadingGeom,
 										const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	auto sampledColor = color->sample(primRec.uv);
-	Lambertian lambertian(sampledColor);
-	return primRec.getCurrentFrame() * lambertian.sampleDirection(uSample, {0, 0, 1});	// dummy wi
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	auto sampledColor = color->sample(shadingGeom.uv);
+	const Lambertian lambertian(sampledColor);
+	return applyTransformToDirection(shadingGeom.getCurrentFrame(),
+									 lambertian.sampleDirection(uSample, {0, 0, 1}));  // dummy wi
 }
-Vector3f MatteMaterial::sampleDirectionWithPdf(const Vector2f& uSample,
-											   const HitRecord& primRec,
-											   const Vector3f& wo,
-											   float& pdf) const
+
+SampleDirPdfResult MatteMaterial::sampleDirectionWithPdf(const Vector2f& uSample,
+														 const LocalGeomParams& shadingGeom,
+														 const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	auto sampledColor = color->sample(primRec.uv);
-	Lambertian lambertian(sampledColor);
-	return primRec.getCurrentFrame() *
-		   lambertian.sampleDirectionWithPdf(uSample, {0, 0, 1}, pdf);	// dummy wi
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto sampledColor = color->sample(shadingGeom.uv);
+	const Lambertian lambertian(sampledColor);
+	auto ret = lambertian.sampleDirectionWithPdf(uSample, {0, 0, 1});  // dummy wi
+	ret.dir = applyTransformToDirection(shadingGeom.getCurrentFrame(), ret.dir);
+	return ret;	 // dummy wi
 }
-float MatteMaterial::getPdf(const HitRecord& primRec, const Vector3f& wo) const
+
+float MatteMaterial::getPdf(const LocalGeomParams& shadingGeom, const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	auto sampledColor = color->sample(primRec.uv);
-	Lambertian lambertian(sampledColor);
-	return lambertian.getPdf(primRec.getCurrentFrame() * wo);
+	if (shadingGeom.frame != FrameCategory::WORLD)
+		__debugbreak();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto sampledColor = color->sample(shadingGeom.uv);
+	const Lambertian lambertian(sampledColor);
+	return lambertian.getPdf(shadingGeom.getCurrentFrame() * wo);
 }

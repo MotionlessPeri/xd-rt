@@ -10,65 +10,62 @@ PerfectReflectionMaterial::PerfectReflectionMaterial() : brdf(std::make_unique<P
 {
 }
 
-ColorRGB PerfectReflectionMaterial::getBxDF(const HitRecord& primRec,
+ColorRGB PerfectReflectionMaterial::getBxDF(const LocalGeomParams& shadingGeom,
 											const Vector3f& wo,
 											const Vector3f& wi) const
 {
 	return {0, 0, 0};
 }
 
-ColorRGB PerfectReflectionMaterial::sampleBxDF(const Vector2f& uSample,
-											   const HitRecord& primRec,
-											   const Vector3f& wo,
-											   Vector3f& wi) const
+SampleBxDFResult PerfectReflectionMaterial::sampleBxDF(const Vector2f& uSample,
+													   const LocalGeomParams& shadingGeom,
+													   const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto localToWorld = primRec.getCurrentFrame();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto localToWorld = shadingGeom.getCurrentFrame();
 	const auto worldToLocal = localToWorld.inverse();
-	auto ret = brdf->sampleBxDF(uSample, (worldToLocal * wo).normalized(), wi);
-	wi = localToWorld * wi;
-	wi.normalize();
+	auto ret = brdf->sampleBxDF(uSample, applyTransformToDirection(worldToLocal, wo));
+	ret.dir = applyTransformToDirection(localToWorld, ret.dir);
 	return ret;
 }
 
-ColorRGB PerfectReflectionMaterial::sampleBxDFWithPdf(const Vector2f& uSample,
-													  const HitRecord& primRec,
-													  const Vector3f& wo,
-													  Vector3f& wi,
-													  float& pdf) const
+SampleBxDFPdfResult PerfectReflectionMaterial::sampleBxDFWithPdf(const Vector2f& uSample,
+																 const LocalGeomParams& shadingGeom,
+																 const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto localToWorld = primRec.getCurrentFrame();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto localToWorld = shadingGeom.getCurrentFrame();
 	const auto worldToLocal = localToWorld.inverse();
-	auto ret = brdf->sampleBxDFWithPdf(uSample, worldToLocal * wo, wi, pdf);
-	wi = localToWorld * wi;
-	wi.normalize();
+	auto ret = brdf->sampleBxDFWithPdf(uSample, worldToLocal * wo);
+	ret.dir = applyTransformToDirection(localToWorld, ret.dir);
 	return ret;
 }
 
 Vector3f PerfectReflectionMaterial::sampleDirection(const Vector2f& uSample,
-													const HitRecord& primRec,
+													const LocalGeomParams& shadingGeom,
 													const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto localToWorld = primRec.getCurrentFrame();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto localToWorld = shadingGeom.getCurrentFrame();
 	const auto worldToLocal = localToWorld.inverse();
 	return (localToWorld * brdf->sampleDirection(uSample, worldToLocal * wo)).normalized();
 }
 
-Vector3f PerfectReflectionMaterial::sampleDirectionWithPdf(const Vector2f& uSample,
-														   const HitRecord& primRec,
-														   const Vector3f& wo,
-														   float& pdf) const
+SampleDirPdfResult PerfectReflectionMaterial::sampleDirectionWithPdf(
+	const Vector2f& uSample,
+	const LocalGeomParams& shadingGeom,
+	const Vector3f& wo) const
 {
-	assert(primRec.frame == FrameCategory::WORLD);
-	const auto localToWorld = primRec.getCurrentFrame();
+	assert(shadingGeom.frame == FrameCategory::WORLD);
+	const auto localToWorld = shadingGeom.getCurrentFrame();
 	const auto worldToLocal = localToWorld.inverse();
-	return (localToWorld * brdf->sampleDirectionWithPdf(uSample, worldToLocal * wo, pdf))
-		.normalized();
+	auto ret = brdf->sampleDirectionWithPdf(uSample, worldToLocal * wo);
+	ret.dir = applyTransformToDirection(localToWorld, ret.dir);
+	return ret;
 }
 
-float PerfectReflectionMaterial::getPdf(const HitRecord& primRec, const Vector3f& wo) const
+float PerfectReflectionMaterial::getPdf(const LocalGeomParams& shadingGeom,
+										const Vector3f& wo) const
 {
 	return 0;
 }

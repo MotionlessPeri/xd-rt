@@ -171,14 +171,16 @@ inline bool isExact(const Vector3f& error)
 	return error.x() == 0.f && error.y() == 0.f && error.z() == 0.f;
 }
 
-inline void applyTransformToPoint(const Transform& transform, Vector3f& point, Vector3f* error)
+inline Vector3f applyTransformToPoint(const Transform& transform,
+									  const Vector3f& point,
+									  Vector3f* error = nullptr)
 {
 	if (error != nullptr) {
 		// Note: Most codes from pbrt-v4
 		const auto& m = transform.matrix();
-		auto& x = point.x();
-		auto& y = point.y();
-		auto& z = point.z();
+		const auto x = point.x();
+		const auto y = point.y();
+		const auto z = point.z();
 		if (isExact(*error)) {
 			// Compute error for transformed exact _p_
 			error->x() = floatingGamma<3>() * (std::abs(m(0, 0) * x) + std::abs(m(0, 1) * y) +
@@ -208,16 +210,16 @@ inline void applyTransformToPoint(const Transform& transform, Vector3f& point, V
 											   std::abs(m(2, 2) * z) + std::abs(m(2, 3)));
 		}
 	}
-	point = transform * point;
+	return transform * point;
 }
 
-inline void applyTransformToDirection(const Transform& transform,
-									  Vector3f& dir,
-									  Vector3f* error = nullptr)
+inline Vector3f applyTransformToDirection(const Transform& transform,
+										  const Vector3f& dir,
+										  Vector3f* error = nullptr)
 {
 	if (error != nullptr) {
 		const auto& m = transform.matrix();
-		auto &x = dir.x(), &y = dir.y(), &z = dir.z();
+		const auto x = dir.x(), y = dir.y(), z = dir.z();
 		if (isExact(*error)) {
 			error->x() = floatingGamma<3>() *
 						 (std::abs(m(0, 0) * x) + std::abs(m(0, 1) * y) + std::abs(m(0, 2) * z));
@@ -245,7 +247,15 @@ inline void applyTransformToDirection(const Transform& transform,
 											   std::abs(m(2, 2) * z));
 		}
 	}
-	dir = (transform.linear() * dir).normalized();
+	return (transform.linear() * dir).normalized();
+}
+
+inline Vector3f applyTransformToNormal(const Transform& transform,
+									   const Vector3f& n,
+									   Vector3f* error = nullptr)
+{
+	// TODO: implement error estimation
+	return (transform.linear().inverse().transpose() * n).normalized();
 }
 
 inline bool isBlack(const ColorRGB& color, float eps = 1e-5f)
@@ -263,5 +273,18 @@ inline bool sameHemisphere(const Vector3f& v, const Vector3f& n)
 {
 	return v.dot(n) > 0;
 }
+
+/**
+ * \brief calculate the closest vector to v perpendicular to n, preserving v's norm
+ * \param v the vector to be orthogonalized
+ * \param n the previous vector in ortho frame
+ * \return the orthogonalized vector closest to v
+ */
+inline Vector3f GramSchmidt(const Vector3f& v, const Vector3f& n)
+{
+	return (v - v.dot(n) * n).normalized() * v.norm();
+}
 }  // namespace xd
+
+// namespace xd
 #endif	// XD_RT_MATHUTIL_H

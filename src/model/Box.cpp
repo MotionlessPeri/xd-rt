@@ -53,12 +53,13 @@ bool Box::hit(const Ray& ray, HitRecord& rec) const
 	}
 	if (hit) {
 		rec.tHit = tHit.t;
-		rec.p = ray.getTPoint(tHit.t);
-		rec.n = tHit.n;
-		rec.dpdu = {0, 0, 0};
-		rec.dpdv = {0, 0, 0};
-		rec.dpdu((tHit.i + 1) % 3) = 1;
-		rec.dpdv((tHit.i + 2) % 3) = 1;
+		rec.geom.p = ray.getTPoint(tHit.t);
+		rec.geom.derivatives.n = tHit.n;
+		// TODO: assign uv
+		rec.geom.derivatives.dpdu = {0, 0, 0};
+		rec.geom.derivatives.dpdv = {0, 0, 0};
+		rec.geom.derivatives.dpdu((tHit.i + 1) % 3) = 1;
+		rec.geom.derivatives.dpdv((tHit.i + 2) % 3) = 1;
 	}
 	return hit;
 }

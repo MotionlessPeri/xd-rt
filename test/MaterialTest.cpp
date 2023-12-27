@@ -11,6 +11,7 @@
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "integrator/DebugIntegrator.h"
 #include "integrator/PathIntegrator.h"
 #include "light/PointLight.h"
 #include "loader/TextureFactory.h"
@@ -58,7 +59,7 @@ TEST(MaterialTestSuite, LambertianTest)
 												up.norm(), width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(5);
+	auto sampler = std::make_shared<SimpleSampler>(50);
 
 	PathIntegrator integrator{sampler, 8};
 	// DebugIntegrator integrator;
@@ -127,9 +128,9 @@ TEST(MaterialTestSuite, SpecularReflectionTest1)
 												width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(2);
+	auto sampler = std::make_shared<SimpleSampler>(20);
 
-	PathIntegrator integrator{sampler, 5};
+	PathIntegrator integrator{sampler, 20};
 	integrator.setCamera(cam);
 	auto scene = sceneBuilder.build();
 	integrator.render(*scene);
@@ -153,8 +154,8 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 
 	sceneBuilder.setHitSolverType(HitSolverType::NAIVE);
 
-	constexpr uint32_t width = 100u;
-	constexpr uint32_t height = 100u;
+	constexpr uint32_t width = 1000u;
+	constexpr uint32_t height = 1000u;
 	const Vector3f center = Vector3f{0, 1.7, 0} * radius;
 	const Vector3f z{0, 0, 1};
 	const Vector3f target{0, 0, 0};
@@ -175,20 +176,21 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 
 	auto sampler = std::make_shared<SimpleSampler>(10);
 
-	{
-		film->clear();
-		MIDirectIntegrator integrator{sampler};
-		integrator.setCamera(cam);
-		const auto scene = sceneBuilder.build();
-		integrator.render(*scene);
+	//{
+	//	film->clear();
+	//	MIDirectIntegrator integrator{sampler};
+	//	integrator.setCamera(cam);
+	//	const auto scene = sceneBuilder.build();
+	//	integrator.render(*scene);
 
-		const std::string hdrPath = R"(D:\matte_with_texture_test_mi_direct.hdr)";
-		EXPECT_NO_THROW(film->saveToFile(hdrPath););
-	}
+	//	const std::string hdrPath = R"(D:\matte_with_texture_test_mi_direct.hdr)";
+	//	EXPECT_NO_THROW(film->saveToFile(hdrPath););
+	//}
 
 	{
+		// TBB_SERIAL
 		film->clear();
-		PathIntegrator integrator{sampler, 1};
+		PathIntegrator integrator{sampler, 8};
 		integrator.setCamera(cam);
 		const auto scene = sceneBuilder.build();
 		integrator.render(*scene);
@@ -203,18 +205,19 @@ TEST(MaterialTestSuite, PerfectTransmissionBasicTest)
 {
 	const float radius = 1.f;
 	auto sphere = std::make_shared<Sphere>(radius);
-	auto transmission = std::make_shared<PerfectTransmissionMaterial>(1.0f, 1.5f);
+	constexpr float etaIn = 1.5f;
+	constexpr float etaOut = 1.f;
+	auto transmission = std::make_shared<PerfectTransmissionMaterial>(etaOut, etaIn);
 	auto spec = std::make_shared<PerfectReflectionMaterial>();
 	auto primitive = std::make_shared<Primitive>(sphere, transmission);
 	Ray ray{{2, 0, 0}, {-1, 0, 0}};
 	HitRecord rec{};
 	EXPECT_TRUE(primitive->hit(ray, rec));
-	float pdf;
-	Vector3f wi;
-	const auto btdf = transmission->sampleBxDFWithPdf({0, 0}, rec, -ray.d, wi, pdf);
-	EXPECT_EQ(btdf, Vector3f(1, 1, 1));
-	EXPECT_EQ(pdf, 1);
-	EXPECT_TRUE(wi.isApprox(Vector3f{-1, 0, 0}));
+	const auto btdfDirPdf = rec.sampleBxDFPdf({0, 0}, -ray.d);
+	EXPECT_TRUE(btdfDirPdf.bxdf.isApprox(Vector3f(1, 1, 1) * (etaIn * etaIn) / (etaOut * etaOut) /
+										 std::fabs(btdfDirPdf.dir.dot(rec.geom.derivatives.n))));
+	EXPECT_EQ(btdfDirPdf.pdf, 1.f);
+	EXPECT_TRUE(btdfDirPdf.dir.isApprox(Vector3f{-1, 0, 0}));
 }
 
 TEST(MaterialTestSuite, PerfectTransmissionSceneTest)
@@ -222,7 +225,7 @@ TEST(MaterialTestSuite, PerfectTransmissionSceneTest)
 	const float radius = 1.f;
 	SceneBuilder sceneBuilder;
 	auto sphere = std::make_shared<Sphere>(radius);
-	auto matte = std::make_shared<PerfectTransmissionMaterial>(1.0f, 1.0f);
+	auto matte = std::make_shared<PerfectTransmissionMaterial>(1.0f, 2.5f);
 	auto spec = std::make_shared<PerfectReflectionMaterial>();
 	auto primitive = std::make_shared<Primitive>(sphere, matte);
 	sceneBuilder.addPrimitive(primitive);
@@ -250,18 +253,6 @@ TEST(MaterialTestSuite, PerfectTransmissionSceneTest)
 	auto film = cam->getFilm();
 
 	auto sampler = std::make_shared<SimpleSampler>(1);
-
-	//{
-	//	film->clear();
-	//	MIDirectIntegrator integrator{sampler};
-	//	integrator.setCamera(cam);
-	//	const auto scene = sceneBuilder.build();
-	//	integrator.render(*scene);
-
-	//	const std::string hdrPath = R"(D:\perfect_transmission_test_mi_direct.hdr)";
-	//	EXPECT_NO_THROW(film->saveToFile(hdrPath););
-	//}
-
 	{
 		film->clear();
 		PathIntegrator integrator{sampler, 8};
@@ -324,7 +315,7 @@ TEST(MaterialTestSuite, PerfectTransmissionSceneTest2)
 												width, height);
 	auto film = cam->getFilm();
 
-	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
+	constexpr uint32_t SAMPLE_PER_PIXEL = 10u;
 	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
 
 	PathIntegrator integrator{sampler, 20};
@@ -363,9 +354,9 @@ TEST(MaterialTestSuite, PerfectTransmissionSceneTest3)
 												width, height);
 	auto film = cam->getFilm();
 
-	auto sampler = std::make_shared<SimpleSampler>(1);
+	auto sampler = std::make_shared<SimpleSampler>(100);
 
-	PathIntegrator integrator{sampler, 8};
+	PathIntegrator integrator{sampler, 20};
 	integrator.setCamera(cam);
 	integrator.render(*scene);
 
@@ -379,6 +370,8 @@ TEST(MaterialTestSuite, PerfectFresnelTest1)
 	SceneBuilder sceneBuilder;
 	auto sphere = std::make_shared<Sphere>(radius);
 	auto mtl = std::make_shared<PerfectFresnelMaterial>(1.0f, 5.f);
+	// auto mtl = std::make_shared<PerfectTransmissionMaterial>(1.0f, 5.f);
+	// auto mtl = std::make_shared<PerfectReflectionMaterial>();
 	auto primitive = std::make_shared<Primitive>(sphere, mtl);
 	sceneBuilder.addPrimitive(primitive);
 
@@ -386,7 +379,7 @@ TEST(MaterialTestSuite, PerfectFresnelTest1)
 
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 1000u;
-	const Vector3f center = Vector3f{0, 1.7, 0} * radius;
+	const Vector3f center = Vector3f{0, 1.7f, 0} * radius;
 	const Vector3f z{0, 0, 1};
 	const Vector3f target{0, 0, 0};
 	const Vector3f towards = (target - center).normalized();
@@ -409,7 +402,9 @@ TEST(MaterialTestSuite, PerfectFresnelTest1)
 	{
 		// TBB_SERIAL
 		film->clear();
-		PathIntegrator integrator{sampler, 8};
+		// DebugIntegrator integrator;
+		// integrator.setDebugChannel(DebugChannel::TEMP);
+		PathIntegrator integrator{sampler, 200};
 		integrator.setCamera(cam);
 		const auto scene = sceneBuilder.build();
 		integrator.render(*scene);
@@ -513,7 +508,7 @@ TEST(MaterialTestSuite, PerfectFresnelSceneTest3)
 
 	auto sampler = std::make_shared<SimpleSampler>(100);
 
-	PathIntegrator integrator{sampler, 8};
+	PathIntegrator integrator{sampler, 20};
 	integrator.setCamera(cam);
 	integrator.render(*scene);
 

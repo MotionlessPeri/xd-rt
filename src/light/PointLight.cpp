@@ -10,46 +10,44 @@ PointLight::PointLight(Vector3f position, ColorRGB intensity)
 }
 
 Vector3f PointLight::sampleDirection(const Vector2f& uSample,
-									 const HitRecord& primRec,
-									 HitRecord& shadowRec) const
+									 const LocalGeomParams& shadingGeom) const
 {
-	const Vector3f pp = (position - primRec.p);
-	shadowRec.tHit = pp.norm();
-	return pp.normalized();
+	return position - shadingGeom.p;
 }
-Vector3f PointLight::sampleDirectionWithPdf(const Vector2f& uSample,
-											const HitRecord& primRec,
-											HitRecord& shadowRec,
-											float& pdf) const
+
+Light::SampleDirectionPdfResult PointLight::sampleDirectionWithPdf(
+	const Vector2f& uSample,
+	const LocalGeomParams& shadingGeom) const
 {
-	const auto wo = sampleDirection(uSample, primRec, shadowRec);
-	pdf = 1.f;
-	return wo;
+	return {sampleDirection(uSample, shadingGeom), 1.f};
 }
-float PointLight::getPdf(const HitRecord& primRec, const Vector3f& wo) const
+
+bool PointLight::isInfinite() const
+{
+	return false;
+}
+
+float PointLight::getPdf(const LocalGeomParams& shadingGeom, const Vector3f& wo) const
 {
 	return 0;
 }
-ColorRGB PointLight::getRadiance(const HitRecord& primRec, const Vector3f& wi) const
+
+ColorRGB PointLight::getRadiance(const LocalGeomParams& shadingGeom, const Vector3f& wi) const
 {
-	return intensity / (position - primRec.p).squaredNorm();
+	return intensity / (position - shadingGeom.p).squaredNorm();
 }
 
-ColorRGB PointLight::sampleRadiance(const Vector2f& uSample,
-									const HitRecord& primRec,
-									HitRecord& shadowRec,
-									Vector3f& wi) const
+Light::SampleRadianceResult PointLight::sampleRadiance(const Vector2f& uSample,
+													   const LocalGeomParams& shadingGeom) const
 {
-	wi = sampleDirection(uSample, primRec, shadowRec);
-	return getRadiance(primRec, wi);
+	const auto& sampleDirRes = sampleDirection(uSample, shadingGeom);
+	return {sampleDirRes, getRadiance(shadingGeom, sampleDirRes)};
 }
 
-ColorRGB PointLight::sampleRadianceWithPdf(const Vector2f& uSample,
-										   const HitRecord& primRec,
-										   HitRecord& shadowRec,
-										   Vector3f& wi,
-										   float& pdf) const
+Light::SampleRadiancePdfResult PointLight::sampleRadianceWithPdf(
+	const Vector2f& uSample,
+	const LocalGeomParams& shadingGeom) const
 {
-	wi = sampleDirectionWithPdf(uSample, primRec, shadowRec, pdf);
-	return getRadiance(primRec, wi);
+	const auto& sampleDirPdfRes = sampleDirectionWithPdf(uSample, shadingGeom);
+	return {sampleDirPdfRes, getRadiance(shadingGeom, sampleDirPdfRes.geomToLight)};
 }

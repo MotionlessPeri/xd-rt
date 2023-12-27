@@ -131,7 +131,7 @@ TEST(ObjLoaderTestSuite, MeshHitTest)
 				const auto ray = cam->generateRay(pixelSample);
 				HitRecord rec;
 				if (meshWithNoAccel->hit(ray, rec)) {
-					tile->addSample({rec.uv.x(), rec.uv.y(), 0}, pixelSample);
+					tile->addSample({rec.geom.uv.x(), rec.geom.uv.y(), 0}, pixelSample);
 				}
 			}
 			film->mergeTileToFilm(std::move(tile));
@@ -154,7 +154,7 @@ TEST(ObjLoaderTestSuite, MeshHitTest)
 				const auto ray = cam->generateRay(pixelSample);
 				HitRecord rec;
 				if (meshWithBVHAccel->hit(ray, rec)) {
-					tile->addSample({rec.uv.x(), rec.uv.y(), 0}, pixelSample);
+					tile->addSample({rec.geom.uv.x(), rec.geom.uv.y(), 0}, pixelSample);
 				}
 			}
 			film->mergeTileToFilm(std::move(tile));

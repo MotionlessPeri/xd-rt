@@ -10,24 +10,19 @@ class PointLight : public Light {
 public:
 	PointLight(Vector3f position, ColorRGB intensity);
 	Vector3f sampleDirection(const Vector2f& uSample,
-							 const HitRecord& primRec,
-							 HitRecord& shadowRec) const override;
-	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
-									const HitRecord& primRec,
-									HitRecord& shadowRec,
-									float& pdf) const override;
-	ColorRGB getRadiance(const HitRecord& primRec, const Vector3f& wi) const override;
-	ColorRGB sampleRadiance(const Vector2f& uSample,
-							const HitRecord& primRec,
-							HitRecord& shadowRec,
-							Vector3f& wi) const override;
-	ColorRGB sampleRadianceWithPdf(const Vector2f& uSample,
-								   const HitRecord& primRec,
-								   HitRecord& shadowRec,
-								   Vector3f& wi,
-								   float& pdf) const override;
+							 const LocalGeomParams& shadingGeom) const override;
+	SampleDirectionPdfResult sampleDirectionWithPdf(
+		const Vector2f& uSample,
+		const LocalGeomParams& shadingGeom) const override;
+	ColorRGB getRadiance(const LocalGeomParams& shadingGeom, const Vector3f& wi) const override;
+	SampleRadianceResult sampleRadiance(const Vector2f& uSample,
+										const LocalGeomParams& shadingGeom) const override;
+	SampleRadiancePdfResult sampleRadianceWithPdf(
+		const Vector2f& uSample,
+		const LocalGeomParams& shadingGeom) const override;
 	bool isDelta() const override { return true; }
-	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
+	bool isInfinite() const override;
+	float getPdf(const LocalGeomParams& shadingGeom, const Vector3f& wo) const override;
 
 protected:
 	Vector3f position;

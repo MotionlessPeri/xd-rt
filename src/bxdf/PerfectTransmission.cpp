@@ -11,23 +11,23 @@ ColorRGB PerfectTransmission::getBxDF(const Vector3f& wi, const Vector3f& wo) co
 {
 	return {0, 0, 0};
 }
-ColorRGB PerfectTransmission::sampleBxDF(const Vector2f& uSample, const Vector3f& wo, Vector3f& wi)
+
+SampleBxDFResult PerfectTransmission::sampleBxDF(const Vector2f& uSample, const Vector3f& wo) const
 {
-	Vector3f& wt = wi;
 	const auto [total, sin2ThetaT] = checkTotalReflection(eta, wo.z());
 	if (total)
-		return {0, 0, 0};
+		return {{0, 0, 0}, {}};
 	const float cosThetaT = std::sqrtf(1 - sin2ThetaT);
-	wt = refract(wo, cosThetaT);
-	return {1, 1, 1};
+	Vector3f brdf{1, 1, 1};
+	brdf *= eta * eta;
+	brdf /= std::fabs(wo.z());
+	return {brdf, refract(wo, cosThetaT)};
 }
-ColorRGB PerfectTransmission::sampleBxDFWithPdf(const Vector2f& uSample,
-												const Vector3f& wo,
-												Vector3f& wi,
-												float& pdf)
+
+SampleBxDFPdfResult PerfectTransmission::sampleBxDFWithPdf(const Vector2f& uSample,
+														   const Vector3f& wo) const
 {
-	pdf = 1;
-	return sampleBxDF(uSample, wo, wi);
+	return {sampleBxDF(uSample, wo), 1.f};
 }
 Vector3f PerfectTransmission::sampleDirection(const Vector2f& uSample, const Vector3f& wo) const
 {
@@ -38,12 +38,10 @@ Vector3f PerfectTransmission::sampleDirection(const Vector2f& uSample, const Vec
 	return refract(wo, cosThetaT);
 }
 
-Vector3f PerfectTransmission::sampleDirectionWithPdf(const Vector2f& uSample,
-													 const Vector3f& wo,
-													 float& pdf)
+SampleDirPdfResult PerfectTransmission::sampleDirectionWithPdf(const Vector2f& uSample,
+															   const Vector3f& wo) const
 {
-	pdf = 1;
-	return sampleDirection(uSample, wo);
+	return {sampleDirection(uSample, wo), 1.f};
 }
 
 float PerfectTransmission::getPdf(const Vector3f& wi) const

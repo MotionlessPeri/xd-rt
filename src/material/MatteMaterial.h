@@ -7,34 +7,31 @@
 #include "Material.h"
 #include "texture/TextureTypes.h"
 namespace xd {
-class MatteMaterial : public Material {
+class MatteMaterial : public PhysicalPlausibleMaterial {
 public:
 	explicit MatteMaterial(const ColorRGB& color);
 	explicit MatteMaterial(std::shared_ptr<Texture2DRGB> colorTexture);
-	ColorRGB getBxDF(const HitRecord& primRec,
+	ColorRGB getBxDF(const LocalGeomParams& shadingGeom,
 					 const Vector3f& wo,
 					 const Vector3f& wi) const override;
-	ColorRGB sampleBxDF(const Vector2f& uSample,
-						const HitRecord& primRec,
-						const Vector3f& wo,
-						Vector3f& wi) const override;
-	ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,
-							   const HitRecord& primRec,
-							   const Vector3f& wo,
-							   Vector3f& wi,
-							   float& pdf) const override;
+	SampleBxDFResult sampleBxDF(const Vector2f& uSample,
+								const LocalGeomParams& shadingGeom,
+								const Vector3f& wo) const override;
+	SampleBxDFPdfResult sampleBxDFWithPdf(const Vector2f& uSample,
+										  const LocalGeomParams& shadingGeom,
+										  const Vector3f& wo) const override;
 	Vector3f sampleDirection(const Vector2f& uSample,
-							 const HitRecord& primRec,
+							 const LocalGeomParams& shadingGeom,
 							 const Vector3f& wo) const override;
-	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
-									const HitRecord& primRec,
-									const Vector3f& wo,
-									float& pdf) const override;
-	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
+	SampleDirPdfResult sampleDirectionWithPdf(const Vector2f& uSample,
+											  const LocalGeomParams& shadingGeom,
+											  const Vector3f& wo) const override;
+	float getPdf(const LocalGeomParams& shadingGeom, const Vector3f& wo) const override;
 	bool isDelta() const override { return false; }
 
 protected:
 	std::shared_ptr<Texture2DRGB> color;
+	std::shared_ptr<Texture2DRGB> normal;
 };
 }  // namespace xd
 #endif	// XD_RT_MATTEMATERIAL_H

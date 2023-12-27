@@ -46,3 +46,29 @@ TEST(SamplerTestSuite, SimpleSamplerGetArrayTest)
 	film.mergeTileToFilm(std::move(tile));
 	EXPECT_NO_THROW(film.saveToFile(R"(D:\SimpleSampler_get2DArray_test.hdr)", {true}));
 }
+
+TEST(SamplerTestSuite, SamplePerPixelTest)
+{
+	const Vector3f center{0, 0, 0};
+	const Vector3f right{0, 0, 500};
+	const Vector3f up{0, 500, 0};
+	constexpr uint32_t width = 10;
+	constexpr uint32_t height = 10;
+	const Vector2f resolution{width, height};
+	Film film{center, right, up, width, height};
+	auto tile = film.getTile({0, 0}, {width - 1, height - 1});
+	constexpr int samplePerPixel = 7;
+	SimpleSampler sampler(samplePerPixel);
+
+	std::array<std::size_t, width * height> spps{0};
+	for (const auto& pixel : *tile) {
+		sampler.setCurrentPixel(pixel);
+		do {
+			const auto index = pixel.y() * width + pixel.x();
+			++spps[index];
+		} while (sampler.startNextSample());
+	}
+	for (const auto& spp : spps) {
+		EXPECT_EQ(spp, samplePerPixel);
+	}
+}

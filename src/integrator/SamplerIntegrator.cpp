@@ -21,11 +21,9 @@ SamplerIntegrator::SamplerIntegrator(const IntegratorConfig& config,
 }
 void SamplerIntegrator::render(const xd::Scene& scene)
 {
+	preProcess(scene);
 	auto film = camera->getFilm();
 	const auto resolution = film->getResolution();
-	// For debug purpose. Make tbb run sequentially
-	// oneapi::tbb::global_control
-	// global_limit(oneapi::tbb::global_control::max_allowed_parallelism, 1);
 	oneapi::tbb::parallel_for(
 		tbb::blocked_range2d<int, int>{0, resolution.y(), 16, 0, resolution.x(), 16},
 		[&](const tbb::blocked_range2d<int, int>& range) {

@@ -23,10 +23,10 @@ TEST(HitRecordTestSuite, DifferentialTest)
 		HitRecord rec;
 		Ray ray{center, dir};
 		EXPECT_TRUE(sphere->hit(ray, rec));
-		const auto localToModel = rec.getCurrentFrame();
-		EXPECT_FLOAT_EQ(localToModel.col(0).norm(), 1.f);
-		EXPECT_FLOAT_EQ(localToModel.col(1).norm(), 1.f);
-		EXPECT_FLOAT_EQ(localToModel.col(2).norm(), 1.f);
+		const auto localToModel = rec.geom.getCurrentFrame();
+		EXPECT_FLOAT_EQ(localToModel.matrix().col(0).norm(), 1.f);
+		EXPECT_FLOAT_EQ(localToModel.matrix().col(1).norm(), 1.f);
+		EXPECT_FLOAT_EQ(localToModel.matrix().col(2).norm(), 1.f);
 		++cnt;
 	}
 }
@@ -63,12 +63,12 @@ TEST(HitRecordTestSuite, FrameCategoryTest)
 		if (sphere->hit(primRay, primRec)) {
 			++cnt;
 			shapeHit = true;
-			EXPECT_EQ(primRec.frame, FrameCategory::MODEL);
+			EXPECT_EQ(primRec.geom.frame, FrameCategory::MODEL);
 		}
 		primRec = {};
 		if (prim->hit(primRay, primRec)) {
 			primHit = true;
-			EXPECT_EQ(primRec.frame, FrameCategory::WORLD);
+			EXPECT_EQ(primRec.geom.frame, FrameCategory::WORLD);
 		}
 		if (shapeHit != primHit)
 			__debugbreak();

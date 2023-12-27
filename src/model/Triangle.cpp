@@ -216,24 +216,24 @@ bool Triangle::hit(const Ray& ray, HitRecord& rec) const
 		if (t >= rec.tHit)
 			return false;
 		rec.tHit = t;
-		rec.p = ray.getTPoint(t);
+		rec.geom.p = ray.getTPoint(t);
 		if (mesh->hasUV()) {
 			const auto uvs = getUVsUnchecked();
-			rec.uv = interpolateWithBaryCoords(uvs, baryCoord);
+			rec.geom.uv = interpolateWithBaryCoords(uvs, baryCoord);
 		}
 		else {
-			rec.uv = {0, 0};
+			rec.geom.uv = {0, 0};
 		}
 
 		if (mesh->hasNormal()) {
 			const auto normals = getNormalsUnchecked();
-			rec.n = interpolateWithBaryCoords(normals, baryCoord);
+			rec.geom.derivatives.n = interpolateWithBaryCoords(normals, baryCoord);
 		}
 		else {
-			rec.n = N.normalized();
+			rec.geom.derivatives.n = N.normalized();
 		}
-		rec.dpdu = dpdu;
-		rec.dpdv = dpdv;
+		rec.geom.derivatives.dpdu = dpdu;
+		rec.geom.derivatives.dpdv = dpdv;
 		return true;
 	}
 	else

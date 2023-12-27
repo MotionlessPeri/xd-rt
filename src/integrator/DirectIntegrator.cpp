@@ -3,12 +3,10 @@
 //
 #include "DirectIntegrator.h"
 #include "Camera.h"
-#include "Film.h"
 #include "Light.h"
-#include "Primitive.h"
+#include "LightSampler.h"
 #include "Sampler.h"
 #include "Scene.h"
-
 using namespace xd;
 MIDirectIntegrator::MIDirectIntegrator(const std::shared_ptr<Sampler>& sampler)
 	: SamplerIntegrator(sampler)
@@ -39,14 +37,12 @@ ColorRGB MIDirectIntegrator::Li(const Ray& ray, const Scene& scene, Sampler& sam
 	if (!scene.hit(ray, primRec)) {
 		const auto env = scene.getEnvironment();
 		if (env) {
-			Li = env->getRadiance(primRec, ray.d);
+			Li = env->getRadiance({}, ray.d);
 		}
 		return Li;
 	}
 
-	const auto material = primRec.primitive->getMaterial();
 	const auto& lights = scene.getLights();
-
 	for (auto i : std::views::iota(0u, lights.size())) {
 		const auto& light = lights[i];
 		const uint32_t numLightSamples = light->getNumSamples();
@@ -63,10 +59,10 @@ ColorRGB MIDirectIntegrator::Li(const Ray& ray, const Scene& scene, Sampler& sam
 				uLight = uLights[sampleIdx];
 				uBxdf = uBxdfs[sampleIdx];
 			}
-			LiThisLight += EstimateDirect(ray, primRec, uLight, *light, uBxdf, scene);
+			LiThisLight +=
+				EstimateDirect(ray, primRec, uLight, *light, uBxdf, 0.f, scene, nullptr, true);
 		}
 		Li += LiThisLight / light->getNumSamples();
 	}
-
 	return Li;
 }

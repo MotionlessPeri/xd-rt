@@ -7,21 +7,41 @@
 #include "MathTypes.h"
 namespace xd {
 class AABB;
+
 class BxDF;
+
 class Camera;
+
 class Film;
+
 class HitAccel;
-class HitRecord;
+
+struct ShadingDerivatives;
+struct LocalGeomParams;
+struct HitRecord;
+
 class HitSolver;
+
 class Integrator;
+
 class Light;
+
+class LightSampler;
+
 class Material;
+class PhysicalPlausibleMaterial;
+
 class Model;
+
 class Primitive;
+
 class Ray;
+
 class Sampler;
+
 class Scene;
 class SceneBuilder;
+
 template <typename ReturnType, typename SampleType>
 class Texture;
 

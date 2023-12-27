@@ -10,29 +10,25 @@
 #include "bxdf/Fresnel.h"
 namespace xd {
 
-class PerfectFresnelMaterial : public Material {
+class PerfectFresnelMaterial : public PhysicalPlausibleMaterial {
 public:
 	PerfectFresnelMaterial(float etaOut, float etaIn);
-	ColorRGB getBxDF(const HitRecord& primRec,
+	ColorRGB getBxDF(const LocalGeomParams& shadingGeom,
 					 const Vector3f& wo,
 					 const Vector3f& wi) const override;
-	ColorRGB sampleBxDF(const Vector2f& uSample,
-						const HitRecord& primRec,
-						const Vector3f& wo,
-						Vector3f& wi) const override;
-	ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,
-							   const HitRecord& primRec,
-							   const Vector3f& wo,
-							   Vector3f& wi,
-							   float& pdf) const override;
-	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
+	SampleBxDFResult sampleBxDF(const Vector2f& uSample,
+								const LocalGeomParams& shadingGeom,
+								const Vector3f& wo) const override;
+	SampleBxDFPdfResult sampleBxDFWithPdf(const Vector2f& uSample,
+										  const LocalGeomParams& shadingGeom,
+										  const Vector3f& wo) const override;
+	float getPdf(const LocalGeomParams& shadingGeom, const Vector3f& wo) const override;
 	Vector3f sampleDirection(const Vector2f& uSample,
-							 const HitRecord& primRec,
+							 const LocalGeomParams& shadingGeom,
 							 const Vector3f& wo) const override;
-	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
-									const HitRecord& primRec,
-									const Vector3f& wo,
-									float& pdf) const override;
+	SampleDirPdfResult sampleDirectionWithPdf(const Vector2f& uSample,
+											  const LocalGeomParams& shadingGeom,
+											  const Vector3f& wo) const override;
 	bool isDelta() const override;
 
 protected:
@@ -42,19 +38,19 @@ protected:
 	 * @tparam SampleFuncType the actual sample function. The signature must be
 	 * (bool sampleReflection, float fresnel) -> SomeType
 	 * @param uSample the sampled point
-	 * @param primRec the local presentation of the hit point
+	 * @param shadingGeom the local presentation of the hit point
 	 * @param wo the incoming direction. Wo must lies in world frame.
 	 * @param func the function definition
 	 * @return This template function returns what func returns
 	 */
 	template <typename SampleFuncType>
 	auto sampleTemplate(const Vector2f& uSample,
-						const HitRecord& primRec,
+						const LocalGeomParams& shadingGeom,
 						const Vector3f& wo,
 						SampleFuncType func) const
 	{
 		float eta;
-		float cosThetaI = wo.dot(primRec.n);
+		float cosThetaI = wo.dot(shadingGeom.derivatives.n);
 		if (cosThetaI > 0) {  // same hemisphere
 			// wo from outside
 			eta = etaIn / etaOut;  // eta_t / eta_i

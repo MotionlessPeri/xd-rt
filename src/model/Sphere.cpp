@@ -71,7 +71,7 @@ bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 	}
 #endif
 	if (hit) {
-		rec.frame = FrameCategory::MODEL;
+		rec.geom.frame = FrameCategory::MODEL;
 		rec.tHit = resT;
 #if 0
 		// handle rounding errors in specialized approach
@@ -84,12 +84,13 @@ bool Sphere::hit(const Ray& ray, HitRecord& rec) const
 #else
 		// handle rouding errors in common approach using Ray::getTPoint
 		Vector3f pError{0, 0, 0};
-		rec.p = ray.getTPoint(resT, pError);
+		rec.geom.p = ray.getTPoint(resT, pError);
 		rec.pError = pError;
 #endif
 
-		std::tie(rec.dpdu, rec.dpdv, rec.n) = generateDifferentials(rec.p);
-		rec.uv = generateUV(rec.p);
+		std::tie(rec.geom.derivatives.dpdu, rec.geom.derivatives.dpdv, rec.geom.derivatives.n) =
+			generateDifferentials(rec.geom.p);
+		rec.geom.uv = generateUV(rec.geom.p);
 	}
 	return hit;
 }

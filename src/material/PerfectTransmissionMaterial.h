@@ -8,29 +8,25 @@
 #include "Material.h"
 #include "bxdf/PerfectTransmission.h"
 namespace xd {
-class PerfectTransmissionMaterial : public Material {
+class PerfectTransmissionMaterial : public PhysicalPlausibleMaterial {
 public:
 	PerfectTransmissionMaterial(float etaOutside, float etaInside);
-	ColorRGB getBxDF(const HitRecord& primRec,
+	ColorRGB getBxDF(const LocalGeomParams& shadingGeom,
 					 const Vector3f& wo,
 					 const Vector3f& wi) const override;
-	ColorRGB sampleBxDF(const Vector2f& uSample,
-						const HitRecord& primRec,
-						const Vector3f& wo,
-						Vector3f& wi) const override;
-	ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,
-							   const HitRecord& primRec,
-							   const Vector3f& wo,
-							   Vector3f& wi,
-							   float& pdf) const override;
-	float getPdf(const HitRecord& primRec, const Vector3f& wo) const override;
+	SampleBxDFResult sampleBxDF(const Vector2f& uSample,
+								const LocalGeomParams& shadingGeom,
+								const Vector3f& wo) const override;
+	SampleBxDFPdfResult sampleBxDFWithPdf(const Vector2f& uSample,
+										  const LocalGeomParams& shadingGeom,
+										  const Vector3f& wo) const override;
+	float getPdf(const LocalGeomParams& shadingGeom, const Vector3f& wo) const override;
 	Vector3f sampleDirection(const Vector2f& uSample,
-							 const HitRecord& primRec,
+							 const LocalGeomParams& shadingGeom,
 							 const Vector3f& wo) const override;
-	Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
-									const HitRecord& primRec,
-									const Vector3f& wo,
-									float& pdf) const override;
+	SampleDirPdfResult sampleDirectionWithPdf(const Vector2f& uSample,
+											  const LocalGeomParams& shadingGeom,
+											  const Vector3f& wo) const override;
 	bool isDelta() const override;
 
 protected:
@@ -48,14 +44,14 @@ protected:
 			return Ret{inToOut, true};
 		}
 	}
-	static auto getTransform(const HitRecord& rec, bool flipNormal)
+	static auto getTransform(const LocalGeomParams& shadingGeom, bool flipNormal)
 	{
 		struct Ret {
-			Matrix3f localToWorld;
-			Matrix3f worldToLocal;
+			Transform localToWorld;
+			Transform worldToLocal;
 		} ret;
-		const auto n = flipNormal ? -rec.n : rec.n;
-		const auto& x = rec.dpdu;
+		const auto n = flipNormal ? -shadingGeom.derivatives.n : shadingGeom.derivatives.n;
+		const auto& x = shadingGeom.derivatives.dpdu;
 		const auto y = coordSystem(n, x);
 		ret.localToWorld = buildFrameMatrix(x, y, n);
 		ret.worldToLocal = ret.localToWorld.inverse();

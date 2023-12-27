@@ -10,7 +10,7 @@
 #include "model/ModelTypes.h"
 namespace xd {
 struct LoadMeshOptions {
-	HitAccelMethod method;
+	HitAccelMethod method = HitAccelMethod::NO_ACCEL;
 };
 class MeshLoader {
 public:

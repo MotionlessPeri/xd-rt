@@ -7,6 +7,7 @@
 #include "BxDF.h"
 #include "CoreTypes.h"
 #include "MathTypes.h"
+#include "texture/TextureTypes.h"
 namespace xd {
 /**
  * Material is an aggregate of brdfs
@@ -14,65 +15,64 @@ namespace xd {
 class Material {
 public:
 	virtual ~Material() = default;
+};
+
+class PhysicalPlausibleMaterial : public Material {
+public:
 	/**
 	 * get bxdf value
-	 * @param primRec the geometric properties around hit point
+	 * @param shadingGeom the geometric properties around hit point
 	 * @param wo the incoming direction. Wi must lies in world frame.
 	 * @param wi the outgoing direction. Wo must lies in world frame.
 	 * @return the bxdf value respected to wi and wo
 	 */
-	virtual ColorRGB getBxDF(const HitRecord& primRec,
+	virtual ColorRGB getBxDF(const LocalGeomParams& shadingGeom,
 							 const Vector3f& wo,
 							 const Vector3f& wi) const = 0;
 	/**
 	 * \brief sample the bxdf of a given point
 	 * \param uSample the sampled point used to sample wo
-	 * \param primRec the local presentation of the hit point
-	 * \param wo the incoming direction. Wo must lies in world frame.
-	 * \param wi the outgoing direction will be assigned to this param. Wi lies in world frame.
-	 * \return the bxdf value
+	 * \param shadingGeom the local presentation of the hit point
+	 * \return the bxdf value and wi's direction
 	 */
-	virtual ColorRGB sampleBxDF(const Vector2f& uSample,
-								const HitRecord& primRec,
-								const Vector3f& wo,
-								Vector3f& wi) const = 0;
+	virtual SampleBxDFResult sampleBxDF(const Vector2f& uSample,
+										const LocalGeomParams& shadingGeom,
+										const Vector3f& wo) const = 0;
 	/**
 	 * \brief sample the bxdf of a given point
 	 * \param uSample the sampled point used to sample wo
-	 * \param primRec the local presentation of the hit point
+	 * \param shadingGeom the local presentation of the hit point
 	 * \param wo the incoming direction. Wo must lies in world frame.
-	 * \param wi the outgoing direction will be assigned to this param. Wi lies in world frame.
-	 * \param pdf the pdf of wi will be assigned to this param.
-	 * \return the bxdf value
+	 * \return the bxdf value, wi's direction and pdf
 	 */
-	virtual ColorRGB sampleBxDFWithPdf(const Vector2f& uSample,
-									   const HitRecord& primRec,
-									   const Vector3f& wo,
-									   Vector3f& wi,
-									   float& pdf) const = 0;
+	virtual SampleBxDFPdfResult sampleBxDFWithPdf(const Vector2f& uSample,
+												  const LocalGeomParams& shadingGeom,
+												  const Vector3f& wo) const = 0;
 	/**
 	 * \brief get pdf value of given wo
-	 * \param primRec the local representation of hit point
+	 * \param shadingGeom the local representation of hit point
 	 * \param wo the outgoing direction. Wo must lies in world frame
 	 * \return the pdf value associate to wo
 	 */
-	virtual float getPdf(const HitRecord& primRec, const Vector3f& wo) const = 0;
+	virtual float getPdf(const LocalGeomParams& shadingGeom, const Vector3f& wo) const = 0;
 	/**
 	 * \brief sample wo's direction according to wi and bxdf's distribution
 	 * \param uSample the sampled point used for sampling direction
 	 * \param wo outgoing direction
-	 * \param primRec the local representation of hit point
+	 * \param shadingGeom the local representation of hit point
 	 * \return wo's direction. Note that wo is in world frame
 	 */
 	virtual Vector3f sampleDirection(const Vector2f& uSample,
-									 const HitRecord& primRec,
+									 const LocalGeomParams& shadingGeom,
 									 const Vector3f& wo) const = 0;
-	virtual Vector3f sampleDirectionWithPdf(const Vector2f& uSample,
-											const HitRecord& primRec,
-											const Vector3f& wo,
-											float& pdf) const = 0;
+	virtual SampleDirPdfResult sampleDirectionWithPdf(const Vector2f& uSample,
+													  const LocalGeomParams& shadingGeom,
+													  const Vector3f& wo) const = 0;
 	virtual bool isDelta() const = 0;
-};
+	virtual ShadingDerivatives getShadingGeometry(const LocalGeomParams& geom);
 
+protected:
+	std::shared_ptr<Texture2DRGB> normal;
+};
 }  // namespace xd
 #endif	// XD_RT_MATERIAL_H

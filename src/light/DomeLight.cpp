@@ -29,35 +29,30 @@ DomeLight::DomeLight(const std::string& imagePath) : Light(1u)
 }
 
 Vector3f DomeLight::sampleDirection(const Vector2f& uSample,
-									const HitRecord& primRec,
-									HitRecord& shadowRec) const
+									const LocalGeomParams& shadingGeom) const
 {
 	const auto uv = dis->sample(uSample);
-	return getSphereDirFromUV(uv);
+	return {getSphereDirFromUV(uv)};
 }
 
-ColorRGB DomeLight::getRadiance(const HitRecord& primRec, const Vector3f& wi) const
+ColorRGB DomeLight::getRadiance(const LocalGeomParams& shadingGeom, const Vector3f& wi) const
 {
 	return dome->sample(wi);
 }
 
-ColorRGB DomeLight::sampleRadiance(const Vector2f& uSample,
-								   const HitRecord& primRec,
-								   HitRecord& shadowRec,
-								   Vector3f& wi) const
+Light::SampleRadianceResult DomeLight::sampleRadiance(const Vector2f& uSample,
+													  const LocalGeomParams& shadingGeom) const
 {
-	wi = sampleDirection(uSample, primRec, shadowRec);
-	return getRadiance(primRec, wi);
+	auto&& sampleDirRes = sampleDirection(uSample, shadingGeom);
+	return {sampleDirRes, getRadiance(shadingGeom, sampleDirRes)};
 }
 
-ColorRGB DomeLight::sampleRadianceWithPdf(const Vector2f& uSample,
-										  const HitRecord& primRec,
-										  HitRecord& shadowRec,
-										  Vector3f& wi,
-										  float& pdf) const
+Light::SampleRadiancePdfResult DomeLight::sampleRadianceWithPdf(
+	const Vector2f& uSample,
+	const LocalGeomParams& shadingGeom) const
 {
-	wi = sampleDirectionWithPdf(uSample, primRec, shadowRec, pdf);
-	return getRadiance(primRec, wi);
+	auto&& sampleDirPdfRes = sampleDirectionWithPdf(uSample, shadingGeom);
+	return {sampleDirPdfRes, getRadiance(shadingGeom, sampleDirPdfRes.geomToLight)};
 }
 
 bool DomeLight::isDelta() const
@@ -65,25 +60,29 @@ bool DomeLight::isDelta() const
 	return false;
 }
 
-float DomeLight::getPdf(const HitRecord& primRec, const Vector3f& wo) const
+float DomeLight::getPdf(const LocalGeomParams& shadingGeom, const Vector3f& wo) const
 {
 	const Vector2f uv = getSphereUV(wo);
 	const auto pdf = dis->getPdf(uv);
 	return normalizePdf(pdf, uv);
 }
 
-Vector3f DomeLight::sampleDirectionWithPdf(const Vector2f& uSample,
-										   const HitRecord& primRec,
-										   HitRecord& shadowRec,
-										   float& pdf) const
+Light::SampleDirectionPdfResult DomeLight::sampleDirectionWithPdf(
+	const Vector2f& uSample,
+	const LocalGeomParams& shadingGeom) const
 {
+	float pdf;
 	const auto uv = dis->sampleWithPdf(uSample, pdf);
 	pdf = normalizePdf(pdf, uv);
-	auto wo = getSphereDirFromUV(uv);
-	return wo;
+	return {getSphereDirFromUV(uv), pdf};
 }
 
-float DomeLight::normalizePdf(float pieceWisePdf, const Vector2f& uv) const
+bool DomeLight::isInfinite() const
+{
+	return true;
+}
+
+float DomeLight::normalizePdf(float pieceWisePdf, const Vector2f& uv)
 {
 	const auto sinTheta = std::sinf(uv[1] * PI);
 	return pieceWisePdf / (2 * PI * PI * sinTheta);

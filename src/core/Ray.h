@@ -39,15 +39,17 @@ public:
 	Vector3f d;
 };
 
-inline void applyTransformToRay(const Transform& transform, Ray& ray)
+inline Ray applyTransformToRay(const Transform& transform, const Ray& ray)
 {
 	Vector3f oError{0, 0, 0};
-	applyTransformToPoint(transform, ray.o, &oError);
-	applyTransformToDirection(transform, ray.d);
+	Ray localRay;
+	localRay.o = applyTransformToPoint(transform, ray.o, &oError);
+	localRay.d = applyTransformToDirection(transform, ray.d);
 	// shift ray.o to error bound's edge in direction ray.d to ensure o is in the right side
 	const Vector3f oErrorHalfExtent = oError / 2.f;
 	const auto dt = oErrorHalfExtent.dot(ray.d);
-	ray.o += ray.d * dt;
+	localRay.o += localRay.d * dt;
+	return localRay;
 }
 }  // namespace xd
 

@@ -44,7 +44,7 @@ TEST(PrimitiveTestSuite, InstanceTest0)
 				const auto primRay = cam->generateRay(pixelSample);
 				HitRecord primRec;
 				if (prim->hit(primRay, primRec)) {
-					const auto shadowRayDir = reflected(-primRay.d, primRec.n);
+					const auto shadowRayDir = reflected(-primRay.d, primRec.geom.derivatives.n);
 					const auto shadowRay = primRec.spawnRay(shadowRayDir);
 					HitRecord shadowRec{};
 					if (!prim->hit(shadowRay, shadowRec)) {

@@ -39,22 +39,19 @@ bool EmbreeAccel::hit(const Ray& ray, HitRecord& rec) const
 	const auto rtcGeom = instanceIdToGeomMap.at(rtcRayHit.hit.instID[0]);
 	rtcInterpolate0(rtcGeom, rtcRayHit.hit.primID, rtcRayHit.hit.u, rtcRayHit.hit.v,
 					RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, (unsigned int)VertexAttributeSlot::UV,
-					rec.uv.data(), 2);
+					rec.geom.uv.data(), 2);
 	rtcInterpolate1(rtcGeom, rtcRayHit.hit.primID, rtcRayHit.hit.u, rtcRayHit.hit.v,
-					RTC_BUFFER_TYPE_VERTEX, 0, rec.p.data(), rec.dpdu.data(), rec.dpdv.data(), 3);
+					RTC_BUFFER_TYPE_VERTEX, 0, rec.geom.p.data(), rec.geom.derivatives.dpdu.data(),
+					rec.geom.derivatives.dpdv.data(), 3);
 
 	rtcInterpolate0(rtcGeom, rtcRayHit.hit.primID, rtcRayHit.hit.u, rtcRayHit.hit.v,
 					RTC_BUFFER_TYPE_VERTEX_ATTRIBUTE, (unsigned int)VertexAttributeSlot::NORMAL,
-					rec.n.data(), 3);
+					rec.geom.derivatives.n.data(), 3);
 	float rawModelToWorld[16];
 	rtcGetGeometryTransformFromScene(scene, rtcRayHit.hit.instID[0], 0,
 									 RTC_FORMAT_FLOAT4X4_COLUMN_MAJOR, rawModelToWorld);
 	const Transform modelToWorld{Matrix4f{rawModelToWorld}};
-	rec.p = modelToWorld * rec.p;
-	const auto debug = (rec.p - ray.o).norm();
-	rec.frame = FrameCategory::WORLD;
-	rec.pError = {0, 0, 0};
-	rec.n = (modelToWorld.linear().inverse().transpose() * rec.n).normalized();
+	rec.applyTransform(FrameCategory::WORLD, modelToWorld);
 	rec.tHit = rtcRayHit.ray.tfar;
 	rec.primitive = std::static_pointer_cast<const Primitive>(primitive->shared_from_this());
 	return true;

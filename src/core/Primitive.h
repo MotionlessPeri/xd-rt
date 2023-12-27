@@ -4,16 +4,16 @@
 
 #ifndef XD_RT_PRIMITIVE_H
 #define XD_RT_PRIMITIVE_H
-#include "Hitable.h"
 #include "Material.h"
 #include "Model.h"
 namespace xd {
 class Primitive : public Model {
 public:
+	friend struct HitRecord;
 	Primitive(std::shared_ptr<Model> model, std::shared_ptr<Material> material);
 	Primitive(std::shared_ptr<Model> model,
-	          std::shared_ptr<Material> material,
-	          const Transform& modelToWorld);
+			  std::shared_ptr<Material> material,
+			  const Transform& modelToWorld);
 	std::shared_ptr<Model> getModel() const { return model; }
 	std::shared_ptr<Material> getMaterial() const { return material; }
 	bool hit(const Ray& ray, HitRecord& rec) const override;

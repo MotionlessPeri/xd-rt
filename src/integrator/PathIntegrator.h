@@ -13,9 +13,11 @@ public:
 				   const std::shared_ptr<Sampler>& sampler,
 				   int max_depth);
 	ColorRGB Li(const Ray& r, const Scene& scene, Sampler& sampler) override;
+	void preProcess(const Scene& scene) override;
 
 protected:
-	int maxDepth;
+	int maxDepth{8};
+	std::shared_ptr<LightSampler> lightSampler{nullptr};
 };
 }  // namespace xd
 #endif	// XD_RT_PATHINTEGRATOR_H

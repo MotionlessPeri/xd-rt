@@ -7,6 +7,8 @@
 
 #include "CoreTypes.h"
 #include "Enums.h"
+#include "Light.h"
+
 namespace xd {
 class SceneBuilder {
 public:
@@ -28,6 +30,8 @@ public:
 	SceneBuilder& addLight(const std::shared_ptr<Light>& light)
 	{
 		lights.emplace_back(light);
+		if (light->isInfinite())
+			infiniteLights.emplace_back(light);
 		return *this;
 	}
 	/**
@@ -89,8 +93,9 @@ protected:
 											  HitSolverType type) const;
 	std::vector<std::shared_ptr<Primitive>> primitives;
 	std::vector<std::shared_ptr<Light>> lights;
+	std::vector<std::shared_ptr<Light>> infiniteLights;
 	std::shared_ptr<Light> environment;
-	HitSolverType hitSolverType;
+	HitSolverType hitSolverType = HitSolverType::UNKNOWN;
 };
 
 }  // namespace xd

@@ -16,17 +16,20 @@ public:
 	friend class SceneBuilder;
 	const std::vector<std::shared_ptr<Primitive>>& getPrimitives() const { return primitives; }
 	const std::vector<std::shared_ptr<Light>>& getLights() const { return lights; }
+	const std::vector<std::shared_ptr<Light>>& getInfiniteLights() const { return infiniteLights; }
 	bool hit(const Ray& ray, HitRecord& rec) const override;
 	bool hitAnything(const Ray& ray, HitRecord& rec) const override;
 	std::shared_ptr<Light> getEnvironment() const { return environment; }
 
 protected:
 	Scene(std::vector<std::shared_ptr<Primitive>> primitives,
-	      std::vector<std::shared_ptr<Light>> lights);
+		  std::vector<std::shared_ptr<Light>> lights,
+		  std::vector<std::shared_ptr<Light>> infiniteLights);
 	void setHitSolver(std::unique_ptr<HitSolver> solver) { hitSolver = std::move(solver); }
 	void setEnvironment(const std::shared_ptr<Light>& env) { environment = env; }
 	std::vector<std::shared_ptr<Primitive>> primitives;
 	std::vector<std::shared_ptr<Light>> lights;
+	std::vector<std::shared_ptr<Light>> infiniteLights;
 	std::shared_ptr<Light> environment = nullptr;
 	std::unique_ptr<HitSolver> hitSolver = nullptr;
 };
