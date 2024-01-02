@@ -10,6 +10,17 @@ PerfectFresnelMaterial::PerfectFresnelMaterial(float etaOut, float etaIn)
 {
 }
 
+PerfectFresnelMaterial::PerfectFresnelMaterial(std::shared_ptr<Texture2DRGB> normalTexture,
+											   float etaOut,
+											   float etaIn)
+	: PhysicalPlausibleMaterial(std::move(normalTexture)),
+	  etaOut(etaOut),
+	  etaIn(etaIn),
+	  reflection(),
+	  transmission(etaOut, etaIn)
+{
+}
+
 ColorRGB PerfectFresnelMaterial::getBxDF(const LocalGeomParams& shadingGeom,
 										 const Vector3f& wo,
 										 const Vector3f& wi) const

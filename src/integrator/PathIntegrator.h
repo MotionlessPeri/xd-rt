@@ -8,7 +8,7 @@
 namespace xd {
 class PathIntegrator : public SamplerIntegrator {
 public:
-	PathIntegrator(const std::shared_ptr<Sampler>& sampler, int maxDepth);
+	PathIntegrator(const std::shared_ptr<Sampler>& sampler, int maxDepth = 8);
 	PathIntegrator(const IntegratorConfig& config,
 				   const std::shared_ptr<Sampler>& sampler,
 				   int max_depth);

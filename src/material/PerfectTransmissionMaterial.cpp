@@ -12,6 +12,16 @@ PerfectTransmissionMaterial::PerfectTransmissionMaterial(float etaOutside, float
 {
 }
 
+PerfectTransmissionMaterial::PerfectTransmissionMaterial(
+	std::shared_ptr<Texture2DRGB> normalTexture,
+	float etaOutside,
+	float etaInside)
+	: PhysicalPlausibleMaterial(std::move(normalTexture)),
+	  outToIn(std::make_unique<PerfectTransmission>(etaOutside, etaInside)),
+	  inToOut(std::make_unique<PerfectTransmission>(etaInside, etaOutside))
+{
+}
+
 ColorRGB PerfectTransmissionMaterial::getBxDF(const LocalGeomParams& shadingGeom,
 											  const Vector3f& wo,
 											  const Vector3f& wi) const

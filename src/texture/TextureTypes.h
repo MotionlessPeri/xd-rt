@@ -33,7 +33,7 @@ template <typename ReturnType>
 class SphereTexture;
 
 using SphereTextureRGB = SphereTexture<ColorRGB>;
-using SphereTexturef = SphereTexture<float>;
+using SphereTextureF = SphereTexture<float>;
 
 template <typename ReturnType>
 class UVTexture;

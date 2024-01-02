@@ -17,6 +17,18 @@ MatteMaterial::MatteMaterial(std::shared_ptr<Texture2DRGB> colorTexture)
 {
 }
 
+MatteMaterial::MatteMaterial(std::shared_ptr<Texture2DRGB> normalTexture, const ColorRGB& c)
+	: PhysicalPlausibleMaterial(std::move(normalTexture))
+{
+	color = std::make_shared<ConstantTexture<ColorRGB, Vector2f>>(c);
+}
+
+MatteMaterial::MatteMaterial(std::shared_ptr<Texture2DRGB> normalTexture,
+							 std::shared_ptr<Texture2DRGB> colorTexture)
+	: PhysicalPlausibleMaterial(std::move(normalTexture)), color(std::move(colorTexture))
+{
+}
+
 ColorRGB MatteMaterial::getBxDF(const LocalGeomParams& shadingGeom,
 								const Vector3f& wo,
 								const Vector3f& wi) const

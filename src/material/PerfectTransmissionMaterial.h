@@ -11,6 +11,9 @@ namespace xd {
 class PerfectTransmissionMaterial : public PhysicalPlausibleMaterial {
 public:
 	PerfectTransmissionMaterial(float etaOutside, float etaInside);
+	PerfectTransmissionMaterial(std::shared_ptr<Texture2DRGB> normalTexture,
+								float etaOutside,
+								float etaInside);
 	ColorRGB getBxDF(const LocalGeomParams& shadingGeom,
 					 const Vector3f& wo,
 					 const Vector3f& wi) const override;

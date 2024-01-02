@@ -7,6 +7,7 @@
 #include "Light.h"
 #include "Primitive.h"
 #include "Scene.h"
+#include "material/PerfectFresnelMaterial.h"
 #include "oneapi/tbb.h"
 #include "sampler/SimpleSampler.h"
 using namespace xd;
@@ -61,7 +62,7 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			return {1, 0, 0};
 		case DebugChannel::SHADOW_HIT: {
 			HitRecord shadowRec;
-			const auto wi = primRec.geom.derivatives.n;
+			const auto wi = primRec.getShadingGeomParams().derivatives.n;
 			const auto shadowRay = primRec.spawnRay(wi);
 			if (scene.hit(shadowRay, shadowRec)) {
 				return {shadowRec.tHit, 1, 0};
@@ -153,18 +154,17 @@ ColorRGB DebugIntegrator::getDebugResult(DebugChannel channel,
 			return res / cnt;
 		}
 		case DebugChannel::TEMP: {
-#if 0
-			const auto light = scene.getLights()[lightIndex];
-			HitRecord shadowRec;
-			Vector3f wi;
-			float pdf;
-			const auto radiance =
-				light->sampleRadianceWithPdf(sampler.sample2D(), primRec, shadowRec, wi, pdf);
-			return {pdf, 0, 0};
-#else
-			const auto brdfDirPdf = primRec.sampleBxDFPdf(sampler.sample2D(), -primRay.d);
-			return {brdfDirPdf.pdf, 0, 0};
-#endif
+			const auto material = std::dynamic_pointer_cast<PerfectFresnelMaterial>(
+				primRec.getPhysicalPlausibleMaterial());
+			if (!material)
+				__debugbreak();
+			const auto shadingGeom = primRec.getShadingGeomParams();
+			// const auto fresnelRes =
+			//	material->getFresnel(sampler.sample2D(), shadingGeom, -primRay.d);
+			// return {fresnelRes.fresnel, fresnelRes.reflect ? 1.f : 0.f, 0};
+			const auto fresnelRes =
+				material->sampleBxDFWithPdf(sampler.sample2D(), shadingGeom, -primRay.d);
+			return {fresnelRes.pdf, 0, 0};
 		}
 
 		default:

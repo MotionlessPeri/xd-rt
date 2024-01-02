@@ -10,6 +10,11 @@ PerfectReflectionMaterial::PerfectReflectionMaterial() : brdf(std::make_unique<P
 {
 }
 
+PerfectReflectionMaterial::PerfectReflectionMaterial(std::shared_ptr<Texture2DRGB> normal)
+	: PhysicalPlausibleMaterial(std::move(normal)), brdf(std::make_unique<PerfectReflection>())
+{
+}
+
 ColorRGB PerfectReflectionMaterial::getBxDF(const LocalGeomParams& shadingGeom,
 											const Vector3f& wo,
 											const Vector3f& wi) const

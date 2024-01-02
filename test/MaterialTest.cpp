@@ -514,3 +514,34 @@ TEST(MaterialTestSuite, PerfectFresnelSceneTest3)
 
 	EXPECT_NO_THROW(film->saveToFile(R"(D:\perfect_fresnel_test3_path.hdr)"));
 }
+
+#include <string>
+#include "TestScenes.h"
+TEST(MaterialTestSuite, NormalMapTest)
+{
+	const auto normalTexture = TextureFactory::loadUVTextureRGB(R"(D:\normal_map.png)");
+	// std::shared_ptr<UVTextureRGB> normalTexture = nullptr;
+	const auto matte = std::make_shared<MatteMaterial>(normalTexture, ColorRGB{0.8f, 0.8f, 0.8f});
+	const auto reflect = std::make_shared<PerfectReflectionMaterial>(normalTexture);
+	const auto transmission =
+		std::make_shared<PerfectTransmissionMaterial>(normalTexture, 1.f, 2.5f);
+	const auto fresnel = std::make_shared<PerfectFresnelMaterial>(normalTexture, 1.f, 2.5f);
+
+	const auto render = [&](const std::shared_ptr<PhysicalPlausibleMaterial>& mtl,
+							const std::string& suffix, uint32_t spp = 2) -> void {
+		using namespace std::string_literals;
+		const auto sceneAndCam = SceneFactory::SingleSphereScene(mtl);
+		auto sampler = std::make_shared<SimpleSampler>(spp);
+		PathIntegrator integrator{sampler, 20};
+		// DebugIntegrator integrator;
+		// integrator.setDebugChannel(DebugChannel::TEMP);
+		integrator.setCamera(sceneAndCam.cam);
+		integrator.render(*sceneAndCam.scene);
+		const auto film = sceneAndCam.cam->getFilm();
+		EXPECT_NO_THROW(film->saveToFile(R"(D:\normal_map_test_)"s + suffix + ".hdr"));
+	};
+	render(matte, "matte", 20);
+	render(reflect, "reflect", 1);
+	render(transmission, "transmission", 1);
+	render(fresnel, "fresnel", 100);
+}

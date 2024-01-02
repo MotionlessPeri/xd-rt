@@ -19,7 +19,7 @@ SampleBxDFResult PerfectTransmission::sampleBxDF(const Vector2f& uSample, const 
 		return {{0, 0, 0}, {}};
 	const float cosThetaT = std::sqrtf(1 - sin2ThetaT);
 	Vector3f brdf{1, 1, 1};
-	brdf *= eta * eta;
+	brdf /= eta * eta;
 	brdf /= std::fabs(wo.z());
 	return {brdf, refract(wo, cosThetaT)};
 }

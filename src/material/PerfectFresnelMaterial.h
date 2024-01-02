@@ -13,6 +13,7 @@ namespace xd {
 class PerfectFresnelMaterial : public PhysicalPlausibleMaterial {
 public:
 	PerfectFresnelMaterial(float etaOut, float etaIn);
+	PerfectFresnelMaterial(std::shared_ptr<Texture2DRGB> normalTexture, float etaOut, float etaIn);
 	ColorRGB getBxDF(const LocalGeomParams& shadingGeom,
 					 const Vector3f& wo,
 					 const Vector3f& wi) const override;
@@ -30,6 +31,19 @@ public:
 											  const LocalGeomParams& shadingGeom,
 											  const Vector3f& wo) const override;
 	bool isDelta() const override;
+
+	auto getFresnel(const Vector2f& uSample,
+					const LocalGeomParams& shadingGeom,
+					const Vector3f& wo) const
+	{
+		return sampleTemplate(uSample, shadingGeom, wo, [&](bool sampleReflection, float fresnel) {
+			const struct Ret {
+				bool reflect;
+				float fresnel;
+			} ret{sampleReflection, fresnel};
+			return ret;
+		});
+	}
 
 protected:
 	/**
