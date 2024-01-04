@@ -5,10 +5,16 @@
 #ifndef XD_RT_MATHUTIL_H
 #define XD_RT_MATHUTIL_H
 #include <cstdint>
+#include <ranges>
 #include <valarray>
 #include "MathTypes.h"
 
 namespace xd {
+template <typename... Args>
+VectorNf<sizeof...(Args)> makeVectorNf(Args... args)
+{
+	return {static_cast<float>(args)...};
+}
 /**
  * Solve quadratic equation in real numbers.
  * If the equation has no solution, x1 x2 remains unchanged
@@ -130,6 +136,24 @@ inline bool fuzzyEqual(float a, float b, float eps = 1e-5f)
 	return std::fabs(b - a) < eps;
 }
 
+template <uint32_t N>
+bool fuzzyEqual(const VectorNf<N>& a, const VectorNf<N>& b, float eps = 1e-5f)
+{
+	// for (const auto i : std::views::iota(0u, N)) {
+	//	if (!fuzzyEqual(a(i), b(i), eps))
+	//		return false;
+	// }
+	return std::ranges::all_of(std::views::iota(0u, N),
+							   [&](uint32_t i) { return fuzzyEqual(a(i), b(i), eps); });
+}
+inline bool fuzzyEqual(const ColorRGB& a, const ColorRGB& b, float eps = 1e-5f)
+{
+	return fuzzyEqual<3>(a, b, eps);
+}
+inline bool fuzzyEqual(const ColorRGBA& a, const ColorRGBA& b, float eps = 1e-5f)
+{
+	return fuzzyEqual<4>(a, b, eps);
+}
 constexpr float MACHINE_EPSILON = std::numeric_limits<float>::epsilon() / 2;
 
 template <int N>
@@ -283,6 +307,44 @@ inline bool sameHemisphere(const Vector3f& v, const Vector3f& n)
 inline Vector3f GramSchmidt(const Vector3f& v, const Vector3f& n)
 {
 	return (v - v.dot(n) * n).normalized() * v.norm();
+}
+
+inline ColorRGB SRGBToLinear(const ColorRGB& linear)
+{
+	constexpr float boundary = 0.04045f;
+	const ColorRGB debug = linear.unaryViewExpr([&](float v) {
+		if (v > boundary)
+			return std::powf(((v + 0.055f) / 1.055f), 2.4f);
+		else
+			return v / 12.92f;
+	});
+	return debug;
+}
+
+inline ColorRGBA SRGBToLinear(const ColorRGBA& srgb)
+{
+	ColorRGB c = srgb.head<3>();
+	c = SRGBToLinear(c);
+	return {c.x(), c.y(), c.z(), srgb.w()};
+}
+
+inline ColorRGB LinearToSRGB(const ColorRGB& srgb)
+{
+	constexpr float boundary = 0.0031308f;
+	const ColorRGB debug = srgb.unaryViewExpr([&](float v) {
+		if (v > boundary)
+			return 1.055f * std::powf(v, 1.f / 2.4f) - 0.055f;
+		else
+			return 12.92f * v;
+	});
+	return debug;
+}
+
+inline ColorRGBA LinearToSRGB(const ColorRGBA& linear)
+{
+	ColorRGB c = linear.head<3>();
+	c = LinearToSRGB(c);
+	return {c.x(), c.y(), c.z(), linear.w()};
 }
 }  // namespace xd
 

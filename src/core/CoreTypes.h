@@ -14,13 +14,17 @@ class Camera;
 
 class Film;
 
+class Filter;
+
 class HitAccel;
 
+struct HitRecord;
 struct ShadingDerivatives;
 struct LocalGeomParams;
-struct HitRecord;
 
 class HitSolver;
+
+class Image;
 
 class Integrator;
 

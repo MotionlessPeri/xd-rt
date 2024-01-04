@@ -73,6 +73,9 @@ set(CORE_FILES
         src/core/HitRecord.cpp
         src/core/LightSampler.cpp
         src/core/LightSampler.h
+        src/core/Image.cpp
+        src/core/Image.h
+        src/core/Filter.h
 )
 set(DISTRIBUTION_FILES
         src/distribution/CosineHemisphere.cpp

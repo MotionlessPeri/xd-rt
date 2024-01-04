@@ -44,3 +44,11 @@ TEST(MathUtilTestSuite, applyTransformTest)
 	dCopy = applyTransformToDirection(t, dCopy, &eDir2nd);
 	EXPECT_TRUE(eDir2nd.cwiseGreaterOrEqual(eDir).all());
 }
+
+TEST(MathUtilTestSuite, SRGBLinearConversionTest)
+{
+	ColorRGB srgb{0.5f, 0.5f, 0.5f};
+	ColorRGB linear{0.21404f, 0.21404f, 0.21404f};
+	EXPECT_TRUE(fuzzyEqual(linear, SRGBToLinear(srgb), 1e-4f));
+	EXPECT_TRUE(fuzzyEqual(srgb, LinearToSRGB(linear), 1e-4f));
+}

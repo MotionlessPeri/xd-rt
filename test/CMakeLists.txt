@@ -39,6 +39,7 @@ add_executable(xd_rt_test
         TriangleTest.cpp
         VisibilityTest.cpp
         TestScenes.h
+        ImageTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)
