@@ -40,6 +40,7 @@ add_executable(xd_rt_test
         VisibilityTest.cpp
         TestScenes.h
         ImageTest.cpp
+        FilterTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)

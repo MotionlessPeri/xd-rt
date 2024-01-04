@@ -63,6 +63,8 @@ ColorRGBA Image2D::getPixelValue(uint32_t row, uint32_t col) const
 
 uint32_t Image2D::getPixelIndex(uint32_t row, uint32_t col) const
 {
+	if (row >= height || col >= width)
+		assert(false);
 	return row * width + col;
 }
 

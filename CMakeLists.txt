@@ -91,6 +91,12 @@ set(DISTRIBUTION_FILES
         src/distribution/UniformHemisphere.cpp
         src/distribution/UniformHemisphere.h
 )
+set(FILTER_FILES
+        src/filter/TentFilter.cpp
+        src/filter/TentFilter.h
+        src/filter/NearestFilter.cpp
+        src/filter/NearestFilter.h
+)
 set(HITACCEL_FILES
         src/hitAccel/BVHNode.cpp
         src/hitAccel/BVHNode.h
@@ -188,6 +194,7 @@ set(SRC_FILES
         ${CAMERA_FILES}
         ${CORE_FILES}
         ${DISTRIBUTION_FILES}
+        ${FILTER_FILES}
         ${HITACCEL_FILES}
         ${HITSOLVER_FILES}
         ${INTEGRATOR_FILES}
@@ -205,6 +212,7 @@ source_group(bxdf FILES ${BXDF_FILES})
 source_group(camera FILES ${CAMERA_FILES})
 source_group(core FILES ${CORE_FILES})
 source_group(distribution FILES ${DISTRIBUTION_FILES})
+source_group(filter FILES ${FILTER_FILES})
 source_group(hitAccel FILES ${HITACCEL_FILES})
 source_group(hitSolver FILES ${HITSOLVER_FILES})
 source_group(integrator FILES ${INTEGRATOR_FILES})

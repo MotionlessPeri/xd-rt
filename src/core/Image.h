@@ -47,8 +47,11 @@ private:
 
 class Image2D {
 public:
+	friend class Filter2D;
 	Image2D(PixelFormat format, uint32_t width, uint32_t height, std::vector<uint8_t>&& data);
 	ColorRGBA getPixelValue(uint32_t row, uint32_t col) const;
+	uint32_t getWidth() const { return width; }
+	uint32_t getHeight() const { return height; }
 
 private:
 	uint32_t getPixelIndex(uint32_t row, uint32_t col) const;
