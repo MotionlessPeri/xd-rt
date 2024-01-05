@@ -76,6 +76,7 @@ set(CORE_FILES
         src/core/Image.cpp
         src/core/Image.h
         src/core/Filter.h
+        src/core/Mapping.h
 )
 set(DISTRIBUTION_FILES
         src/distribution/CosineHemisphere.cpp
@@ -150,6 +151,12 @@ set(LOADER_FILES
         src/loader/TextureFactory.cpp
         src/loader/TextureFactory.h
 )
+set(MAPPING_FILES
+        src/mapping/UVMapping.cpp
+        src/mapping/UVMapping.h
+        src/mapping/EquirectangularMapping.cpp
+        src/mapping/EquirectangularMapping.h
+)
 set(MATERIAL_FILES
         src/material/MatteMaterial.cpp
         src/material/MatteMaterial.h
@@ -180,6 +187,7 @@ set(TEXTURE_FILES
         src/texture/SphereTexture.h
         src/texture/TextureTypes.h
         src/texture/UVTexture.h
+        src/texture/ImageTexture.h
 )
 set(MISC_FILES
         src/MathUtil.h
@@ -200,6 +208,7 @@ set(SRC_FILES
         ${INTEGRATOR_FILES}
         ${LIGHT_FILES}
         ${LOADER_FILES}
+        ${MAPPING_FILES}
         ${MATERIAL_FILES}
         ${MODEL_FILES}
         ${SAMPLER_FILES}
@@ -218,6 +227,7 @@ source_group(hitSolver FILES ${HITSOLVER_FILES})
 source_group(integrator FILES ${INTEGRATOR_FILES})
 source_group(light FILES ${LIGHT_FILES})
 source_group(loader FILES ${LOADER_FILES})
+source_group(mapping FILES ${MAPPING_FILES})
 source_group(material FILES ${MATERIAL_FILES})
 source_group(model FILES ${MODEL_FILES})
 source_group(sampler FILES ${SAMPLER_FILES})

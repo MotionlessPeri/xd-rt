@@ -41,6 +41,7 @@ add_executable(xd_rt_test
         TestScenes.h
         ImageTest.cpp
         FilterTest.cpp
+        MappingTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)
