@@ -4,14 +4,13 @@
 
 #ifndef XD_RT_NEARESTFILTER_H
 #define XD_RT_NEARESTFILTER_H
-#include "Filter.h"
+#include "ImageFilter2D.h"
 namespace xd {
 
-class NearestFilter : public Filter2D {
+class NearestFilter : public ImageFilter2D {
 public:
-	NearestFilter(WrapMode mode, std::shared_ptr<Image2D> image);
-
-	ColorRGBA filter(const Vector2f& pos) const override;
+	NearestFilter(WrapMode wrap_s, WrapMode wrap_t);
+	ColorRGBA filter(const std::shared_ptr<Image2D>& image, const Vector2f& pos) const override;
 };
 
 }  // namespace xd

@@ -7,11 +7,11 @@
 
 #include <optional>
 
+#include "Contexts.h"
 #include "CoreTypes.h"
 #include "Enums.h"
 #include "Material.h"
 #include "MathTypes.h"
-#include "MathUtil.h"
 #include "Ray.h"
 namespace xd {
 struct ShadingDerivatives {
@@ -53,7 +53,7 @@ public:
 					Vector3f dndv);
 	LocalGeomParams(FrameCategory frame, Vector3f p, Vector2f uv, ShadingDerivatives geom);
 	explicit operator ShadingDerivatives() const;
-
+	explicit operator TextureEvalContext() const;
 	Transform getCurrentFrame() const;
 
 	void setShadingGeometry(ShadingDerivatives geom);

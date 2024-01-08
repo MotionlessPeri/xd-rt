@@ -21,7 +21,7 @@ class PhysicalPlausibleMaterial : public Material {
 public:
 	PhysicalPlausibleMaterial() = default;
 
-	explicit PhysicalPlausibleMaterial(std::shared_ptr<Texture2DRGB> normal);
+	explicit PhysicalPlausibleMaterial(std::shared_ptr<Texture> normal);
 
 	/**
 	 * get bxdf value
@@ -76,7 +76,7 @@ public:
 	virtual ShadingDerivatives getShadingGeometry(const LocalGeomParams& geom);
 
 protected:
-	std::shared_ptr<Texture2DRGB> normal = nullptr;
+	std::shared_ptr<Texture> normal = nullptr;
 };
 }  // namespace xd
 #endif	// XD_RT_MATERIAL_H

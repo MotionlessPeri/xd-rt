@@ -63,6 +63,16 @@ LocalGeomParams::operator ShadingDerivatives() const
 {
 	return derivatives;
 }
+
+LocalGeomParams::operator TextureEvalContext() const
+{
+	TextureEvalContext res;
+	res.p = p;
+	res.uv = uv;
+	res.n = derivatives.n;
+	return res;
+}
+
 Transform LocalGeomParams::getCurrentFrame() const
 {
 	const auto& z = derivatives.n;

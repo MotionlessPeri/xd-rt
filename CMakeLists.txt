@@ -77,6 +77,7 @@ set(CORE_FILES
         src/core/Image.h
         src/core/Filter.h
         src/core/Mapping.h
+        src/core/Contexts.h
 )
 set(DISTRIBUTION_FILES
         src/distribution/CosineHemisphere.cpp
@@ -97,6 +98,8 @@ set(FILTER_FILES
         src/filter/TentFilter.h
         src/filter/NearestFilter.cpp
         src/filter/NearestFilter.h
+        src/filter/FilterTypes.h
+        src/filter/ImageFilter2D.h
 )
 set(HITACCEL_FILES
         src/hitAccel/BVHNode.cpp
@@ -156,6 +159,7 @@ set(MAPPING_FILES
         src/mapping/UVMapping.h
         src/mapping/EquirectangularMapping.cpp
         src/mapping/EquirectangularMapping.h
+        src/mapping/MappingTypes.h
 )
 set(MATERIAL_FILES
         src/material/MatteMaterial.cpp
@@ -184,10 +188,9 @@ set(SAMPLER_FILES
 )
 set(TEXTURE_FILES
         src/texture/ConstantTexture.h
-        src/texture/SphereTexture.h
         src/texture/TextureTypes.h
-        src/texture/UVTexture.h
         src/texture/ImageTexture.h
+        src/texture/ImageTexture.cpp
 )
 set(MISC_FILES
         src/MathUtil.h

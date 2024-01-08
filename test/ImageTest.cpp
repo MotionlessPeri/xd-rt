@@ -2,6 +2,8 @@
 // Created by Frank on 2024/1/3.
 //
 #include <ranges>
+
+#include "Film.h"
 #include "Image.h"
 #include "MathUtil.h"
 #include "gtest/gtest.h"
@@ -34,8 +36,9 @@ TEST(ImageTestSuite, ImageCreateTest)
 	std::vector<uint8_t> floatColorsToChar{floatColorsConvertedRaw,
 										   floatColorsConvertedRaw + compCnt * sizeof(float)};
 
-	const Image2D u8Image{PixelFormat::FORMAT_R8G8B8A8_UNORM, width, height, std::move(u8Colors)};
-	const Image2D floatImage{PixelFormat::FORMAT_R32G32B32A32_SFLOAT, width, height,
+	const Image2D u8Image{PixelFormat::FORMAT_R8G8B8A8_UNORM, width, height, 0u,
+						  std::move(u8Colors)};
+	const Image2D floatImage{PixelFormat::FORMAT_R32G32B32A32_SFLOAT, width, height, 0u,
 							 std::move(floatColorsToChar)};
 	for (const auto i : std::views::iota(0u, width * height)) {
 		const auto row = i / width;
@@ -56,10 +59,40 @@ TEST(ImageTestSuite, ColorSpaceTest)
 	std::vector<uint8_t> pixel1{127, 127, 127};
 	const auto* u8Pixel = reinterpret_cast<const uint8_t*>(pixel0.data());
 	Image2D linearImage{
-		PixelFormat::FORMAT_R32G32B32_SFLOAT, 1, 1, {u8Pixel, u8Pixel + 3 * sizeof(float)}};
-	Image2D srgbImage{PixelFormat::FORMAT_R8G8B8_SRGB, 1, 1, std::move(pixel1)};
+		PixelFormat::FORMAT_R32G32B32_SFLOAT, 1, 1, 0, {u8Pixel, u8Pixel + 3 * sizeof(float)}};
+	Image2D srgbImage{PixelFormat::FORMAT_R8G8B8_SRGB, 1, 1, 0u, std::move(pixel1)};
 	const auto d1 = linearImage.getPixelValue(0, 0);
 	const auto d2 = srgbImage.getPixelValue(0, 0);
 	EXPECT_TRUE(fuzzyEqual(linearImage.getPixelValue(0, 0), linearExpected, 1e-4f));
 	EXPECT_TRUE(fuzzyEqual(srgbImage.getPixelValue(0, 0), srgbExpected, 1e-2f));
+}
+
+TEST(ImageTestSuite, StrideTest)
+{
+	struct Pixel {
+		uint8_t r, g, b;
+		uint8_t padding = 255;
+		operator ColorRGB() const
+		{
+			return Eigen::Vector<uint8_t, 3>{r, g, b}.cast<float>() / 255.f;
+		}
+		operator ColorRGBA() const
+		{
+			return Eigen::Vector<uint8_t, 4>{r, g, b, 255u}.cast<float>() / 255.f;
+		}
+	};
+	std::vector<Pixel> data{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {0, 0, 0}};
+	constexpr uint32_t width = 2u;
+	constexpr uint32_t height = 2u;
+	constexpr uint32_t stride = 4u;
+	const auto* convertedData = reinterpret_cast<const uint8_t*>(data.data());
+	Image2D imageWithPadding{PixelFormat::FORMAT_R8G8B8_UNORM,
+							 width,
+							 height,
+							 stride,
+							 {convertedData, convertedData + width * height * sizeof(Pixel)}};
+	EXPECT_EQ(imageWithPadding.getPixelValue(0, 0), ColorRGBA(data[0]));
+	EXPECT_EQ(imageWithPadding.getPixelValue(0, 1), ColorRGBA(data[1]));
+	EXPECT_EQ(imageWithPadding.getPixelValue(1, 0), ColorRGBA(data[2]));
+	EXPECT_EQ(imageWithPadding.getPixelValue(1, 1), ColorRGBA(data[3]));
 }

@@ -9,9 +9,9 @@ UVMapping::UVMapping(float sx, float sy, float tx, float ty, float r)
 {
 }
 
-Mapping<2, 2>::OutputType UVMapping::map(const InputType& coords) const
+UVMapping::OutputType UVMapping::map(const TextureEvalContext& ctx) const
 {
-	auto res = coords;
+	auto res = ctx.uv;
 	res = Eigen::Rotation2Df{r} * res;
 	res = Eigen::Scaling(sx, sy) * res;
 	res += Vector2f{tx, ty};

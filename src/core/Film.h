@@ -87,6 +87,7 @@ public:
 		return getSampleCoordFromIndex(i);
 	}
 	std::size_t size() const { return tileExtent.x() * tileExtent.y(); }
+	Vector2i getExtent() const { return bottomRight - topLeft; };
 	Vector2i topLeft;
 	Vector2i bottomRight;
 	Vector2i tileExtent;

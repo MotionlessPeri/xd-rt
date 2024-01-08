@@ -168,17 +168,16 @@ TEST(DistribTestSuite, PieceWise2DGenTest)
 }
 
 #include "loader/TextureFactory.h"
-#include "texture/SphereTexture.h"
 TEST(DistribTestSuite, PieceWise2DGenTest2)
 {
-	auto texture = TextureFactory::loadSphereTextureRGB(R"(D:\dome.hdr)");
-	const auto width = texture->getWidth();
-	const auto height = texture->getHeight();
-	const auto& data = texture->getImage();
+	const auto texture = TextureFactory::get().loadSphereTexture(R"(D:\dome.hdr)");
+	const auto image = texture->getImage();
+	const auto width = image->getWidth();
+	const auto height = image->getHeight();
 	const auto pixelCnt = width * height;
 	std::vector<float> weights(pixelCnt, 0.f);
 	for (auto i = 0u; i < pixelCnt; ++i) {
-		weights[i] = rgbToLuminance(data[i]);
+		weights[i] = rgbToLuminance(image->getPixelValue(i).head<3>());
 	}
 	constexpr uint32_t COUNT = 100000u;
 	struct Count {
@@ -215,14 +214,14 @@ TEST(DistribTestSuite, PieceWise2DGenTest2)
 
 TEST(DistribTestSuite, PieceWise2DPdfTest)
 {
-	const auto texture = TextureFactory::loadSphereTextureRGB(R"(D:\dome.hdr)");
-	const auto width = texture->getWidth();
-	const auto height = texture->getHeight();
-	const auto& data = texture->getImage();
+	const auto texture = TextureFactory::get().loadSphereTexture(R"(D:\dome.hdr)");
+	const auto image = texture->getImage();
+	const auto width = image->getWidth();
+	const auto height = image->getHeight();
 	const auto pixelCnt = width * height;
 	std::vector<float> weights(pixelCnt, 0.f);
 	for (auto i = 0u; i < pixelCnt; ++i) {
-		weights[i] = rgbToLuminance(data[i]);
+		weights[i] = rgbToLuminance(image->getPixelValue(i).head<3>());
 	}
 
 	PieceWise2D dis{weights, width, height};

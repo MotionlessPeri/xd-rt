@@ -96,7 +96,7 @@ TEST(PrimitiveTestSuite, InstanceTest1)
 	const auto sphereCount = uint32_t(360.f / rotationAngle);
 	const Vector3f interval{(2 * rightNorm - 2 * radius) / ((float)sphereCount - 1), 0, 0};
 
-	auto diffuse = TextureFactory::loadUVTextureRGB(R"(D:\uv_checker.jpg)");
+	auto diffuse = TextureFactory::get().loadUVTexture(R"(D:\uv_checker.jpg)");
 	auto matte = std::make_shared<MatteMaterial>(diffuse);
 	const auto reflect = std::make_shared<PerfectReflectionMaterial>();
 	for (auto i = 0u; i < sphereCount; ++i, sphereCenter += interval) {
@@ -117,7 +117,7 @@ TEST(PrimitiveTestSuite, InstanceTest1)
 												rightNorm / width * height, width, height);
 	auto film = cam->getFilm();
 
-	constexpr uint32_t SAMPLE_PER_PIXEL = 1u;
+	constexpr uint32_t SAMPLE_PER_PIXEL = 10u;
 	constexpr uint32_t MAX_DEPTH = 8u;
 	auto sampler = std::make_shared<SimpleSampler>(SAMPLE_PER_PIXEL);
 	PathIntegrator integrator{sampler, MAX_DEPTH};
@@ -152,7 +152,7 @@ TEST(PrimitiveTestSuite, InstanceTest2)
 	const float delta = bound.getExtent().x();
 	Vector3f meshCenter{-rightNorm + delta, 0, 0};
 
-	auto diffuse = TextureFactory::loadUVTextureRGB(R"(D:\uv_checker.jpg)");
+	auto diffuse = TextureFactory::get().loadUVTexture(R"(D:\uv_checker.jpg)");
 	auto matte = std::make_shared<MatteMaterial>(diffuse);
 	constexpr float rotationAngle = 30.f;
 	auto yUpToZUp = Eigen::AngleAxis<float>(PI / 2, Vector3f{1, 0, 0});
@@ -204,7 +204,7 @@ TEST(PrimitiveTestSuite, InstanceTest3)
 	SceneBuilder sb;
 	const auto sphere = std::make_shared<Sphere>(radius);
 
-	auto diffuse = TextureFactory::loadUVTextureRGB(R"(D:\uv_checker.jpg)");
+	auto diffuse = TextureFactory::get().loadUVTexture(R"(D:\uv_checker.jpg)");
 	auto matte = std::make_shared<MatteMaterial>(diffuse);
 	auto reflect = std::make_shared<PerfectReflectionMaterial>();
 	Matrix4f rotMat;

@@ -10,7 +10,7 @@ PerfectFresnelMaterial::PerfectFresnelMaterial(float etaOut, float etaIn)
 {
 }
 
-PerfectFresnelMaterial::PerfectFresnelMaterial(std::shared_ptr<Texture2DRGB> normalTexture,
+PerfectFresnelMaterial::PerfectFresnelMaterial(std::shared_ptr<Texture> normalTexture,
 											   float etaOut,
 											   float etaIn)
 	: PhysicalPlausibleMaterial(std::move(normalTexture)),

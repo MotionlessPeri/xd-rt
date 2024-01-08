@@ -10,10 +10,10 @@ namespace xd {
 class MatteMaterial : public PhysicalPlausibleMaterial {
 public:
 	explicit MatteMaterial(const ColorRGB& color);
-	explicit MatteMaterial(std::shared_ptr<Texture2DRGB> colorTexture);
-	MatteMaterial(std::shared_ptr<Texture2DRGB> normalTexture, const ColorRGB& color);
-	MatteMaterial(std::shared_ptr<Texture2DRGB> normalTexture,
-				  std::shared_ptr<Texture2DRGB> colorTexture);
+	explicit MatteMaterial(std::shared_ptr<Texture> colorTexture);
+	MatteMaterial(std::shared_ptr<Texture> normalTexture, const ColorRGB& color);
+	MatteMaterial(std::shared_ptr<Texture> normalTexture,
+				  std::shared_ptr<Texture> colorTexture);
 	ColorRGB getBxDF(const LocalGeomParams& shadingGeom,
 					 const Vector3f& wo,
 					 const Vector3f& wi) const override;
@@ -33,7 +33,7 @@ public:
 	bool isDelta() const override { return false; }
 
 protected:
-	std::shared_ptr<Texture2DRGB> color;
+	std::shared_ptr<Texture> color;
 };
 }  // namespace xd
 #endif	// XD_RT_MATTEMATERIAL_H

@@ -7,7 +7,7 @@
 #include "Mapping.h"
 namespace xd {
 
-class UVMapping : public Mapping<2, 2> {
+class UVMapping : public Mapping2D {
 public:
 	UVMapping() = default;
 	/**
@@ -20,7 +20,7 @@ public:
 	 */
 	UVMapping(float sx, float sy, float tx, float ty, float r);
 
-	OutputType map(const InputType& coords) const override;
+	OutputType map(const TextureEvalContext& ctx) const override;
 
 protected:
 	float sx = 1, sy = 1, tx = 0, ty = 0, r = 0;

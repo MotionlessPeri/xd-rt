@@ -38,9 +38,12 @@ TEST(GLTFSceneLoaderTestSuite, loadTest)
 	auto sampler = std::make_shared<SimpleSampler>(1);
 	const auto scene = builder.build();
 	DebugIntegrator integrator;
-	integrator.setDebugChannel(DebugChannel::BXDF);
+	integrator.setDebugChannel(DebugChannel::SHADING_NORMAL);
 	integrator.setCamera(cam);
 	integrator.render(*scene);
-	const std::string hdrPath = R"(D:\gltf_load_test_debug.hdr)";
-	EXPECT_NO_THROW(film->saveToFile(hdrPath, {}););
+	EXPECT_NO_THROW(film->saveToFile(R"(D:\gltf_load_test_debug_shading_normal.hdr)", {}));
+	film->clear();
+	integrator.setDebugChannel(DebugChannel::GEOM_NORMAL);
+	integrator.render(*scene);
+	EXPECT_NO_THROW(film->saveToFile(R"(D:\gltf_load_test_debug_geom_normal.hdr)", {}));
 }

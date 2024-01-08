@@ -3,15 +3,11 @@
 //
 
 #include "NearestFilter.h"
+using namespace xd;
+NearestFilter::NearestFilter(WrapMode wrap_s, WrapMode wrap_t) : ImageFilter2D(wrap_s, wrap_t) {}
 
-namespace xd {
-NearestFilter::NearestFilter(WrapMode mode, std::shared_ptr<Image2D> image)
-	: Filter2D(mode, std::move(image))
+ColorRGBA NearestFilter::filter(const std::shared_ptr<Image2D>& image, const Vector2f& pos) const
 {
+	const Vector2i intCoords = pos.cwiseProduct(image->getExtent().cast<float>()).cast<int>();
+	return getPixelValue(image, intCoords.y(), intCoords.x());
 }
-ColorRGBA NearestFilter::filter(const Vector2f& pos) const
-{
-	const auto intCoords = pos.cast<uint32_t>();
-	return getPixelValue(intCoords.y(), intCoords.x());
-}
-}  // namespace xd

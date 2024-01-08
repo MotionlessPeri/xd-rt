@@ -5,7 +5,8 @@
 #include "EquirectangularMapping.h"
 #include "MathUtil.h"
 using namespace xd;
-EquirectangularMapping::OutputType EquirectangularMapping::map(const InputType& dir) const
+
+Mapping<2>::OutputType EquirectangularMapping::map(const TextureEvalContext& ctx) const
 {
-	return getSphereUV(dir);
+	return getSphereUV(ctx.p);
 }

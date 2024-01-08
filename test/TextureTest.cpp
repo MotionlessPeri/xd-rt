@@ -1,38 +1,28 @@
 //
 // Created by Frank on 2023/9/2.
 //
+#include "Macros.h"
 #include "gtest/gtest.h"
+#include "loader/TextureFactory.h"
 #include "texture/ConstantTexture.h"
 using namespace xd;
 TEST(TextureTestSuite, ConstantTextureSampleTest)
 {
 	const float fParam = 0.6f;
-	const Vector3f cParam{0.1, 0.7, 0.2};
-	const Vector2f samplePos{0.4, 0.6};
-	auto textureF = std::make_shared<ConstantTexture<float, Vector2f>>(fParam);
-	auto textureC = std::make_shared<ConstantTexture<Vector3f, Vector2f>>(cParam);
-	EXPECT_EQ(textureF->sample(samplePos), fParam);
-	EXPECT_TRUE(cParam.isApprox(textureC->sample(samplePos)));
+	const Vector3f cParam{0.1f, 0.7f, 0.2f};
+	const auto cTextureF = std::make_shared<ConstantTexture>(fParam);
+	const auto cTextureC = std::make_shared<ConstantTexture>(cParam);
+	EXPECT_EQ(cTextureF->sample(TextureEvalContext{}).x(), fParam);
+	EXPECT_EQ(cTextureC->sample(TextureEvalContext{}).head<3>(), cParam);
 }
 
 #include <oneapi/tbb.h>
 #include "HitRecord.h"
 #include "camera/CameraFactory.h"
 #include "stb_image.h"
-#include "texture/SphereTexture.h"
 TEST(TextureTestSuite, SphereTextureTest)
 {
-	int domeWidth, domeHeight, channels;
-	auto* rawData = stbi_loadf(R"(D:\dome.hdr)", &domeWidth, &domeHeight, &channels, 0);
-	std::vector<Vector3f> domeData{};
-	domeData.reserve(domeWidth * domeHeight);
-	for (auto i = 0u; i < domeWidth * domeHeight; ++i) {
-		domeData.emplace_back(rawData[channels * i], rawData[channels * i + 1],
-							  rawData[channels * i + 2]);
-	}
-
-	SphereTexture<Vector3f> texture{domeData, (uint32_t)domeWidth, (uint32_t)domeHeight};
-
+	const auto texture = TextureFactory::get().loadSphereTexture(R"(D:\dome.hdr)");
 	constexpr uint32_t width = 1000u;
 	constexpr uint32_t height = 1000u;
 	const Vector3f right{500, 0, 0};
@@ -45,7 +35,7 @@ TEST(TextureTestSuite, SphereTextureTest)
 	auto cam = CameraFactory::createPerspCamera(camPos, target, up.normalized(), verticalFov,
 												right.norm() / up.norm(), width, height);
 	auto film = cam->getFilm();
-
+	TBB_SERIAL
 	tbb::parallel_for(
 		tbb::blocked_range2d<int, int>(0, height, 0, width),
 		[&](const tbb::blocked_range2d<int, int>& range) {
@@ -56,7 +46,7 @@ TEST(TextureTestSuite, SphereTextureTest)
 				const Vector2f pixelSample = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
 				const auto ray = cam->generateRay(pixelSample);
 				HitRecord rec;
-				tile->addSample(texture.sample(ray.d), pixelSample);
+				tile->addSample(texture->sample(TextureEvalContext{ray.d}).head<3>(), pixelSample);
 			}
 			film->mergeTileToFilm(std::move(tile));
 		});
@@ -65,7 +55,6 @@ TEST(TextureTestSuite, SphereTextureTest)
 }
 
 #include "model/Triangle.h"
-#include "texture/UVTexture.h"
 TEST(TextureTestSuite, UVTextureTest)
 {
 	const float sqrt3 = std::sqrtf(3);
@@ -75,20 +64,10 @@ TEST(TextureTestSuite, UVTextureTest)
 					  {},
 					  {0, 1, 2}};
 
-	int imageWidth, imageHeight, imageChannels;
-	auto* rawData = stbi_load(R"(D:\uv_checker.jpg)", &imageWidth, &imageHeight, &imageChannels, 0);
-	const auto pixelCnt = imageWidth * imageHeight;
-	std::vector<float> imgData;
-	imgData.reserve(pixelCnt);
-	for (auto i = 0u; i < pixelCnt; ++i) {
-		imgData.emplace_back((float)rawData[i * imageChannels] / 255.f);
-		imgData.emplace_back((float)rawData[i * imageChannels + 1] / 255.f);
-		imgData.emplace_back((float)rawData[i * imageChannels + 2] / 255.f);
-	}
-	UVTextureRGB texture{imgData, (uint32_t)imageWidth, (uint32_t)imageHeight};
+	const auto texture = TextureFactory::get().loadUVTexture(R"(D:\uv_checker.jpg)");
 	const Vector3f origin{0, 0, 0};
 	const Vector3f center{0, 0, -1};
-	const Vector3f right{1.25, 0, 0};
+	const Vector3f right{1.25f, 0, 0};
 	const Vector3f up{0, 1, 0};
 	const uint32_t width = 1000u;
 	const uint32_t height = 800u;
@@ -107,11 +86,47 @@ TEST(TextureTestSuite, UVTextureTest)
 				const auto ray = cam->generateRay(pixelSample);
 				HitRecord rec;
 				if (mesh.hit(ray, rec)) {
-					const auto color = texture.sample(rec.geom.uv);
+					const auto color = texture->sample(TextureEvalContext{rec.geom}).head<3>();
 					tile->addSample(color, pixelSample);
 				}
 			}
 			film->mergeTileToFilm(std::move(tile));
 		});
 	film->saveToFile(R"(D:\uv_texture_test.hdr)");
+}
+
+TEST(TextureTestSuite, TentFilterTest)
+{
+	const Vector3f center{0, 0, 0};
+	const Vector3f up{0, 1, 0};
+	const Vector3f right{1, 0, 0};
+
+	LoadTextureOptions options;
+	options.filterType = FilterType::NEAREST;
+	using namespace std::string_literals;
+	const auto imagePath = R"(D:\filter_test_image.png)"s;
+	const auto nearestTexture = TextureFactory::get().loadUVTexture(imagePath, options);
+	options.filterType = FilterType::TENT;
+	const auto tentTexture = TextureFactory::get().loadUVTexture(imagePath, options);
+
+	// magnification
+	{
+		constexpr uint32_t width = 1000u;
+		constexpr uint32_t height = 1000u;
+		Film nearestFilm{center, right, up, width, height};
+		Film tentFilm{center, right, up, width, height};
+		auto nTile = nearestFilm.getTile({0, 0}, {width - 1, height - 1});
+		auto tTile = tentFilm.getTile({0, 0}, {width - 1, height - 1});
+		for (const auto& pixel : *nTile) {
+			const Vector2f pixelCenter = pixel.cast<float>() + Vector2f{0.5f, 0.5f};
+			TextureEvalContext ctx;
+			ctx.uv = pixelCenter.cwiseQuotient(nearestFilm.getResolution().cast<float>());
+			nTile->addSample(nearestTexture->sample(ctx).head<3>(), pixelCenter);
+			tTile->addSample(tentTexture->sample(ctx).head<3>(), pixelCenter);
+		}
+		nearestFilm.mergeTileToFilm(std::move(nTile));
+		tentFilm.mergeTileToFilm(std::move(tTile));
+		nearestFilm.saveToFile(R"(D:\texture_filter_test_nearest.hdr)");
+		tentFilm.saveToFile(R"(D:\texture_filter_test_tent.hdr)");
+	}
 }

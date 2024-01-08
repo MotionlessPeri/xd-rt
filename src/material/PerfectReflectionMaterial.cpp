@@ -10,7 +10,7 @@ PerfectReflectionMaterial::PerfectReflectionMaterial() : brdf(std::make_unique<P
 {
 }
 
-PerfectReflectionMaterial::PerfectReflectionMaterial(std::shared_ptr<Texture2DRGB> normal)
+PerfectReflectionMaterial::PerfectReflectionMaterial(std::shared_ptr<Texture> normal)
 	: PhysicalPlausibleMaterial(std::move(normal)), brdf(std::make_unique<PerfectReflection>())
 {
 }

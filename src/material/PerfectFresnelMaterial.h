@@ -13,7 +13,7 @@ namespace xd {
 class PerfectFresnelMaterial : public PhysicalPlausibleMaterial {
 public:
 	PerfectFresnelMaterial(float etaOut, float etaIn);
-	PerfectFresnelMaterial(std::shared_ptr<Texture2DRGB> normalTexture, float etaOut, float etaIn);
+	PerfectFresnelMaterial(std::shared_ptr<Texture> normalTexture, float etaOut, float etaIn);
 	ColorRGB getBxDF(const LocalGeomParams& shadingGeom,
 					 const Vector3f& wo,
 					 const Vector3f& wi) const override;

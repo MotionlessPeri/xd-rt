@@ -83,13 +83,13 @@ ColorRGB PathIntegrator::Li(const Ray& r, const Scene& scene, Sampler& sampler)
 		beta =
 			beta.cwiseProduct(bxdfVal * std::fabs(newWi.dot(shadingGeom.derivatives.n)) / bsdfPdf);
 		specularBounce = primRec.getPhysicalPlausibleMaterial()->isDelta();
-		// constexpr int minDepth = 3;
-		// if (depth >= minDepth) {
-		//	const auto q = std::max(0.05f, beta.maxCoeff());
-		//	if (sampler.sample1D() < q)
-		//		break;
-		//	beta /= 1 - q;
-		// }
+		constexpr int minDepth = 3;
+		if (depth >= minDepth && !specularBounce) {
+			const auto q = std::max(0.05f, beta.maxCoeff());
+			if (sampler.sample1D() < q)
+				break;
+			beta /= 1 - q;
+		}
 	}
 
 	return Li;

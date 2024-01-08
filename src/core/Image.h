@@ -4,22 +4,10 @@
 
 #ifndef XD_RT_IMAGE_H
 #define XD_RT_IMAGE_H
-#include <MathTypes.h>
-
 #include <vector>
+#include "Enums.h"
+#include "MathTypes.h"
 namespace xd {
-enum class ColorSpace { UNKNOWN, LINEAR, SRGB };
-enum class PixelFormat {
-	FORMAT_UNKNOWN,
-	FORMAT_R8G8B8_UNORM,
-	FORMAT_R8G8B8_SRGB,
-	FORMAT_R8G8B8A8_UNORM,
-	FORMAT_R8G8B8A8_SRGB,
-	FORMAT_R32G32B32_SFLOAT,
-	FORMAT_R32G32B32A32_SFLOAT,
-};
-enum class PixelComponentFormat { UNKONWN, U8, SFLOAT };
-
 inline uint32_t getPixelComponentFormatSize(PixelComponentFormat compFormat)
 {
 	switch (compFormat) {
@@ -47,18 +35,25 @@ private:
 
 class Image2D {
 public:
-	friend class Filter2D;
-	Image2D(PixelFormat format, uint32_t width, uint32_t height, std::vector<uint8_t>&& data);
+	friend class ImageFilter2D;
+	Image2D(PixelFormat format,
+			uint32_t width,
+			uint32_t height,
+			uint32_t stride,
+			std::vector<uint8_t> data);
 	ColorRGBA getPixelValue(uint32_t row, uint32_t col) const;
-	uint32_t getWidth() const { return width; }
-	uint32_t getHeight() const { return height; }
+	ColorRGBA getPixelValue(uint32_t index) const;
+	uint32_t getWidth() const { return extent.x(); }
+	uint32_t getHeight() const { return extent.y(); }
+	Vector2i getExtent() const { return extent; }
 
 private:
 	uint32_t getPixelIndex(uint32_t row, uint32_t col) const;
 	ColorRGBA getPixelValueByIndex(uint32_t index) const;
 	ColorRGBA convertToLinear(const ColorRGBA& color, ColorSpace space) const;
 	PixelFormat format;
-	uint32_t width, height;
+	Vector2i extent;
+	uint32_t stride = 0u;
 	std::vector<uint8_t> data;	// we use vector to handle low-level memory
 };
 

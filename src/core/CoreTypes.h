@@ -14,7 +14,7 @@ class Camera;
 
 class Film;
 
-class Filter;
+class ImageFilter2D;
 
 class HitAccel;
 
@@ -24,13 +24,16 @@ struct LocalGeomParams;
 
 class HitSolver;
 
-class Image;
+class Image2D;
 
 class Integrator;
 
 class Light;
 
 class LightSampler;
+
+template <uint32_t OutputDim>
+class Mapping;
 
 class Material;
 class PhysicalPlausibleMaterial;
@@ -46,8 +49,6 @@ class Sampler;
 class Scene;
 class SceneBuilder;
 
-template <typename ReturnType, typename SampleType>
 class Texture;
-
 }  // namespace xd
 #endif	// XD_RT_CORETYPES_H

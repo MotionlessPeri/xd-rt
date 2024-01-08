@@ -3,24 +3,33 @@
 //
 
 #include "TentFilter.h"
-using namespace xd;
-TentFilter::TentFilter(WrapMode mode, std::shared_ptr<Image2D> image)
-	: Filter2D(mode, std::move(image))
-{
-}
 
-ColorRGBA TentFilter::filter(const Vector2f& pos) const
+#include <iostream>
+using namespace xd;
+TentFilter::TentFilter(WrapMode wrap_s, WrapMode wrap_t) : ImageFilter2D(wrap_s, wrap_t) {}
+
+ColorRGBA TentFilter::filter(const std::shared_ptr<Image2D>& image, const Vector2f& pos) const
 {
-	const auto intCoords = pos.cast<int>();
-	const float dx = pos.x() - intCoords.x() - 0.5f;
-	const float dy = pos.y() - intCoords.y() - 0.5f;
-	const int topLeftX = dx < 0 ? intCoords.x() - 1 : intCoords.x();
-	const int topLeftY = dy < 0 ? intCoords.y() - 1 : intCoords.y();
+	// const auto floatingCoords = pos.cwiseProduct(image->getExtent().cast<float>());
+	const Vector2f floatingCoords = pos.cwiseProduct(image->getExtent().cast<float>());
+	const Vector2i intCoords = floatingCoords.cast<int>();
+	float dx = floatingCoords.x() - intCoords.x() - 0.5f;
+	float dy = floatingCoords.y() - intCoords.y() - 0.5f;
+	int topLeftX = intCoords.x();
+	if (dx < 0) {
+		dx = 1 + dx;
+		topLeftX -= 1;
+	}
+	int topLeftY = intCoords.y();
+	if (dy < 0) {
+		dy = 1 + dy;
+		topLeftY -= 1;
+	}
 	std::array<ColorRGBA, 4> values;
-	values[0] = getPixelValue(topLeftY, topLeftX);
-	values[1] = getPixelValue(topLeftY, topLeftX + 1);
-	values[2] = getPixelValue(topLeftY + 1, topLeftX);
-	values[3] = getPixelValue(topLeftY + 1, topLeftX + 1);
+	values[0] = getPixelValue(image, topLeftY, topLeftX);
+	values[1] = getPixelValue(image, topLeftY, topLeftX + 1);
+	values[2] = getPixelValue(image, topLeftY + 1, topLeftX);
+	values[3] = getPixelValue(image, topLeftY + 1, topLeftX + 1);
 	return (1 - dx) * (1 - dy) * values[0] + dx * (1 - dy) * values[1] + (1 - dx) * dy * values[2] +
 		   dx * dy * values[3];
 }

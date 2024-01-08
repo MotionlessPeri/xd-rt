@@ -9,6 +9,7 @@
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
+#include "integrator/DebugIntegrator.h"
 #include "integrator/DirectIntegrator.h"
 #include "integrator/PathIntegrator.h"
 #include "light/DomeLight.h"
@@ -47,6 +48,7 @@ TEST(IntegratorTestSuite, SamplePerPixelTest)
 	testFunc(std::make_shared<PathIntegrator>(std::make_shared<SimpleSampler>(samplePerPixel), 8));
 	testFunc(std::make_shared<MIDirectIntegrator>(std::make_shared<SimpleSampler>(samplePerPixel)));
 }
+
 TEST(IntegratorTestSuite, AnalyticalSceneTest)
 {
 	const ColorRGB matteColor{1, 0, 0};
@@ -91,14 +93,14 @@ TEST(IntegratorTestSuite, AnalyticalSceneTest)
 		integrator.render(*scene);
 		film->saveToFile(R"(D:\analytical_scene_test_mi_direct.hdr)");
 	}
-	//// path
-	//{
-	//	film->clear();
-	//	PathIntegrator integrator{{false}, sampler, 1};
-	//	integrator.setCamera(cam);
-	//	integrator.render(*scene);
-	//	film->saveToFile(R"(D:\analytical_scene_test_path.hdr)");
-	//}
+	// path
+	{
+		film->clear();
+		PathIntegrator integrator{{false}, sampler, 8};
+		integrator.setCamera(cam);
+		integrator.render(*scene);
+		film->saveToFile(R"(D:\analytical_scene_test_path.hdr)");
+	}
 }
 
 TEST(IntegratorTestSuite, ImageDomeTest)
@@ -148,7 +150,10 @@ TEST(IntegratorTestSuite, ImageDomeTest)
 
 TEST(IntegratorTestSuite, ImageMaterialTest)
 {
-	const auto image = TextureFactory::loadUVTextureRGB(R"(D:\uv_checker.jpg)");
+	// const auto image = TextureFactoryNew::get().loadUVTexture(R"(D:\uv_checker.jpg)");
+	LoadTextureOptions options;
+	options.filterType = FilterType::NEAREST;
+	const auto image = TextureFactory::get().loadUVTexture(R"(D:\uv_checker.jpg)", options);
 	const auto matte = std::make_shared<MatteMaterial>(image);
 	const auto sphere = std::make_shared<Sphere>(1.f);
 	const auto prim = std::make_shared<Primitive>(sphere, matte);
@@ -173,15 +178,17 @@ TEST(IntegratorTestSuite, ImageMaterialTest)
 												camVerticalFov, 1, width, height);
 	const auto film = cam->getFilm();
 
-	const auto sampler = std::make_shared<SimpleSampler>(20);
+	const auto sampler = std::make_shared<SimpleSampler>(10);
 	// direct
 	{
 		// TBB_SERIAL
 		film->clear();
 		MIDirectIntegrator integrator{sampler};
+		// DebugIntegrator integrator;
+		// integrator.setDebugChannel(DebugChannel::BXDF);
 		integrator.setCamera(cam);
 		integrator.render(*scene);
-		film->saveToFile(R"(D:\image_mtl_scene_test.hdr)");
+		film->saveToFile(R"(D:\image_mtl_scene_test_nearest.hdr)");
 	}
 }
 

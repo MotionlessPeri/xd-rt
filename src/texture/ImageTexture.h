@@ -4,13 +4,28 @@
 
 #ifndef XD_RT_IMAGETEXTURE_H
 #define XD_RT_IMAGETEXTURE_H
-#include "Image.h"
+#include "CoreTypes.h"
+#include "Mapping.h"
 #include "Texture.h"
-namespace xd {
-template <typename ReturnType, typename SampleType>
-class ImageTexture : public Texture<ReturnType, SampleType> {};
+#include "filter/FilterTypes.h"
+#include "filter/ImageFilter2D.h"
 
-template <typename ReturnType>
-class ImageTexture2D : public ImageTexture<ReturnType, Vector2f> {};
+namespace xd {
+class ImageTexture : public Texture {
+public:
+	ImageTexture(std::shared_ptr<Image2D> image,
+				 std::shared_ptr<ImageFilter2D> filter,
+				 std::shared_ptr<Mapping2D> mapping);
+
+	ColorRGBA sample(const TextureEvalContext& ctx) const override;
+	[[nodiscard]] std::shared_ptr<Image2D> getImage() const { return image; }
+	[[nodiscard]] std::shared_ptr<ImageFilter2D> getFilter() const { return filter; }
+	[[nodiscard]] std::shared_ptr<Mapping2D> getMapping() const { return mapping; }
+
+private:
+	std::shared_ptr<Image2D> image;
+	std::shared_ptr<ImageFilter2D> filter;
+	std::shared_ptr<Mapping2D> mapping;
+};
 }  // namespace xd
 #endif	// XD_RT_IMAGETEXTURE_H

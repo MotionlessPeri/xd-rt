@@ -27,7 +27,7 @@ public:
 		const Vector2f& uSample,
 		const LocalGeomParams& shadingGeom) const override;
 	bool isInfinite() const override;
-	std::shared_ptr<Texture3D<ColorRGB>> dome;
+	std::shared_ptr<Texture> dome;
 	std::unique_ptr<PieceWise2D> dis;
 
 protected:

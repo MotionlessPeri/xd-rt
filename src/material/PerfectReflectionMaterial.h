@@ -11,7 +11,7 @@ namespace xd {
 class PerfectReflectionMaterial : public PhysicalPlausibleMaterial {
 public:
 	PerfectReflectionMaterial();
-	explicit PerfectReflectionMaterial(std::shared_ptr<Texture2DRGB> normal);
+	explicit PerfectReflectionMaterial(std::shared_ptr<Texture> normal);
 
 	ColorRGB getBxDF(const LocalGeomParams& shadingGeom,
 					 const Vector3f& wo,

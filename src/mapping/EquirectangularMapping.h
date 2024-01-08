@@ -7,15 +7,14 @@
 #include "Mapping.h"
 namespace xd {
 
-class EquirectangularMapping : public Mapping<3, 2> {
+class EquirectangularMapping : public Mapping2D {
 public:
 	/**
 	 * \brief mapping a spherical direction to an (s, t) representation
-	 * \param dir the coords of input point. Note that the coords must be normed(a direction on
-	 * S2)
+	 * \param ctx a texture evaluate context that holds all information to sample a texture value
 	 * \return the mapped coords
 	 */
-	OutputType map(const InputType& dir) const override;
+	OutputType map(const TextureEvalContext& ctx) const override;
 };
 
 }  // namespace xd

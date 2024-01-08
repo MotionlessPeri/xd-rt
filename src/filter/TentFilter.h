@@ -4,14 +4,13 @@
 
 #ifndef XD_RT_TENTFILTER_H
 #define XD_RT_TENTFILTER_H
-#include "Filter.h"
+#include "ImageFilter2D.h"
 namespace xd {
 
-class TentFilter : public Filter2D {
+class TentFilter : public ImageFilter2D {
 public:
-	TentFilter(WrapMode mode, std::shared_ptr<Image2D> image);
-
-	ColorRGBA filter(const Vector2f& pos) const override;
+	TentFilter(WrapMode wrap_s, WrapMode wrap_t);
+	ColorRGBA filter(const std::shared_ptr<Image2D>& image, const Vector2f& pos) const override;
 };
 
 }  // namespace xd

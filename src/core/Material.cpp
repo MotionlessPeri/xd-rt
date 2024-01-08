@@ -6,7 +6,7 @@
 #include "Texture.h"
 using namespace xd;
 
-PhysicalPlausibleMaterial::PhysicalPlausibleMaterial(std::shared_ptr<Texture2DRGB> normal)
+PhysicalPlausibleMaterial::PhysicalPlausibleMaterial(std::shared_ptr<Texture> normal)
 	: normal(std::move(normal))
 {
 }
@@ -16,7 +16,7 @@ ShadingDerivatives PhysicalPlausibleMaterial::getShadingGeometry(const LocalGeom
 	if (!normal)
 		return static_cast<ShadingDerivatives>(geom);
 	const auto toGeomFrame = geom.getCurrentFrame();
-	const auto n = 2 * normal->sample(geom.uv) - Vector3f{1, 1, 1};
+	const auto n = 2 * normal->sample(TextureEvalContext(geom)).head<3>() - Vector3f{1, 1, 1};
 	ShadingDerivatives shading;
 	const auto& geomDpdu = geom.derivatives.dpdu;
 	const auto& geomDpdv = geom.derivatives.dpdv;

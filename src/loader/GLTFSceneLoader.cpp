@@ -2,236 +2,24 @@
 // Created by Frank on 2023/10/1.
 //
 #include "GLTFSceneLoader.h"
-#include "texture/UVTexture.h"
-using namespace xd;
-
-std::shared_ptr<UVTextureF> GLTFTextureLoader::loadTexture2DF(const tinygltf::Texture& texture,
-															  const tinygltf::Image& image)
-{
-	// Note: for now, tinygltf only support 8bit and 16bit unsigned int file, so we don't need to
-	// consider floating type image(exr, hdr, etc) for now Note: the current implmentation of
-	// tinygltf cast 16 bit unsigned into 8-bit containers
-	assert(image.component == 1);
-	return std::make_shared<UVTextureF>(getImageData(texture, image), (uint32_t)image.width,
-										(uint32_t)image.height);
-}
-std::shared_ptr<UVTextureF> GLTFTextureLoader::loadTexture2DF(const tinygltf::Texture& texture,
-															  const tinygltf::Image& image,
-															  const tinygltf::BufferView& view,
-															  const tinygltf::Buffer& buffer)
-{
-	// TODO: implement me
-	assert(false);
-	return nullptr;
-}
-std::shared_ptr<UVTextureRGB> GLTFTextureLoader::loadTexture2DRGB(const tinygltf::Texture& texture,
-																  const tinygltf::Image& image)
-{
-	// Note: for now, tinygltf only support 8bit and 16bit unsigned int file, so we don't need to
-	// consider floating type image(exr, hdr, etc) for now
-	// Note: the current implmentation of
-	// tinygltf cast 16 bit unsigned into 8-bit containers
-	assert(image.component == 3);
-	return std::make_shared<UVTextureRGB>(getImageData(texture, image), (uint32_t)image.width,
-										  (uint32_t)image.height);
-}
-std::shared_ptr<UVTextureRGB> GLTFTextureLoader::loadTexture2DRGB(const tinygltf::Texture& texture,
-																  const tinygltf::Image& image,
-																  const tinygltf::BufferView& view,
-																  const tinygltf::Buffer& buffer)
-{
-	// TODO: implement me
-	assert(false);
-	return nullptr;
-}
-std::shared_ptr<UVTextureRGBA> GLTFTextureLoader::loadTexture2DRGBA(
-	const tinygltf::Texture& texture,
-	const tinygltf::Image& image)
-{
-	assert(image.component == 4);
-	return std::make_shared<UVTextureRGBA>(getImageData(texture, image), (uint32_t)image.width,
-										   (uint32_t)image.height);
-}
-std::shared_ptr<UVTextureRGBA> GLTFTextureLoader::loadTexture2DRGBA(
-	const tinygltf::Texture& texture,
-	const tinygltf::Image& image,
-	const tinygltf::BufferView& view,
-	const tinygltf::Buffer& buffer)
-{
-	// TODO: implement me
-	assert(false);
-	return std::shared_ptr<UVTextureRGBA>();
-}
-
-GLTFTextureLoader::RGBALoadSplitRes GLTFTextureLoader::loadTexture2DRGBASplit(
-	const tinygltf::Texture& texture,
-	const tinygltf::Image& image)
-{
-	auto splitRes = splitRGBAImage(texture, image);
-	return {
-		std::make_shared<UVTextureRGB>(splitRes.rgb, (uint32_t)image.width, (uint32_t)image.height),
-		std::make_shared<UVTextureF>(splitRes.alpha, (uint32_t)image.width,
-									 (uint32_t)image.height)};
-}
-GLTFTextureLoader::RGBALoadSplitRes GLTFTextureLoader::loadTexture2DRGBASplit(
-	const tinygltf::Texture& texture,
-	const tinygltf::Image& image,
-	const tinygltf::BufferView& view,
-	const tinygltf::Buffer& buffer)
-{
-	return GLTFTextureLoader::RGBALoadSplitRes();
-}
-std::vector<float> GLTFTextureLoader::getImageData(const tinygltf::Texture& texture,
-												   const tinygltf::Image& image)
-{
-	std::vector<float> container;
-	const auto containerSize = image.width * image.height * image.component;
-	container.reserve(containerSize);
-	switch (image.bits) {
-		case 8: {
-			for (const auto ch : image.image) {
-				container.emplace_back((float)ch / 255.f);
-			}
-			break;
-		}
-		case 16: {
-			const auto* ptr = reinterpret_cast<const uint16_t*>(image.image.data());
-			for (auto i = 0u; i < containerSize; ++i) {
-				container.emplace_back((float)ptr[i] / 65535.f);
-			}
-			break;
-		}
-		default: {
-			throw std::runtime_error{"Unsupported image bits\n"};
-		}
-	}
-	return container;
-}
-GLTFTextureLoader::RGBATextureSplitRes GLTFTextureLoader::splitRGBAImage(
-	const tinygltf::Texture& texture,
-	const tinygltf::Image& image)
-{
-	RGBATextureSplitRes res;
-	const auto pixelSize = image.width * image.height;
-	res.rgb.reserve(pixelSize * 3);
-	res.alpha.reserve(pixelSize);
-	switch (image.bits) {
-		case 8: {
-			constexpr float norm = 1.f / 255.f;
-			for (auto pixelIdx = 0; pixelIdx < pixelSize; ++pixelIdx) {
-				res.rgb.emplace_back((float)image.image[4 * pixelIdx] * norm);
-				res.rgb.emplace_back((float)image.image[4 * pixelIdx + 1] * norm);
-				res.rgb.emplace_back((float)image.image[4 * pixelIdx + 2] * norm);
-				res.alpha.emplace_back((float)image.image[4 * pixelIdx + 3] * norm);
-			}
-			break;
-		}
-		case 16: {
-			constexpr float norm = 1.f / 65535.f;
-			const auto* ptr = reinterpret_cast<const uint16_t*>(image.image.data());
-			for (auto pixelIdx = 0; pixelIdx < pixelSize; ++pixelIdx) {
-				res.rgb.emplace_back((float)ptr[4 * pixelIdx] * norm);
-				res.rgb.emplace_back((float)ptr[4 * pixelIdx + 1] * norm);
-				res.rgb.emplace_back((float)ptr[4 * pixelIdx + 2] * norm);
-				res.alpha.emplace_back((float)ptr[4 * pixelIdx + 3] * norm);
-			}
-			break;
-		}
-		default: {
-			throw std::runtime_error{"Unsupported image bits\n"};
-		}
-	}
-	return res;
-}
-
-#include "material/MatteMaterial.h"
-GLTFMaterialLoader::GLTFMaterialLoader(
-	std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>> floatTextures,
-	std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>> rgbTextures,
-	std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>> rgbaTextures)
-	: floatTextures(std::move(floatTextures)), rgbTextures(std::move(rgbTextures)), rgbaTextures(
-		  std::move(rgbaTextures))
-{
-}
-std::shared_ptr<Material> GLTFMaterialLoader::loadMaterial(const tinygltf::Material& material)
-{
-	// TODO: we create matte material for all. Fix me as soon as pbr material is implemented
-	const auto& pbr = material.pbrMetallicRoughness;
-	const auto textureIndex = material.pbrMetallicRoughness.baseColorTexture.index;
-	std::shared_ptr<Material> ret = nullptr;
-	if (textureIndex == -1) {
-		ret = std::make_shared<MatteMaterial>(Vector3f{(float)pbr.baseColorFactor[0],
-													   (float)pbr.baseColorFactor[1],
-													   (float)pbr.baseColorFactor[2]});
-	}
-	else {
-		auto texture = (*rgbTextures)[textureIndex];
-		ret = std::make_shared<MatteMaterial>(texture);
-	}
-	return ret;
-}
-
 #include "GLTFMeshLoader.h"
 #include "Primitive.h"
 #include "Scene.h"
 #include "SceneBuilder.h"
+#include "filter/NearestFilter.h"
+#include "filter/TentFilter.h"
+#include "mapping/UVMapping.h"
+#include "material/MatteMaterial.h"
 #include "model/Triangle.h"
+#include "texture/ImageTexture.h"
+using namespace xd;
+
 std::shared_ptr<Scene> GLTFSceneLoader::load(const std::string& path,
 											 const LoadSceneOptions& options)
 {
 	SceneBuilder builder;
 	loadToSceneBuilder(path, options, builder);
 	return builder.build();
-}
-
-void GLTFSceneLoader::loadTextures(
-	const tinygltf::Model& gltfModel,
-	std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>& RGBTextures,
-	std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>& RGBATextures,
-	std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>>& floatTextures) const
-{
-	GLTFTextureLoader textureLoader;
-
-	for (int i = 0; i < gltfModel.textures.size(); ++i) {
-		const auto& gltfTexture = gltfModel.textures[i];
-		const auto& image = gltfModel.images[gltfTexture.source];
-		switch (image.component) {
-			case 1: {
-				const auto texture = textureLoader.loadTexture2DF(gltfTexture, image);
-				floatTextures->insert({i, texture});
-				break;
-			}
-			case 3: {
-				const auto texture = textureLoader.loadTexture2DRGB(gltfTexture, image);
-				RGBTextures->insert({i, texture});
-				break;
-			}
-			case 4: {
-				const auto textures = textureLoader.loadTexture2DRGBASplit(gltfTexture, image);
-				floatTextures->insert({i, textures.alpha});
-				RGBTextures->insert({i, textures.rgb});
-				break;
-			}
-			default: {
-				throw std::runtime_error{"Unsupported image component!\n"};
-			}
-		}
-	}
-}
-
-std::vector<std::shared_ptr<Material>> GLTFSceneLoader::loadMaterials(
-	tinygltf::Model& gltfModel,
-	const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>& RGBTextures,
-	const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>& RGBATextures,
-	const std::shared_ptr<std::unordered_map<int, std::shared_ptr<Texture2DF>>>& floatTextures)
-	const
-{
-	GLTFMaterialLoader materialLoader{floatTextures, RGBTextures, RGBATextures};
-	std::vector<std::shared_ptr<Material>> materials;
-	for (const auto& material : gltfModel.materials) {
-		materials.emplace_back(materialLoader.loadMaterial(material));
-	}
-	return materials;
 }
 
 SceneBuilder GLTFSceneLoader::loadNodes(const tinygltf::Model& gltfModel,
@@ -323,6 +111,7 @@ SceneBuilder GLTFSceneLoader::loadNodes(const tinygltf::Model& gltfModel,
 	// TODO: handle lights
 	return sceneBuilder;
 }
+
 void GLTFSceneLoader::loadToSceneBuilder(const std::string& path,
 										 const LoadSceneOptions& options,
 										 SceneBuilder& sceneBuilder) const
@@ -336,12 +125,124 @@ void GLTFSceneLoader::loadToSceneBuilder(const std::string& path,
 	if (!ret) {
 		throw std::runtime_error{"Load gltf failed!\n"};
 	}
-	auto RGBTextures = std::make_shared<std::unordered_map<int, std::shared_ptr<Texture2DRGB>>>();
-	auto RGBATextures = std::make_shared<std::unordered_map<int, std::shared_ptr<Texture2DRGBA>>>();
-	auto floatTextures = std::make_shared<std::unordered_map<int, std::shared_ptr<Texture2DF>>>();
-	loadTextures(gltfModel, RGBTextures, RGBATextures, floatTextures);
 
-	auto materials = loadMaterials(gltfModel, RGBTextures, RGBATextures, floatTextures);
+	auto materials = loadMaterials(gltfModel);
 
 	loadNodes(gltfModel, materials, sceneBuilder);
+}
+
+std::vector<std::shared_ptr<Material>> GLTFSceneLoader::loadMaterials(
+	tinygltf::Model& gltfModel) const
+{
+	std::vector<std::shared_ptr<Material>> materials;
+	for (const auto& gltfMtl : gltfModel.materials) {
+		// TODO: maybe image should be separated with underlying
+		const std::shared_ptr<Texture> normal =
+			gltfMtl.normalTexture.index == -1
+				? nullptr
+				: loadImageTexture(gltfModel, gltfModel.textures[gltfMtl.normalTexture.index],
+								   false);
+		const auto& pbr = gltfMtl.pbrMetallicRoughness;
+		const auto baseColorTexture =
+			loadTextureTemplate(gltfModel, gltfMtl.pbrMetallicRoughness.baseColorTexture.index,
+								Vector3f{static_cast<float>(pbr.baseColorFactor[0]),
+										 static_cast<float>(pbr.baseColorFactor[1]),
+										 static_cast<float>(pbr.baseColorFactor[2])},
+								true);
+		materials.emplace_back(std::make_shared<MatteMaterial>(normal, baseColorTexture));
+	}
+	return materials;
+}
+
+std::shared_ptr<ImageFilter2D> GLTFSceneLoader::buildFilter(
+	const tinygltf::Sampler& gltfSampler) const
+{
+	// TODO: because we have not implement mip-map yet, build the filter with respect to magFilter
+	const auto tinyGltfWrapToWrapEnum = [](int wrap) -> WrapMode {
+		switch (wrap) {
+			case TINYGLTF_TEXTURE_WRAP_REPEAT:
+				return WrapMode::REPEAT;
+			case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE:
+				return WrapMode::CLAMP;
+			default:
+				return WrapMode::UNKNOWN;
+		}
+	};
+	switch (gltfSampler.magFilter) {
+		case TINYGLTF_TEXTURE_FILTER_NEAREST: {
+			const auto wrapS = tinyGltfWrapToWrapEnum(gltfSampler.wrapS);
+			const auto wrapT = tinyGltfWrapToWrapEnum(gltfSampler.wrapT);
+			return std::make_shared<NearestFilter>(wrapS, wrapT);
+		}
+		case TINYGLTF_TEXTURE_FILTER_LINEAR: {
+			const auto wrapS = tinyGltfWrapToWrapEnum(gltfSampler.wrapS);
+			const auto wrapT = tinyGltfWrapToWrapEnum(gltfSampler.wrapT);
+			return std::make_shared<TentFilter>(wrapS, wrapT);
+		}
+		default: {
+			return nullptr;
+		}
+	}
+}
+
+std::shared_ptr<Mapping2D> GLTFSceneLoader::buildMapping() const
+{
+	static const auto uvMapping = std::make_shared<UVMapping>();
+	return uvMapping;
+}
+
+std::shared_ptr<Image2D> GLTFSceneLoader::buildImage(const tinygltf::Model& gltfModel,
+													 const tinygltf::Image& gltfImage,
+													 bool isSrgb) const
+{
+	std::vector<uint8_t> data;
+	uint32_t stride = 0u;
+	if (gltfImage.bufferView == -1) {
+		assert(!gltfImage.uri.empty());
+		// change gltfImage to non-const ref and move to data if necessary
+		data = gltfImage.image;
+		stride = 0u;
+	}
+	else {
+		const auto& bufferView = gltfModel.bufferViews[gltfImage.bufferView];
+		const auto& buffer = gltfModel.buffers[bufferView.buffer];
+		if (gltfImage.as_is) {
+			// TODO: image stored in buffer as file format, need to resolve it
+			assert(false);
+			return nullptr;
+		}
+		data = {buffer.data.data(), buffer.data.data() + bufferView.byteLength};
+		stride = static_cast<uint32_t>(bufferView.byteStride);
+	}
+
+	const auto pixelFormat = getPixelFormat(gltfImage, isSrgb);
+	return std::make_shared<Image2D>(pixelFormat, static_cast<uint32_t>(gltfImage.width),
+									 static_cast<uint32_t>(gltfImage.height), stride,
+									 std::move(data));
+}
+
+PixelFormat GLTFSceneLoader::getPixelFormat(const tinygltf::Image& image, bool isSrgb) const
+{
+	switch (image.pixel_type) {
+		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+			if (image.component == 3)
+				return isSrgb ? PixelFormat::FORMAT_R8G8B8_SRGB : PixelFormat::FORMAT_R8G8B8_UNORM;
+			if (image.component == 4)
+				return isSrgb ? PixelFormat::FORMAT_R8G8B8A8_SRGB
+							  : PixelFormat::FORMAT_R8G8B8A8_UNORM;
+			return PixelFormat::FORMAT_UNKNOWN;
+		}
+		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+			return PixelFormat::FORMAT_UNKNOWN;
+		}
+		case TINYGLTF_COMPONENT_TYPE_FLOAT: {
+			if (image.component == 3)
+				return PixelFormat::FORMAT_R32G32B32_SFLOAT;
+			if (image.component == 4)
+				return PixelFormat::FORMAT_R32G32B32A32_SFLOAT;
+			return PixelFormat::FORMAT_UNKNOWN;
+		}
+		default:
+			return PixelFormat::FORMAT_UNKNOWN;
+	}
 }

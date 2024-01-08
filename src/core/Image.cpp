@@ -52,20 +52,29 @@ PixelFormatInfo PixelFormatHelper::get(PixelFormat format)
 	return findIt->second;
 }
 
-Image2D::Image2D(PixelFormat format, uint32_t width, uint32_t height, std::vector<uint8_t>&& data)
-	: format(format), width(width), height(height), data(data)
+Image2D::Image2D(PixelFormat format,
+				 uint32_t width,
+				 uint32_t height,
+				 uint32_t stride,
+				 std::vector<uint8_t> data)
+	: format(format), extent(width, height), stride(stride), data(std::move(data))
 {
 }
 ColorRGBA Image2D::getPixelValue(uint32_t row, uint32_t col) const
 {
-	return getPixelValueByIndex(getPixelIndex(row, col));
+	return getPixelValue(getPixelIndex(row, col));
+}
+
+ColorRGBA Image2D::getPixelValue(uint32_t index) const
+{
+	return getPixelValueByIndex(index);
 }
 
 uint32_t Image2D::getPixelIndex(uint32_t row, uint32_t col) const
 {
-	if (row >= height || col >= width)
+	if (row >= extent.y() || col >= extent.x())
 		assert(false);
-	return row * width + col;
+	return row * extent.x() + col;
 }
 
 template <typename CompType>
@@ -87,8 +96,7 @@ template <typename CompType>
 ColorRGBA getPixelColor(const uint8_t* ptr, uint32_t compCnt)
 {
 	const auto* convertedPtr = reinterpret_cast<const CompType*>(ptr);
-	ColorRGBA res;
-	res.w() = 1.f;
+	ColorRGBA res{0, 0, 0, 1};
 	for (auto i : std::views::iota(0u, compCnt)) {
 		res[i] = normalize(convertedPtr[i]);
 	}
@@ -99,7 +107,7 @@ ColorRGBA Image2D::getPixelValueByIndex(uint32_t index) const
 	const auto pixelFormatInfo = PixelFormatHelper::get(format);
 	const auto pixelLength = pixelFormatInfo.componentCount *
 							 getPixelComponentFormatSize(pixelFormatInfo.componentFormat);
-	const auto* ptr = data.data() + index * pixelLength;
+	const auto* ptr = data.data() + index * (stride == 0u ? pixelLength : stride);
 	switch (pixelFormatInfo.componentFormat) {
 		case PixelComponentFormat::U8:
 			return convertToLinear(getPixelColor<uint8_t>(ptr, pixelFormatInfo.componentCount),

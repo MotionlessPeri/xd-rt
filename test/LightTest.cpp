@@ -186,7 +186,7 @@ TEST(LightTestSuite, DomeLightTest)
 TEST(LightTestSuite, DomeLightPdfTest)
 {
 	const auto domeLight = std::make_shared<DomeLight>(R"(D:\dome.hdr)");
-	const auto texture = std::dynamic_pointer_cast<SphereTextureRGB>(domeLight->dome);
+	const auto texture = domeLight->dome;
 	EXPECT_TRUE(texture);
 	const auto& dis = domeLight->dis;
 	const uint32_t width = dis->getWidth();

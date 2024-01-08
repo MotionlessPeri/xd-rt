@@ -5,13 +5,11 @@
 #include <oneapi/tbb.h>
 #include <thread>
 #include "Film.h"
-#include "Macros.h"
 #include "Primitive.h"
 #include "Scene.h"
 #include "SceneBuilder.h"
 #include "camera/CameraFactory.h"
 #include "gtest/gtest.h"
-#include "integrator/DebugIntegrator.h"
 #include "integrator/PathIntegrator.h"
 #include "light/PointLight.h"
 #include "loader/TextureFactory.h"
@@ -146,7 +144,7 @@ TEST(MaterialTestSuite, LambertianWithImageTest)
 	const float radius = 1.f;
 	SceneBuilder sceneBuilder;
 	auto sphere = std::make_shared<Sphere>(radius);
-	auto diffuse = TextureFactory::loadUVTextureRGB(R"(D:\uv_checker.jpg)");
+	auto diffuse = TextureFactory::get().loadUVTexture(R"(D:\uv_checker.jpg)");
 	auto matte = std::make_shared<MatteMaterial>(diffuse);
 	auto spec = std::make_shared<PerfectReflectionMaterial>();
 	auto primitive = std::make_shared<Primitive>(sphere, matte);
@@ -214,10 +212,10 @@ TEST(MaterialTestSuite, PerfectTransmissionBasicTest)
 	HitRecord rec{};
 	EXPECT_TRUE(primitive->hit(ray, rec));
 	const auto btdfDirPdf = rec.sampleBxDFPdf({0, 0}, -ray.d);
-	EXPECT_TRUE(btdfDirPdf.bxdf.isApprox(Vector3f(1, 1, 1) * (etaIn * etaIn) / (etaOut * etaOut) /
+	EXPECT_TRUE(btdfDirPdf.bxdf.isApprox(ColorRGB(1, 1, 1) * (etaOut * etaOut) / (etaIn * etaIn) /
 										 std::fabs(btdfDirPdf.dir.dot(rec.geom.derivatives.n))));
 	EXPECT_EQ(btdfDirPdf.pdf, 1.f);
-	EXPECT_TRUE(btdfDirPdf.dir.isApprox(Vector3f{-1, 0, 0}));
+	EXPECT_TRUE(btdfDirPdf.dir.isApprox(ColorRGB{-1, 0, 0}));
 }
 
 TEST(MaterialTestSuite, PerfectTransmissionSceneTest)
@@ -519,7 +517,9 @@ TEST(MaterialTestSuite, PerfectFresnelSceneTest3)
 #include "TestScenes.h"
 TEST(MaterialTestSuite, NormalMapTest)
 {
-	const auto normalTexture = TextureFactory::loadUVTextureRGB(R"(D:\normal_map.png)");
+	LoadTextureOptions options;
+	options.filterType = FilterType::TENT;
+	const auto normalTexture = TextureFactory::get().loadUVTexture(R"(D:\normal_map.png)", options);
 	// std::shared_ptr<UVTextureRGB> normalTexture = nullptr;
 	const auto matte = std::make_shared<MatteMaterial>(normalTexture, ColorRGB{0.8f, 0.8f, 0.8f});
 	const auto reflect = std::make_shared<PerfectReflectionMaterial>(normalTexture);
@@ -540,8 +540,8 @@ TEST(MaterialTestSuite, NormalMapTest)
 		const auto film = sceneAndCam.cam->getFilm();
 		EXPECT_NO_THROW(film->saveToFile(R"(D:\normal_map_test_)"s + suffix + ".hdr"));
 	};
-	render(matte, "matte", 20);
-	render(reflect, "reflect", 1);
-	render(transmission, "transmission", 1);
-	render(fresnel, "fresnel", 100);
+	// render(matte, "matte", 20);
+	render(reflect, "reflect", 10);
+	// render(transmission, "transmission", 1);
+	// render(fresnel, "fresnel", 100);
 }
