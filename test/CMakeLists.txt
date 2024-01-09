@@ -8,14 +8,40 @@ find_package(TBB REQUIRED)
 include_directories(${TBB_INCLUDE_DIRS})
 find_package(embree 4 REQUIRED)
 include_directories(${EMBREE_INCLUDE_DIRS})
+find_package(Vulkan REQUIRED)
+include_directories(${Vulkan_INCLUDE_DIRS})
+set(GLFW_ROOT_DIR external/glfw3)
+find_package(GLFW REQUIRED)
+message("glfw lib dir: ${GLFW_LIB_DIR}")
 
 set(NON_BUILD_FILES
         ../.clang-format
         ../eigen.natvis
-
 )
+
+file(GLOB IMGUI_HEADERS ../3rdparty/imgui/*.h)
+file(GLOB IMGUI_SOURCES ../3rdparty/imgui/*.cpp)
+
+set(IMGUI_FILES ${IMGUI_HEADERS} ${IMGUI_SOURCES})
+
+
+include_directories(../3rdparty/imgui/)
+include_directories(../3rdparty/imgui/backends/)
+if (USE_VULKAN)
+    set(IMGUI_FILES
+            ${IMGUI_FILES}
+            ../3rdparty/imgui/backends/imgui_impl_vulkan.h
+            ../3rdparty/imgui/backends/imgui_impl_vulkan.cpp
+            ../3rdparty/imgui/backends/imgui_impl_glfw.h
+            ../3rdparty/imgui/backends/imgui_impl_glfw.cpp
+    )
+endif ()
+
+source_group(imgui FILES ${IMGUI_FILES})
+
 add_executable(xd_rt_test
         ${NON_BUILD_FILES}
+        ${IMGUI_FILES}
         AABBTest.cpp
         BxDFTest.cpp
         CameraTest.cpp
@@ -42,6 +68,7 @@ add_executable(xd_rt_test
         ImageTest.cpp
         FilterTest.cpp
         MappingTest.cpp
+        ImguiIntegrationTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)
@@ -59,5 +86,11 @@ add_custom_command(TARGET xd_rt_test
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${EMBREE_ROOT_DIR}/bin"
+        $<TARGET_FILE_DIR:xd_rt_test>
+)
+add_custom_command(TARGET xd_rt_test
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        "${GLFW_LIB_DIR}/glfw3.dll"
         $<TARGET_FILE_DIR:xd_rt_test>
 )

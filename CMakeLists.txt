@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.18)
 project(xd_rt)
 
+set(USE_VULKAN TRUE)
+set(PLATFORM_WINDOWS TRUE)
 set(CMAKE_CXX_STANDARD 20)
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
 set(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
@@ -219,6 +221,8 @@ set(SRC_FILES
         ${MISC_FILES}
         ${NON_BUILD_FILES}
 )
+
+# for visual studio filters
 source_group(3rdParty FILES ${3RDPARTY_FILES})
 source_group(bxdf FILES ${BXDF_FILES})
 source_group(camera FILES ${CAMERA_FILES})
@@ -241,7 +245,7 @@ source_group(non-build FILES ${NON_BUILD_FILES})
 add_executable(xd_rt_playground main.cpp)
 add_library(xd_rt STATIC ${SRC_FILES})
 
-target_link_libraries(xd_rt TBB)
+
 set(TBB_ROOT "${CMAKE_SOURCE_DIR}/external/TBB")
 set(EMBREE_ROOT_DIR "${CMAKE_SOURCE_DIR}/external/embree")
 
@@ -249,8 +253,18 @@ find_package(TBB REQUIRED)
 include_directories(${TBB_INCLUDE_DIRS})
 find_package(embree 4 REQUIRED)
 include_directories(${EMBREE_INCLUDE_DIRS})
+find_package(Vulkan REQUIRED)
+message("Vulkan Version ${Vulkan_VERSION} ${Vulkan_INCLUDE_DIRS}")
+include_directories(${Vulkan_INCLUDE_DIRS})
+set(GLFW_ROOT_DIR external/glfw3)
+find_package(GLFW REQUIRED)
+message("glfw lib dir: ${GLFW_LIB_DIR}")
+include_directories(${GLFW_INCLUDE_DIR})
 
 target_link_libraries(xd_rt ${EMBREE_LIBRARIES})
+target_link_libraries(xd_rt TBB)
+target_link_libraries(xd_rt ${Vulkan_LIBRARIES})
+target_link_libraries(xd_rt ${GLFW_LIBRARIES})
 
 #target_link_directories("${TBB_ROOT}/lib")
 target_link_libraries(xd_rt_playground xd_rt)
