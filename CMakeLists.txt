@@ -201,6 +201,31 @@ set(NON_BUILD_FILES
         ./.clang-format
         ./eigen.natvis
 )
+
+set(VULKAN_FILES
+        src/backend/vulkan/VulkanGlobal.cpp
+        src/backend/vulkan/VulkanGlobal.h
+        src/backend/vulkan/VulkanInstance.cpp
+        src/backend/vulkan/VulkanInstance.h
+        src/backend/vulkan/VulkanPhysicalDevice.cpp
+        src/backend/vulkan/VulkanPhysicalDevice.h
+        src/backend/vulkan/VulkanDevice.cpp
+        src/backend/vulkan/VulkanDevice.h
+        src/backend/vulkan/VulkanTypes.h
+        src/backend/vulkan/VulkanMacros.h
+        src/backend/vulkan/VulkanQueue.cpp
+        src/backend/vulkan/VulkanQueue.h
+        src/backend/vulkan/VulkanImage.cpp
+        src/backend/vulkan/VulkanImage.h
+        src/backend/vulkan/VulkanImageView.cpp
+        src/backend/vulkan/VulkanImageView.h
+        src/backend/vulkan/VulkanSurface.h
+        src/backend/vulkan/VulkanSurface.cpp
+        src/backend/vulkan/VulkanSwapchain.cpp
+        src/backend/vulkan/VulkanSwapchain.h
+        src/backend/vulkan/VulkanPlatformSpecific.h
+)
+
 set(SRC_FILES
         ${3RDPARTY_FILES}
         ${BXDF_FILES}
@@ -220,6 +245,7 @@ set(SRC_FILES
         ${TEXTURE_FILES}
         ${MISC_FILES}
         ${NON_BUILD_FILES}
+        ${VULKAN_FILES}
 )
 
 # for visual studio filters
@@ -241,10 +267,11 @@ source_group(sampler FILES ${SAMPLER_FILES})
 source_group(texture FILES ${TEXTURE_FILES})
 source_group(misc FILES ${MISC_FILES})
 source_group(non-build FILES ${NON_BUILD_FILES})
+source_group(backend/vulkan FILES ${VULKAN_FILES})
 
 add_executable(xd_rt_playground main.cpp)
+#add_library(xd_rt SHARED ${SRC_FILES})
 add_library(xd_rt STATIC ${SRC_FILES})
-
 
 set(TBB_ROOT "${CMAKE_SOURCE_DIR}/external/TBB")
 set(EMBREE_ROOT_DIR "${CMAKE_SOURCE_DIR}/external/embree")
@@ -256,21 +283,20 @@ include_directories(${EMBREE_INCLUDE_DIRS})
 find_package(Vulkan REQUIRED)
 message("Vulkan Version ${Vulkan_VERSION} ${Vulkan_INCLUDE_DIRS}")
 include_directories(${Vulkan_INCLUDE_DIRS})
-set(GLFW_ROOT_DIR external/glfw3)
-find_package(GLFW REQUIRED)
-message("glfw lib dir: ${GLFW_LIB_DIR}")
-include_directories(${GLFW_INCLUDE_DIR})
+#set(GLFW_ROOT_DIR external/glfw3)
+#find_package(GLFW REQUIRED)
+#include_directories(${GLFW_INCLUDE_DIRS})
 
 target_link_libraries(xd_rt ${EMBREE_LIBRARIES})
 target_link_libraries(xd_rt TBB)
 target_link_libraries(xd_rt ${Vulkan_LIBRARIES})
 target_link_libraries(xd_rt ${GLFW_LIBRARIES})
-
 #target_link_directories("${TBB_ROOT}/lib")
 target_link_libraries(xd_rt_playground xd_rt)
 target_link_libraries(xd_rt_playground TBB)
 
 add_subdirectory(test)
+add_subdirectory(src/app)
 
 add_custom_command(TARGET xd_rt
         POST_BUILD

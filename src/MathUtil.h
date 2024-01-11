@@ -6,6 +6,7 @@
 #define XD_RT_MATHUTIL_H
 #include <cstdint>
 #include <ranges>
+#include <utility>
 #include <valarray>
 #include "MathTypes.h"
 
@@ -346,6 +347,18 @@ inline ColorRGBA LinearToSRGB(const ColorRGBA& linear)
 	c = LinearToSRGB(c);
 	return {c.x(), c.y(), c.z(), linear.w()};
 }
+
+template <typename T1, typename T2>
+struct PairHasher {
+	std::size_t operator()(const std::pair<T1, T2>& obj) const noexcept
+	{
+		std::size_t seed = 0x10380992;
+		seed ^= (seed << 6) + (seed >> 2) + 0x62E190B1 + std::hash<T1>{}(obj.first);
+		seed ^= (seed << 6) + (seed >> 2) + 0x29578FAD + std::hash<T2>{}(obj.second);
+		return seed;
+	}
+};
+
 }  // namespace xd
 
 // namespace xd

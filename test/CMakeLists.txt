@@ -12,7 +12,7 @@ find_package(Vulkan REQUIRED)
 include_directories(${Vulkan_INCLUDE_DIRS})
 set(GLFW_ROOT_DIR external/glfw3)
 find_package(GLFW REQUIRED)
-message("glfw lib dir: ${GLFW_LIB_DIR}")
+include_directories(${GLFW_INCLUDE_DIRS})
 
 set(NON_BUILD_FILES
         ../.clang-format
@@ -23,7 +23,6 @@ file(GLOB IMGUI_HEADERS ../3rdparty/imgui/*.h)
 file(GLOB IMGUI_SOURCES ../3rdparty/imgui/*.cpp)
 
 set(IMGUI_FILES ${IMGUI_HEADERS} ${IMGUI_SOURCES})
-
 
 include_directories(../3rdparty/imgui/)
 include_directories(../3rdparty/imgui/backends/)
@@ -69,12 +68,15 @@ add_executable(xd_rt_test
         FilterTest.cpp
         MappingTest.cpp
         ImguiIntegrationTest.cpp
+        VulkanTest.cpp
 )
 
 target_link_libraries(xd_rt_test xd_rt)
+target_link_libraries(xd_rt_test xd_rt_app)
 target_link_libraries(xd_rt_test gtest gtest_main)
 target_link_libraries(xd_rt_test TBB)
 target_link_libraries(xd_rt_test ${EMBREE_LIBRARIES})
+target_link_libraries(xd_rt_test ${GLFW_LIBRARIES})
 
 add_custom_command(TARGET xd_rt_test
         POST_BUILD
