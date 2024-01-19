@@ -7,3 +7,4 @@ cmake-build-debug
 cmake-build-minsizerel
 eigen.natvis
 Folder.DotSettings.user
+src/app/vulkan/shader/*.spv

@@ -5,11 +5,11 @@
 #ifndef XD_RT_VULKANSURFACE_H
 #define XD_RT_VULKANSURFACE_H
 #include <memory>
+#include "VulkanDeviceObject.h"
 #include "VulkanPlatformSpecific.h"
-#include "app/vulkan/Types.h"
 #include "backend/vulkan/VulkanTypes.h"
 namespace xd {
-class VulkanSurface {
+class VulkanSurface : public VulkanDeviceObject<SurfaceCIType> {
 public:
 	friend class VulkanDevice;
 
@@ -21,17 +21,18 @@ public:
 	~VulkanSurface();
 	std::shared_ptr<VulkanSwapchain> createSwapchain(int width, int height) const;
 
-private:
-	VulkanSurface(std::weak_ptr<const VulkanInstance> instance,
-				  std::weak_ptr<const VulkanPhysicalDevice> physicalDevice,
-				  std::weak_ptr<const VulkanDevice> device,
+	VulkanSurface(std::shared_ptr<const VulkanDevice> device,
+				  VkWin32SurfaceCreateInfoKHR desc,
+				  std::shared_ptr<const VulkanInstance> instance,
+				  std::shared_ptr<const VulkanPhysicalDevice> physical_device,
 				  VkSurfaceKHR surface);
+
+private:
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities,
 								int width,
 								int height) const;
-	std::weak_ptr<const VulkanInstance> instanceWeakRef;
-	std::weak_ptr<const VulkanPhysicalDevice> physicalDeviceWeakRef;
-	std::weak_ptr<const VulkanDevice> deviceWeakRef;
+	std::shared_ptr<const VulkanInstance> instance;
+	std::shared_ptr<const VulkanPhysicalDevice> physicalDevice;
 	VkSurfaceKHR surface = VK_NULL_HANDLE;
 };
 }  // namespace xd

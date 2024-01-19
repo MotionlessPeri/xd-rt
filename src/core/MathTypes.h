@@ -16,6 +16,8 @@ using Eigen::Matrix4f;
 using Eigen::Vector2f;
 using Eigen::Vector2i;
 using Eigen::Vector3f;
+using Eigen::Vector3i;
+using Vector3u32 = Eigen::Vector3<uint32_t>;
 using Eigen::Vector4f;
 using Eigen::VectorXf;
 template <typename CompType, uint32_t N, typename = void>

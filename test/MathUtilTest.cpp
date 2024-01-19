@@ -52,3 +52,20 @@ TEST(MathUtilTestSuite, SRGBLinearConversionTest)
 	EXPECT_TRUE(fuzzyEqual(linear, SRGBToLinear(srgb), 1e-4f));
 	EXPECT_TRUE(fuzzyEqual(srgb, LinearToSRGB(linear), 1e-4f));
 }
+
+#include "distribution/UniformDistribution.h"
+TEST(MathUtilTestSuite, CoordSystemTest)
+{
+	UniformDistribution<1> dis;
+	constexpr uint32_t COUNT = 1000;
+	for ([[maybe_unused]] const auto i : std::views::iota(0u, COUNT)) {
+		const Vector3f z = Vector3f{dis.sample(), dis.sample(), dis.sample()}.normalized();
+		const auto [x, y] = coordSystem(z, true);
+		EXPECT_TRUE(z.isApprox(x.cross(y)));
+	}
+	for ([[maybe_unused]] const auto i : std::views::iota(0u, COUNT)) {
+		const Vector3f z = Vector3f{dis.sample(), dis.sample(), dis.sample()}.normalized();
+		const auto [x, y] = coordSystem(z, false);
+		EXPECT_TRUE(z.isApprox(-(x.cross(y))));
+	}
+}

@@ -4,6 +4,7 @@
 
 #ifndef XD_RT_MATHUTIL_H
 #define XD_RT_MATHUTIL_H
+#include <bit>
 #include <cstdint>
 #include <ranges>
 #include <utility>
@@ -115,8 +116,15 @@ inline Matrix3f buildFrameMatrix(const Vector3f& x, const Vector3f& y, const Vec
 }
 inline std::tuple<Vector3f, Vector3f> coordSystem(const Vector3f& z, bool rightHanded = true)
 {
-	Vector3f x{-z.z(), 0, z.x()};
-	return {x, coordSystem(z, x, rightHanded)};
+	// Code from pbrt-v4
+	const float sign = std::copysign(1.f, z.z());
+	const float a = -1 / (sign + z.z());
+	const float b = z.x() * z.y() * a;
+	Vector3f x{1 + sign * z.x() * z.x() * a, sign * b, -sign * z.x()};
+	Vector3f y{b, sign + z.y() * z.y() * a, -z.y()};
+	if (!rightHanded)
+		y = -y;
+	return {x, y};
 }
 
 inline float balanceHeuristic(uint32_t numF, float pdfF, uint32_t numG, float pdfG)

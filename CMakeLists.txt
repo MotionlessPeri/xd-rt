@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.24)
 project(xd_rt)
 
 set(USE_VULKAN TRUE)
@@ -203,27 +203,69 @@ set(NON_BUILD_FILES
 )
 
 set(VULKAN_FILES
-        src/backend/vulkan/VulkanGlobal.cpp
-        src/backend/vulkan/VulkanGlobal.h
-        src/backend/vulkan/VulkanInstance.cpp
-        src/backend/vulkan/VulkanInstance.h
-        src/backend/vulkan/VulkanPhysicalDevice.cpp
-        src/backend/vulkan/VulkanPhysicalDevice.h
         src/backend/vulkan/VulkanDevice.cpp
         src/backend/vulkan/VulkanDevice.h
-        src/backend/vulkan/VulkanTypes.h
-        src/backend/vulkan/VulkanMacros.h
-        src/backend/vulkan/VulkanQueue.cpp
-        src/backend/vulkan/VulkanQueue.h
+        src/backend/vulkan/VulkanDeviceObject.h
         src/backend/vulkan/VulkanImage.cpp
         src/backend/vulkan/VulkanImage.h
         src/backend/vulkan/VulkanImageView.cpp
         src/backend/vulkan/VulkanImageView.h
-        src/backend/vulkan/VulkanSurface.h
+        src/backend/vulkan/VulkanInstance.cpp
+        src/backend/vulkan/VulkanInstance.h
+        src/backend/vulkan/VulkanMacros.h
+        src/backend/vulkan/VulkanPhysicalDevice.cpp
+        src/backend/vulkan/VulkanPhysicalDevice.h
+        src/backend/vulkan/VulkanPlatformSpecific.h
+        src/backend/vulkan/VulkanQueue.cpp
+        src/backend/vulkan/VulkanQueue.h
+        src/backend/vulkan/VulkanShader.cpp
+        src/backend/vulkan/VulkanShader.h
         src/backend/vulkan/VulkanSurface.cpp
+        src/backend/vulkan/VulkanSurface.h
         src/backend/vulkan/VulkanSwapchain.cpp
         src/backend/vulkan/VulkanSwapchain.h
-        src/backend/vulkan/VulkanPlatformSpecific.h
+        src/backend/vulkan/VulkanTypes.h
+        src/backend/vulkan/VulkanGraphicsPipeline.cpp
+        src/backend/vulkan/VulkanGraphicsPipeline.h
+        src/backend/vulkan/ModelFactoryVk.cpp
+        src/backend/vulkan/ModelFactoryVk.h
+        src/backend/vulkan/TriangleMeshVk.cpp
+        src/backend/vulkan/TriangleMeshVk.h
+        src/backend/vulkan/VulkanBuffer.cpp
+        src/backend/vulkan/VulkanBuffer.h
+        src/backend/vulkan/VulkanMemory.cpp
+        src/backend/vulkan/VulkanMemory.h
+        src/backend/vulkan/VulkanCommandQueue.cpp
+        src/backend/vulkan/VulkanCommandQueue.h
+        src/backend/vulkan/VulkanCommandBuffer.cpp
+        src/backend/vulkan/VulkanCommandBuffer.h
+        src/backend/vulkan/VulkanCommandPool.cpp
+        src/backend/vulkan/VulkanCommandPool.h
+        src/backend/vulkan/VulkanGlobal.cpp
+        src/backend/vulkan/VulkanGlobal.h
+        src/backend/vulkan/MaterialTemplateVk.cpp
+        src/backend/vulkan/MaterialTemplateVk.h
+        src/backend/vulkan/MaterialInstanceVk.cpp
+        src/backend/vulkan/MaterialInstanceVk.h
+        src/backend/vulkan/VulkanDescriptorSetLayout.cpp
+        src/backend/vulkan/VulkanDescriptorSetLayout.h
+        src/backend/vulkan/VulkanDescriptorSet.cpp
+        src/backend/vulkan/VulkanDescriptorSet.h
+        src/backend/vulkan/VulkanDescriptorPool.cpp
+        src/backend/vulkan/VulkanDescriptorPool.h
+        src/backend/vulkan/VulkanSubpass.cpp
+        src/backend/vulkan/VulkanSubpass.h
+        src/backend/vulkan/VulkanRenderPass.cpp
+        src/backend/vulkan/VulkanRenderPass.h
+        src/backend/vulkan/VulkanFrameBuffer.cpp
+        src/backend/vulkan/VulkanFrameBuffer.h
+        src/backend/vulkan/FrameGraph.cpp
+        src/backend/vulkan/FrameGraph.h
+        src/backend/vulkan/VulkanDescs.h
+        src/backend/vulkan/VulkanFence.cpp
+        src/backend/vulkan/VulkanFence.h
+        src/backend/vulkan/VulkanSemaphore.cpp
+        src/backend/vulkan/VulkanSemaphore.h
 )
 
 set(SRC_FILES
@@ -281,22 +323,27 @@ include_directories(${TBB_INCLUDE_DIRS})
 find_package(embree 4 REQUIRED)
 include_directories(${EMBREE_INCLUDE_DIRS})
 find_package(Vulkan REQUIRED)
-message("Vulkan Version ${Vulkan_VERSION} ${Vulkan_INCLUDE_DIRS}")
+message("Vulkan Version ${Vulkan_VERSION} ${Vulkan_INCLUDE_DIRS} ${Vulkan_LIBRARIES} ${Vulkan_glslc_FOUND}")
 include_directories(${Vulkan_INCLUDE_DIRS})
-#set(GLFW_ROOT_DIR external/glfw3)
-#find_package(GLFW REQUIRED)
-#include_directories(${GLFW_INCLUDE_DIRS})
+set(GLFW_ROOT_DIR external/glfw3)
+find_package(GLFW REQUIRED)
+include_directories(${GLFW_INCLUDE_DIRS})
 
 target_link_libraries(xd_rt ${EMBREE_LIBRARIES})
 target_link_libraries(xd_rt TBB)
 target_link_libraries(xd_rt ${Vulkan_LIBRARIES})
 target_link_libraries(xd_rt ${GLFW_LIBRARIES})
 #target_link_directories("${TBB_ROOT}/lib")
-target_link_libraries(xd_rt_playground xd_rt)
-target_link_libraries(xd_rt_playground TBB)
 
-add_subdirectory(test)
 add_subdirectory(src/app)
+add_subdirectory(test)
+
+target_link_libraries(xd_rt_playground ${EMBREE_LIBRARIES})
+target_link_libraries(xd_rt_playground ${Vulkan_LIBRARIES})
+target_link_libraries(xd_rt_playground ${GLFW_LIBRARIES})
+target_link_libraries(xd_rt_playground xd_rt)
+target_link_libraries(xd_rt_playground xd_rt_app)
+target_link_libraries(xd_rt_playground TBB)
 
 add_custom_command(TARGET xd_rt
         POST_BUILD
@@ -309,4 +356,22 @@ add_custom_command(TARGET xd_rt
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${EMBREE_ROOT_DIR}/bin"
         $<TARGET_FILE_DIR:xd_rt>
+)
+add_custom_command(TARGET xd_rt_playground
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${TBB_ROOT}/bin"
+        $<TARGET_FILE_DIR:xd_rt_playground>
+)
+add_custom_command(TARGET xd_rt_playground
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${EMBREE_ROOT_DIR}/bin"
+        $<TARGET_FILE_DIR:xd_rt_playground>
+)
+add_custom_command(TARGET xd_rt_playground
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        "${GLFW_LIB_DIR}/glfw3.dll"
+        $<TARGET_FILE_DIR:xd_rt_playground>
 )

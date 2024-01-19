@@ -10,7 +10,7 @@ find_package(embree 4 REQUIRED)
 include_directories(${EMBREE_INCLUDE_DIRS})
 find_package(Vulkan REQUIRED)
 include_directories(${Vulkan_INCLUDE_DIRS})
-set(GLFW_ROOT_DIR external/glfw3)
+set(GLFW_ROOT_DIR ../external/glfw3)
 find_package(GLFW REQUIRED)
 include_directories(${GLFW_INCLUDE_DIRS})
 

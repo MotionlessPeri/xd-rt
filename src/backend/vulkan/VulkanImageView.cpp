@@ -7,12 +7,16 @@
 #include "VulkanDevice.h"
 
 using namespace xd;
-VulkanImageView::~VulkanImageView()
+
+VulkanImageView::VulkanImageView(std::shared_ptr<const VulkanDevice> device,
+								 VkImageViewCreateInfo desc,
+								 VkImageView image_view)
+	: VulkanDeviceObject<VkImageViewCreateInfo>(std::move(device), std::move(desc)),
+	  imageView(image_view)
 {
-	deviceWeakRef.lock()->destroyImageView(imageView);
 }
 
-VulkanImageView::VulkanImageView(std::weak_ptr<const VulkanDevice> device, VkImageView image_view)
-	: deviceWeakRef(device), imageView(image_view)
+VulkanImageView::~VulkanImageView()
 {
+	device->destroyImageView(imageView);
 }

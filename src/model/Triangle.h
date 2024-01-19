@@ -83,9 +83,14 @@ public:
 	std::array<Vector2f, 3> getUVsUnchecked() const;
 	std::array<Vector3f, 3> getNormalsUnchecked() const;
 	std::array<Vector3f, 3> getTangentsUnchecked() const;
-	std::array<Vector3f, 3> getBiTangentsUnchecked() const;
+	Vector3u32 getIndices() const
+	{
+		const auto& indices = mesh->indices;
+		return {indices[3 * index], indices[3 * index + 1], indices[3 * index + 2]};
+	}
 	float getArea() const override;
 	AABB getAABB() const override { return aabb; }
+	Vector3f getGeomNormal() const;
 
 protected:
 	void calAccParams();

@@ -1,5 +1,12 @@
-#include <numeric>
+#include "app/vulkan/GLFWGlobal.h"
+#include "app/vulkan/VulkanGLFWApp.h"
+using namespace xd;
 int main()
 {
-	constexpr auto min = std::numeric_limits<float>::min();
+	GLFWGlobal::init();
+	constexpr int WIDTH = 1000;
+	constexpr int HEIGHT = 800;
+	const char* TITLE = "glfw window test";
+	VulkanGLFWApp app{WIDTH, HEIGHT, TITLE};
+	app.run();
 }

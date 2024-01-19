@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 project(xd_rt_app)
+add_compile_definitions(PROJECT_ROOT=R\"\(${PROJECT_SOURCE_DIR}\)\")
 find_package(Vulkan REQUIRED)
 include_directories(${Vulkan_INCLUDE_DIRS})
 set(GLFW_ROOT_DIR external/glfw3)
@@ -14,6 +15,10 @@ set(VULKAN_FILES
 )
 set(NON_BUILD_FILES
         ../../.clang-format
+)
+set(SHADER_FILES
+        vulkan/shader/test.frag
+        vulkan/shader/test.vert
 )
 file(GLOB IMGUI_HEADERS ../3rdparty/imgui/*.h)
 file(GLOB IMGUI_SOURCES ../3rdparty/imgui/*.cpp)
@@ -35,9 +40,21 @@ endif ()
 set(SRC_FILES
         ${VULKAN_FILES}
         ${IMGUI_FILES}
-        ${NON_BUILD_FILES})
+        ${NON_BUILD_FILES}
+        ${SHADER_FILES})
 source_group(vulkan FILES ${VULKAN_FILES})
 source_group(imgui FILES ${IMGUI_FILES})
+source_group(shader FILES ${SHADER_FILES})
+
 add_library(xd_rt_app STATIC ${SRC_FILES})
 target_link_libraries(xd_rt_app ${GLFW_LIBRARIES})
 target_link_libraries(xd_rt_app xd_rt)
+
+file(GLOB files "vulkan/shader/*.vert" "vulkan/shader/*.frag")
+# message("check files ${files}")
+foreach (file ${files})
+    add_custom_command(TARGET xd_rt_app
+            PRE_BUILD
+            COMMAND Vulkan::glslc ${file} -o ${file}.spv
+    )
+endforeach ()

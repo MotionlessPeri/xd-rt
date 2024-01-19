@@ -9,6 +9,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include "VulkanDescs.h"
 #include "VulkanPlatformSpecific.h"
 #include "VulkanTypes.h"
 namespace xd {
@@ -34,25 +35,25 @@ public:
 		return -1;
 	}
 	// VkPhysicalDevice getHandle() const { return device; }
-	std::shared_ptr<VulkanDevice> createLogicalDevice(
-		std::vector<uint32_t> queueFamilyIndexes,
-		std::vector<std::vector<float>> queuePriorities,
-		VkPhysicalDeviceFeatures features,
-		std::vector<const char*> deviceExtensions) const;
+	std::shared_ptr<VulkanDevice> createLogicalDevice(const DeviceDesc& desc) const;
 
 	VkPhysicalDeviceProperties getPhysicalDeviceProperties() const;
+	VkPhysicalDeviceProperties2 getPhysicalDeviceProperties2() const;
 	VkPhysicalDeviceFeatures getPhysicalDeviceFeatures() const;
 	std::vector<VkSurfaceFormatKHR> getPhysicalDeviceSurfaceFormats(VkSurfaceKHR surface) const;
 	std::vector<VkPresentModeKHR> getPhysicalDeviceSurfacePresentModes(VkSurfaceKHR surface) const;
 	VkSurfaceCapabilitiesKHR getPhysicalDeviceSurfaceCapabilities(VkSurfaceKHR surface) const;
+	uint32_t getProperMemoryTypeIndex(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+	const VkPhysicalDeviceMemoryProperties& getMemoryProperties() const { return memProperties; }
 
 private:
 	explicit VulkanPhysicalDevice(VkPhysicalDevice m_device,
-								  const std::weak_ptr<const VulkanInstance>& instanceWeakRef);
+								  std::shared_ptr<const VulkanInstance> instanceWeakRef);
 	VkPhysicalDevice device = VK_NULL_HANDLE;
-	std::weak_ptr<const VulkanInstance> instanceWeakRef;
+	std::shared_ptr<const VulkanInstance> instance;
 	std::vector<VkQueueFamilyProperties> queueFamilyProperties;
 	std::unordered_set<std::string> supportedExtensionNames;
+	VkPhysicalDeviceMemoryProperties memProperties;
 };
 
 }  // namespace xd

@@ -7,8 +7,8 @@
 #include <memory>
 #include <mutex>
 #include <vector>
-#include "VulkanPlatformSpecific.h"
-#include "VulkanTypes.h"
+#include "backend/vulkan/VulkanPlatformSpecific.h"
+#include "backend/vulkan/VulkanTypes.h"
 namespace xd {
 static std::once_flag initFlag;
 class VulkanGlobal {
@@ -21,7 +21,7 @@ public:
 					 int height,
 					 VkPhysicalDeviceFeatures features,
 					 std::vector<const char*> deviceExtensions);
-
+	static void terminate();
 	inline static std::shared_ptr<VulkanInstance> instance = nullptr;
 	inline static std::shared_ptr<VulkanPhysicalDevice> physicalDevice = nullptr;
 	inline static std::shared_ptr<VulkanDevice> device = nullptr;
@@ -29,6 +29,7 @@ public:
 	inline static std::shared_ptr<VulkanSwapchain> swapchain = nullptr;
 	inline static std::shared_ptr<VulkanQueue> graphicQueue = nullptr;
 	inline static std::shared_ptr<VulkanQueue> presentQueue = nullptr;
+	inline static std::shared_ptr<VulkanQueue> transferQueue = nullptr;
 };
 
 }  // namespace xd

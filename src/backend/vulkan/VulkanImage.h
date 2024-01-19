@@ -7,11 +7,12 @@
 
 #include <memory>
 
+#include "VulkanDeviceObject.h"
 #include "VulkanPlatformSpecific.h"
 #include "VulkanTypes.h"
 namespace xd {
 
-class VulkanImage {
+class VulkanImage : public VulkanDeviceObject<VkImageCreateInfo> {
 public:
 	friend class VulkanDevice;
 	VulkanImage() = delete;
@@ -23,8 +24,8 @@ public:
 	std::shared_ptr<VulkanImageView> createImageView(VkImageViewCreateInfo&& ci) const;
 
 private:
-	VulkanImage(std::weak_ptr<const VulkanDevice> device, VkImage image, bool isSwapchainImage);
-	std::weak_ptr<const VulkanDevice> deviceWeakRef;
+	VulkanImage(std::shared_ptr<const VulkanDevice> device, VkImage image);
+	VulkanImage(std::shared_ptr<const VulkanDevice> device, VkImageCreateInfo desc, VkImage image);
 	VkImage image = VK_NULL_HANDLE;
 	bool isSwapchainImage = false;
 };

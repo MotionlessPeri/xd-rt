@@ -26,13 +26,13 @@ TriangleMesh::TriangleMesh(const std::vector<float>& positions,
 						   const std::vector<uint32_t>& indices,
 						   HitAccelMethod method)
 	: rawPositions(positions),
-	  positionsAccessor(rawPositions.data(), 3, rawPositions.size()),
+	  positionsAccessor(rawPositions.data(), 3, rawPositions.size() / 3),
 	  rawUVs(uvs),
-	  uvAccessor(rawUVs.data(), 2, rawUVs.size()),
+	  uvAccessor(rawUVs.data(), 2, rawUVs.size() / 2),
 	  rawNormals(normals),
-	  normalAccessor(rawNormals.data(), 3, rawNormals.size()),
+	  normalAccessor(rawNormals.data(), 3, rawNormals.size() / 3),
 	  rawTangents(tangents),
-	  tangentAccessor(rawTangents.data(), 3, rawTangents.size()),
+	  tangentAccessor(rawTangents.data(), 3, rawTangents.size() / 3),
 	  indices(indices)
 {
 	init(method);
@@ -45,13 +45,13 @@ TriangleMesh::TriangleMesh(std::vector<float>&& positions,
 						   std::vector<uint32_t>&& indices,
 						   HitAccelMethod method)
 	: rawPositions(positions),
-	  positionsAccessor(rawPositions.data(), 3, rawPositions.size()),
+	  positionsAccessor(rawPositions.data(), 3, rawPositions.size() / 3),
 	  rawUVs(uvs),
-	  uvAccessor(rawUVs.data(), 2, rawUVs.size()),
+	  uvAccessor(rawUVs.data(), 2, rawUVs.size() / 2),
 	  rawNormals(normals),
-	  normalAccessor(rawNormals.data(), 3, rawNormals.size()),
+	  normalAccessor(rawNormals.data(), 3, rawNormals.size() / 3),
 	  rawTangents(tangents),
-	  tangentAccessor(rawTangents.data(), 3, rawTangents.size()),
+	  tangentAccessor(rawTangents.data(), 3, rawTangents.size() / 3),
 	  indices(indices)
 {
 	init(method);
@@ -168,6 +168,11 @@ Vector3f Triangle::getBarycentricCoordUnchecked(const Vector3f& P) const
 	const float w = (d00 * d21 - d01 * d20) / denom;
 	const float u = 1.f - v - w;
 	return {u, v, w};
+}
+
+Vector3f Triangle::getGeomNormal() const
+{
+	return AB.cross(AC).normalized();
 }
 
 void Triangle::calAccParams()

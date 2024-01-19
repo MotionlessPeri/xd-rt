@@ -5,31 +5,30 @@
 
 #include <bit>
 #include <stdexcept>
+#include "VulkanDevice.h"
+#include "VulkanInstance.h"
 #include "VulkanSwapchain.h"
-#include "backend/vulkan/VulkanDevice.h"
-#include "backend/vulkan/VulkanInstance.h"
-#include "backend/vulkan/VulkanMacros.h"
+
 using namespace xd;
-VulkanSurface::VulkanSurface(std::weak_ptr<const VulkanInstance> instance,
-							 std::weak_ptr<const VulkanPhysicalDevice> physicalDevice,
-							 std::weak_ptr<const VulkanDevice> device,
+VulkanSurface::VulkanSurface(std::shared_ptr<const VulkanDevice> device,
+							 VkWin32SurfaceCreateInfoKHR desc,
+							 std::shared_ptr<const VulkanInstance> instance,
+							 std::shared_ptr<const VulkanPhysicalDevice> physical_device,
 							 VkSurfaceKHR surface)
-	: instanceWeakRef(std::move(instance)),
-	  physicalDeviceWeakRef(std::move(physicalDevice)),
-	  deviceWeakRef(std::move(device)),
+	: VulkanDeviceObject(std::move(device), std::move(desc)),
+	  instance(std::move(instance)),
+	  physicalDevice(std::move(physical_device)),
 	  surface(surface)
 {
 }
 
 VulkanSurface::~VulkanSurface()
 {
-	deviceWeakRef.lock()->destroySurface(surface);
+	device->destroySurface(surface);
 }
 
 std::shared_ptr<VulkanSwapchain> VulkanSurface::createSwapchain(int width, int height) const
 {
-	const auto physicalDevice = physicalDeviceWeakRef.lock();
-	const auto device = deviceWeakRef.lock();
 	if (!device)
 		throw std::runtime_error{""};
 
@@ -79,7 +78,7 @@ std::shared_ptr<VulkanSwapchain> VulkanSurface::createSwapchain(int width, int h
 	createInfo.preTransform = capabilities.currentTransform;
 	createInfo.compositeAlpha = static_cast<VkCompositeAlphaFlagBitsKHR>(
 		1 << std::countr_zero(capabilities.supportedCompositeAlpha));
-	return deviceWeakRef.lock()->createSwapchain(createInfo, extent, chosenFormat);
+	return device->createSwapchain(std::move(createInfo), extent, chosenFormat);
 }
 
 VkExtent2D VulkanSurface::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities,

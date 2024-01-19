@@ -6,14 +6,17 @@
 #define XD_RT_VULKANIMAGEVIEW_H
 
 #include <memory>
+
+#include "VulkanDeviceObject.h"
 #include "VulkanPlatformSpecific.h"
 #include "VulkanTypes.h"
 
 namespace xd {
 
-class VulkanImageView {
+class VulkanImageView : public VulkanDeviceObject<VkImageViewCreateInfo> {
 public:
 	friend class VulkanDevice;
+	friend class VulkanGLFWApp;	 // TODO: I don't know if this works. Delete it ASAP
 	VulkanImageView() = delete;
 	VulkanImageView(const VulkanImageView& other) = delete;
 	VulkanImageView(VulkanImageView&& other) noexcept = delete;
@@ -22,8 +25,9 @@ public:
 	~VulkanImageView();
 
 private:
-	explicit VulkanImageView(std::weak_ptr<const VulkanDevice> device, VkImageView image_view);
-	std::weak_ptr<const VulkanDevice> deviceWeakRef;
+	VulkanImageView(std::shared_ptr<const VulkanDevice> device,
+					VkImageViewCreateInfo desc,
+					VkImageView image_view);
 	VkImageView imageView;
 };
 

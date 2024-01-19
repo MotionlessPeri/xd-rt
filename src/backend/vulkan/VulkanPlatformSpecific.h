@@ -20,5 +20,5 @@ using SurfaceCIType = VkWin32SurfaceCreateInfoKHR;
 #ifdef WIN32
 using NativeWindowType = HWND;
 #endif
-}
+}  // namespace xd
 #endif	// XD_RT_VULKANPLATFORMSPECIFIC_H

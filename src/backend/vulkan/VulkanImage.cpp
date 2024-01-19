@@ -5,20 +5,28 @@
 #include "VulkanImage.h"
 #include "VulkanDevice.h"
 using namespace xd;
-VulkanImage::VulkanImage(std::weak_ptr<const VulkanDevice> device,
-						 VkImage image,
-						 bool isSwapchainImage)
-	: deviceWeakRef(device), image(image), isSwapchainImage(isSwapchainImage)
+VulkanImage::VulkanImage(std::shared_ptr<const VulkanDevice> _device, VkImage image)
+	: VulkanDeviceObject(std::move(_device)), image(image), isSwapchainImage(true)
 {
 }
+
+VulkanImage::VulkanImage(std::shared_ptr<const VulkanDevice> _device,
+						 VkImageCreateInfo _desc,
+						 VkImage image)
+	: VulkanDeviceObject(std::move(_device), std::move(_desc)),
+	  image(image),
+	  isSwapchainImage(false)
+{
+}
+
 VulkanImage::~VulkanImage()
 {
 	if (!isSwapchainImage)
-		deviceWeakRef.lock()->destroyImage(image);
+		device->destroyImage(image);
 }
 
 std::shared_ptr<VulkanImageView> VulkanImage::createImageView(VkImageViewCreateInfo&& ci) const
 {
 	ci.image = image;
-	return deviceWeakRef.lock()->createImageView(ci);
+	return device->createImageView(ci);
 }

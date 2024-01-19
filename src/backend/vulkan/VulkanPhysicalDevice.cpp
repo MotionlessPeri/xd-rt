@@ -9,10 +9,9 @@
 #include "VulkanMacros.h"
 using namespace xd;
 
-VulkanPhysicalDevice::VulkanPhysicalDevice(
-	VkPhysicalDevice m_device,
-	const std::weak_ptr<const VulkanInstance>& instanceWeakRef)
-	: device(m_device), instanceWeakRef(instanceWeakRef)
+VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice m_device,
+										   std::shared_ptr<const VulkanInstance> instance)
+	: device(m_device), instance(std::move(instance))
 {
 	assert(m_device != VK_NULL_HANDLE);
 	uint32_t queueFamilyCount = 0;
@@ -31,42 +30,17 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(
 	for (const auto& extension : supportedDeviceExtensions) {
 		supportedExtensionNames.emplace(extension.extensionName);
 	}
+
+	vkGetPhysicalDeviceMemoryProperties(device, &memProperties);
 }
 
 std::shared_ptr<VulkanDevice> VulkanPhysicalDevice::createLogicalDevice(
-	std::vector<uint32_t> queueFamilyIndexes,
-	std::vector<std::vector<float>> queuePriorities,
-	VkPhysicalDeviceFeatures features,
-	std::vector<const char*> deviceExtensions) const
+	const DeviceDesc& desc) const
 {
-	const auto queueFamilyCount = queueFamilyIndexes.size();
-	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos(queueFamilyCount);
-	for (auto i = 0ull; i < queueFamilyCount; ++i) {
-		auto& queueCreateInfo = queueCreateInfos[i];
-		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queueCreateInfo.queueFamilyIndex = queueFamilyIndexes[i];
-		queueCreateInfo.queueCount = queuePriorities[i].size();
-		queueCreateInfo.pQueuePriorities = queuePriorities[i].data();
-	}
-
-	for (const auto* extension : deviceExtensions) {
-		if (supportedExtensionNames.count(extension) == 0) {
-			throw std::runtime_error{""};
-		}
-	}
-
-	VkDeviceCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	createInfo.queueCreateInfoCount = queueCreateInfos.size();
-	createInfo.pQueueCreateInfos = queueCreateInfos.data();
-	createInfo.pEnabledFeatures = &features;
-	createInfo.enabledExtensionCount = deviceExtensions.size();
-	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-
 	VkDevice logicalDevice;
-	CHECK_VK_ERROR(vkCreateDevice(device, &createInfo, nullptr, &logicalDevice));
-	return std::shared_ptr<VulkanDevice>(
-		new VulkanDevice{logicalDevice, shared_from_this(), instanceWeakRef});
+	CHECK_VK_ERROR(vkCreateDevice(device, &desc.ci, nullptr, &logicalDevice));
+	return std::shared_ptr<VulkanDevice>{
+		new VulkanDevice{logicalDevice, desc, shared_from_this(), instance}};
 }
 
 VkPhysicalDeviceProperties VulkanPhysicalDevice::getPhysicalDeviceProperties() const
@@ -75,6 +49,19 @@ VkPhysicalDeviceProperties VulkanPhysicalDevice::getPhysicalDeviceProperties() c
 	vkGetPhysicalDeviceProperties(device, &ret);
 	return ret;
 }
+
+VkPhysicalDeviceProperties2 VulkanPhysicalDevice::getPhysicalDeviceProperties2() const
+{
+	VkPhysicalDeviceDepthStencilResolveProperties depthStencilProps;
+	depthStencilProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES;
+	depthStencilProps.pNext = nullptr;
+	VkPhysicalDeviceProperties2 ret;
+	ret.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	ret.pNext = &depthStencilProps;
+	vkGetPhysicalDeviceProperties2(device, &ret);
+	return ret;
+}
+
 VkPhysicalDeviceFeatures VulkanPhysicalDevice::getPhysicalDeviceFeatures() const
 {
 	VkPhysicalDeviceFeatures ret;
@@ -117,4 +104,16 @@ VkSurfaceCapabilitiesKHR VulkanPhysicalDevice::getPhysicalDeviceSurfaceCapabilit
 	VkSurfaceCapabilitiesKHR ret;
 	CHECK_VK_ERROR(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &ret));
 	return ret;
+}
+
+uint32_t VulkanPhysicalDevice::getProperMemoryTypeIndex(uint32_t typeFilter,
+														VkMemoryPropertyFlags properties) const
+{
+	for (const auto i : std::views::iota(0u, memProperties.memoryTypeCount)) {
+		if ((typeFilter & (1 << i)) &&
+			(memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+			return i;
+		}
+	}
+	throw std::runtime_error{"No suitable memory type!\n"};
 }
