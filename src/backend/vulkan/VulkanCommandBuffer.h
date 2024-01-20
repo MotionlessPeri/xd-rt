@@ -33,9 +33,15 @@ public:
 	void endRenderPass() const;
 
 	void bindPipeline(VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline) const;
-
 	void setViewport(const VkViewport& viewport) const;
 	void setScissor(const VkRect2D& scissor) const;
+	void bindDescriptorSets(VkPipelineLayout layout,
+							uint32_t firstSet,
+							const std::vector<VkDescriptorSet>& descriptorSets) const
+	{
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, firstSet,
+								descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+	}
 	void bindVertexBuffer(uint32_t bindingPoint, VkBuffer buffer) const
 	{
 		VkDeviceSize offsets[] = {0};
@@ -72,6 +78,7 @@ private:
 						const VkCommandBufferAllocateInfo& desc,
 						std::shared_ptr<const VulkanCommandPool> pool,
 						VkCommandBuffer cmd_buffer);
+
 	std::shared_ptr<const VulkanCommandPool> pool = nullptr;
 	VkCommandBuffer cmdBuffer = VK_NULL_HANDLE;
 };

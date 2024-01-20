@@ -25,12 +25,14 @@ void VulkanDescriptorSet::bindResource(uint32_t index, const VkDescriptorImageIn
 	boundImages[index] = imageInfo;
 }
 
-void VulkanDescriptorSet::updateDescriptor()
+void VulkanDescriptorSet::updateDescriptors()
 {
 	std::vector<VkWriteDescriptorSet> writes;
 	addWriteDescriptorSet(writes, boundBuffers);
 	addWriteDescriptorSet(writes, boundImages);
 	device->updateDescriptorSets(writes);
+	boundBuffers.clear();
+	boundImages.clear();
 }
 
 VulkanDescriptorSet::VulkanDescriptorSet(

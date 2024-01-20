@@ -80,7 +80,7 @@ public:
 	void destroyDescriptorSetLayout(VkDescriptorSetLayout layout) const;
 
 	std::shared_ptr<VulkanDescriptorPool> createDescriptorPool(
-		const VkDescriptorPoolCreateInfo& ci) const;
+		const DescriptorPoolDesc& desc) const;
 	void destroyDescriptorPool(VkDescriptorPool pool) const;
 
 	std::shared_ptr<VulkanDescriptorSet> createDescriptorSet(

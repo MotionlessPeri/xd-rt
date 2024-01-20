@@ -14,6 +14,7 @@ namespace xd {
 class VulkanDescriptorSet : public VulkanDeviceObject<VkDescriptorSetAllocateInfo> {
 public:
 	friend class VulkanDevice;
+	friend class VulkanPipelineBase;
 	VulkanDescriptorSet() = delete;
 	VulkanDescriptorSet(const VulkanDescriptorSet& other) = delete;
 	VulkanDescriptorSet(VulkanDescriptorSet&& other) noexcept = delete;
@@ -21,7 +22,7 @@ public:
 	VulkanDescriptorSet& operator=(VulkanDescriptorSet&& other) noexcept = delete;
 	void bindResource(uint32_t index, const VkDescriptorBufferInfo& bufferInfo);
 	void bindResource(uint32_t index, const VkDescriptorImageInfo& imageInfo);
-	void updateDescriptor();
+	void updateDescriptors();
 
 private:
 	VulkanDescriptorSet(std::shared_ptr<const VulkanDevice> device,
@@ -34,7 +35,7 @@ private:
 	void addWriteDescriptorSet(std::vector<VkWriteDescriptorSet>& writes,
 							   std::unordered_map<uint32_t, DescInfoType>& map)
 	{
-		for (const auto it : map) {
+		for (const auto& it : map) {
 			const auto& layoutBinding = layoutRef->getBinding(it.first);
 			VkWriteDescriptorSet writeDescriptorSet{};
 			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -58,7 +59,6 @@ private:
 			writeDescriptorSet.descriptorCount = 1;
 			writes.emplace_back(writeDescriptorSet);
 		}
-		map.clear();
 	}
 
 	std::shared_ptr<const VulkanDescriptorSetLayout> layoutRef = nullptr;

@@ -19,6 +19,15 @@ public:
 	VulkanBuffer& operator=(VulkanBuffer&& other) noexcept = delete;
 	~VulkanBuffer();
 	void setData(uint32_t offset, void* ptr, uint32_t size) const;
+	VkDescriptorBufferInfo getBindingInfo(VkDeviceSize offset = 0,
+										  VkDeviceSize range = VK_WHOLE_SIZE) const
+	{
+		VkDescriptorBufferInfo ret;
+		ret.buffer = buffer;
+		ret.offset = 0;
+		ret.range = VK_WHOLE_SIZE;
+		return ret;
+	}
 
 private:
 	VulkanBuffer(std::shared_ptr<const VulkanDevice> _device,

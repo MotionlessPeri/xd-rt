@@ -12,14 +12,23 @@ namespace xd {
 
 class VulkanPipelineBase {
 public:
-	VulkanPipelineBase(VkPipeline pipeline) : pipeline(pipeline) {}
+	VulkanPipelineBase(VkPipeline pipeline, VkPipelineLayout layout)
+		: pipeline(pipeline), layout(layout)
+	{
+	}
+
 	VulkanPipelineBase(const VulkanPipelineBase& other) = delete;
 	VulkanPipelineBase(VulkanPipelineBase&& other) noexcept = delete;
 	VulkanPipelineBase& operator=(const VulkanPipelineBase& other) = delete;
 	VulkanPipelineBase& operator=(VulkanPipelineBase&& other) noexcept = delete;
+	void bindDescriptorSets(
+		std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+		uint32_t firstSet,
+		const std::vector<std::shared_ptr<VulkanDescriptorSet>>& descSets) const;
 
 protected:
 	VkPipeline pipeline = VK_NULL_HANDLE;
+	VkPipelineLayout layout = VK_NULL_HANDLE;
 };
 
 class VulkanGraphicsPipeline : public VulkanDeviceObject<GraphicsPipelineDesc>,

@@ -70,5 +70,9 @@ struct VertexInputStateDesc {
 	std::vector<VkVertexInputBindingDescription> bindingDescs;
 	std::vector<VkVertexInputAttributeDescription> attrDescs;
 };
+struct DescriptorPoolDesc {
+	VkDescriptorPoolCreateInfo ci;
+	std::vector<VkDescriptorPoolSize> poolSizes;
+};
 }  // namespace xd
 #endif	// XD_RT_VULKANDESCS_H

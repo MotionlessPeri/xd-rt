@@ -14,7 +14,7 @@ VulkanDescriptorPool::~VulkanDescriptorPool()
 }
 
 VulkanDescriptorPool::VulkanDescriptorPool(std::shared_ptr<const VulkanDevice> device,
-										   const VkDescriptorPoolCreateInfo& desc,
+										   const DescriptorPoolDesc& desc,
 										   VkDescriptorPool pool)
 	: VulkanDeviceObject(std::move(device), desc), pool(pool)
 {
@@ -25,6 +25,7 @@ std::shared_ptr<VulkanDescriptorSet> VulkanDescriptorPool::createDescriptorSet(
 {
 	VkDescriptorSetAllocateInfo ai;
 	ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	ai.pNext = nullptr;
 	ai.descriptorPool = pool;
 	ai.descriptorSetCount = 1;
 	ai.pSetLayouts = &layout->layout;

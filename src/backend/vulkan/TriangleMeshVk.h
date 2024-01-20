@@ -6,9 +6,9 @@
 #define XD_RT_TRIANGLEMESHVK_H
 #include <memory>
 
+#include "MathTypes.h"
 #include "VulkanTypes.h"
 #include "model/ModelTypes.h"
-
 namespace xd {
 
 class TriangleMeshVk {

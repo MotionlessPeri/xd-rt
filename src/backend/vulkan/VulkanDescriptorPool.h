@@ -4,11 +4,12 @@
 
 #ifndef XD_RT_VULKANDESCRIPTORPOOL_H
 #define XD_RT_VULKANDESCRIPTORPOOL_H
+#include "VulkanDescs.h"
 #include "VulkanDeviceObject.h"
 #include "VulkanPlatformSpecific.h"
 namespace xd {
 
-class VulkanDescriptorPool : public VulkanDeviceObject<VkDescriptorPoolCreateInfo>,
+class VulkanDescriptorPool : public VulkanDeviceObject<DescriptorPoolDesc>,
 							 public std::enable_shared_from_this<VulkanDescriptorPool> {
 public:
 	friend class VulkanDevice;
@@ -22,8 +23,9 @@ public:
 
 private:
 	VulkanDescriptorPool(std::shared_ptr<const VulkanDevice> device,
-						 const VkDescriptorPoolCreateInfo& desc,
+						 const DescriptorPoolDesc& desc,
 						 VkDescriptorPool pool);
+
 	std::shared_ptr<VulkanDescriptorSet> createDescriptorSet(
 		std::shared_ptr<const VulkanDescriptorSetLayout> layout) const;
 	VkDescriptorPool pool = VK_NULL_HANDLE;

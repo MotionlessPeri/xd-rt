@@ -4,14 +4,19 @@
 
 #include "VulkanGLFWApp.h"
 #include <fstream>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <ranges>
 #include <sstream>
 #include <string>
-
 #include "backend/vulkan/ModelFactoryVk.h"
 #include "backend/vulkan/TriangleMeshVk.h"
+#include "backend/vulkan/VulkanBuffer.h"
 #include "backend/vulkan/VulkanCommandBuffer.h"
 #include "backend/vulkan/VulkanCommandPool.h"
+#include "backend/vulkan/VulkanDescriptorPool.h"
+#include "backend/vulkan/VulkanDescriptorSet.h"
+#include "backend/vulkan/VulkanDescriptorSetLayout.h"
 #include "backend/vulkan/VulkanDevice.h"
 #include "backend/vulkan/VulkanFence.h"
 #include "backend/vulkan/VulkanFrameBuffer.h"
@@ -26,6 +31,7 @@
 
 namespace xd {
 VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
+	: width(width), height(height)
 {
 	uint32_t glfwExtensionCnt = 0u;
 	auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCnt);
@@ -56,13 +62,13 @@ VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
 	poolCi.pNext = nullptr;
 	poolCi.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	poolCi.queueFamilyIndex = VulkanGlobal::graphicQueue->getQueueFamilyIndex();
-	pool = device->createCommandPool(std::move(poolCi));
+	cmdPool = device->createCommandPool(std::move(poolCi));
 	VkCommandBufferAllocateInfo cmdBufferInfo;
 	cmdBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	cmdBufferInfo.pNext = nullptr;
 	cmdBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	cmdBufferInfo.commandBufferCount = frameCount;
-	cmdBuffers = pool->allocateCommandBuffers(std::move(cmdBufferInfo));
+	cmdBuffers = cmdPool->allocateCommandBuffers(std::move(cmdBufferInfo));
 	// create sync objects
 	for ([[maybe_unused]] const auto i : std::views::iota(0u, frameCount)) {
 		VkSemaphoreCreateInfo semaphoreCi;
@@ -78,30 +84,52 @@ VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
 								 device->createFence(fenceCi));
 	}
 	loadAssets();
+	createResources();
+	buildDescriptors();
 	buildRenderPass();
 	buildPipeline();
 	buildFrameBuffers();
-	for ([[maybe_unused]] const auto i : std::views::iota(0u, frameCount)) {
-		recordCommandBuffer(i);
-	}
 }
 
 void VulkanGLFWApp::run()
 {
 	while (!glfwWindowShouldClose(window)) {
+		const auto timeStart = std::chrono::steady_clock::now();
 		glfwPollEvents();
 		draw();
+		const auto timeEnd = std::chrono::steady_clock::now();
+		elapsedTime = std::chrono::duration<float>{timeEnd - timeStart}.count();
 	}
 	device->waitIdle();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
 
+void VulkanGLFWApp::handleInput(GLFWwindow* window) {}
+
 void VulkanGLFWApp::loadAssets()
 {
 	ObjMeshLoader loader;
 	auto meshWithNoAccel = loader.load(R"(D:\qem-test.obj)");
 	model = ModelFactoryVk::get().buildTriangleMesh(meshWithNoAccel);
+}
+
+void VulkanGLFWApp::createResources()
+{
+	uniformData.model = glm::mat4{1.f};
+	uniformData.view = glm::lookAt(glm::vec3{2, 0, 0}, glm::vec3{0, 0, 0}, -glm::vec3{0, 1, 0});
+	uniformData.proj = glm::perspective(90.f, (float)width / height, 0.1f, 100.f);
+	uniformData.normalTransform = glm::transpose(glm::inverse(uniformData.model));
+
+	VkBufferCreateInfo bufferCi;
+	bufferCi.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferCi.pNext = nullptr;
+	bufferCi.flags = 0;
+	bufferCi.size = sizeof(uniformData);
+	bufferCi.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+	bufferCi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	uniformBuffer = device->createBuffer(
+		bufferCi, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
 void VulkanGLFWApp::buildRenderPass()
@@ -184,6 +212,39 @@ void VulkanGLFWApp::buildRenderPass()
 	renderPass = device->createRenderPass(desc);
 }
 
+void VulkanGLFWApp::buildDescriptors()
+{
+	DescriptorPoolDesc poolDesc;
+	poolDesc.poolSizes = std::vector<VkDescriptorPoolSize>{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+	poolDesc.ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolDesc.ci.pNext = nullptr;
+	poolDesc.ci.flags = 0;
+	poolDesc.ci.maxSets = frameCount;
+	poolDesc.ci.poolSizeCount = poolDesc.poolSizes.size();
+	poolDesc.ci.pPoolSizes = poolDesc.poolSizes.data();
+	descPool = device->createDescriptorPool(poolDesc);
+	DescriptorSetLayoutDesc layoutDesc;
+	layoutDesc.bindings = std::vector<VkDescriptorSetLayoutBinding>{
+		{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}};
+	layoutDesc.ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutDesc.ci.pNext = nullptr;
+	layoutDesc.ci.flags = 0;
+	layoutDesc.ci.bindingCount = layoutDesc.bindings.size();
+	layoutDesc.ci.pBindings = layoutDesc.bindings.data();
+	descSetLayout = device->createDescriptorSetLayout(layoutDesc);
+	frameResources.resize(frameCount);
+	for (auto& resource : frameResources) {
+		resource.descSet = descSetLayout->createDescriptorSet(descPool);
+	}
+}
+
+void VulkanGLFWApp::bindResources()
+{
+	const auto& descSet = frameResources[currentFrame].descSet;
+	descSet->bindResource(0, uniformBuffer->getBindingInfo());
+	descSet->updateDescriptors();
+}
+
 void VulkanGLFWApp::buildPipeline()
 {
 	GraphicsPipelineDesc pipelineDesc;
@@ -191,8 +252,8 @@ void VulkanGLFWApp::buildPipeline()
 	pipelineDesc.layoutCi.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineDesc.layoutCi.pNext = nullptr;
 	pipelineDesc.layoutCi.flags = 0;
-	pipelineDesc.layoutCi.setLayoutCount = 0;			  // Optional
-	pipelineDesc.layoutCi.pSetLayouts = nullptr;		  // Optional
+	pipelineDesc.layoutCi.setLayoutCount = 1;
+	pipelineDesc.layoutCi.pSetLayouts = &descSetLayout->layout;
 	pipelineDesc.layoutCi.pushConstantRangeCount = 0;	  // Optional
 	pipelineDesc.layoutCi.pPushConstantRanges = nullptr;  // Optional
 	std::shared_ptr<VulkanShader> vs, fs;
@@ -244,18 +305,6 @@ void VulkanGLFWApp::buildPipeline()
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-	// const auto swapchainExtent = VulkanGlobal::swapchain->getExtent();
-	// VkViewport viewport{};
-	// viewport.x = 0.0f;
-	// viewport.y = 0.0f;
-	// viewport.width = (float)swapchainExtent.width;
-	// viewport.height = (float)swapchainExtent.height;
-	// viewport.minDepth = 0.0f;
-	// viewport.maxDepth = 1.0f;
-	// VkRect2D scissor{};
-	// scissor.offset = {0, 0};
-	// scissor.extent = swapchainExtent;
 
 	// dynamic viewport and scissor state
 	VkPipelineViewportStateCreateInfo viewportState{};
@@ -388,6 +437,8 @@ void VulkanGLFWApp::recordCommandBuffer(uint32_t imageIndex)
 	scissor.extent = swapchainExtent;
 	cmdBuffer->setScissor(scissor);
 
+	pipeline->bindDescriptorSets(cmdBuffer, 0, {frameResources[currentFrame].descSet});
+
 	model->bind(cmdBuffer);
 	model->draw(cmdBuffer);
 
@@ -395,11 +446,18 @@ void VulkanGLFWApp::recordCommandBuffer(uint32_t imageIndex)
 	cmdBuffer->endCommandBuffer();
 }
 
+void VulkanGLFWApp::updateResources()
+{
+	uniformBuffer->setData(0, &uniformData, sizeof(uniformData));
+}
+
 void VulkanGLFWApp::draw()
 {
 	// waiting for fence before using it
 	syncObjects[currentFrame].submitFence->wait();
 	syncObjects[currentFrame].submitFence->reset();
+	updateResources();
+	bindResources();
 
 	const auto imageIndex =
 		swapchain->acquireNextImage(syncObjects[currentFrame].imageAcquireComplete, nullptr);

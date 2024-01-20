@@ -284,12 +284,12 @@ void VulkanDevice::destroyDescriptorSetLayout(VkDescriptorSetLayout layout) cons
 }
 
 std::shared_ptr<VulkanDescriptorPool> VulkanDevice::createDescriptorPool(
-	const VkDescriptorPoolCreateInfo& ci) const
+	const DescriptorPoolDesc& desc) const
 {
 	VkDescriptorPool pool;
-	CHECK_VK_ERROR(vkCreateDescriptorPool(device, &ci, nullptr, &pool));
+	CHECK_VK_ERROR(vkCreateDescriptorPool(device, &desc.ci, nullptr, &pool));
 	return std::shared_ptr<VulkanDescriptorPool>{
-		new VulkanDescriptorPool{shared_from_this(), ci, pool}};
+		new VulkanDescriptorPool{shared_from_this(), desc, pool}};
 }
 
 void VulkanDevice::destroyDescriptorPool(VkDescriptorPool pool) const

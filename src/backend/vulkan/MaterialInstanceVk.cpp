@@ -11,12 +11,12 @@ MaterialInstanceVk::MaterialInstanceVk(std::shared_ptr<VulkanDevice> _device,
 									   std::shared_ptr<const MaterialTemplateVk> mtl_template)
 	: device(std::move(_device)), mtlTemplate(std::move(mtl_template))
 {
-	const auto poolSizes = mtlTemplate->getPoolSizes();
-	VkDescriptorPoolCreateInfo ci;
-	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	ci.poolSizeCount = poolSizes.size();
-	ci.pPoolSizes = poolSizes.data();
-	pool = device->createDescriptorPool(ci);
+	DescriptorPoolDesc desc;
+	desc.poolSizes = mtlTemplate->getPoolSizes();
+	desc.ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	desc.ci.poolSizeCount = desc.poolSizes.size();
+	desc.ci.pPoolSizes = desc.poolSizes.data();
+	pool = device->createDescriptorPool(desc);
 
 	descriptorSets.resize(mtlTemplate->setLayouts.size());
 	std::ranges::transform(
