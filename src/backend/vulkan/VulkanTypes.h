@@ -33,5 +33,9 @@ class VulkanSemaphore;
 class MaterialTemplateVk;
 class MaterialInstanceVk;
 class TriangleMeshVk;
+
+class FrameGraphBuilder;
+class FrameGraphPass;
+class FrameGraph;
 }  // namespace xd
 #endif	// XD_RT_VULKANTYPES_H

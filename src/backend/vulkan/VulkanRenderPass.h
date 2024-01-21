@@ -47,7 +47,7 @@ public:
 	VulkanRenderPass& operator=(VulkanRenderPass&& other) noexcept = delete;
 	~VulkanRenderPass();
 	std::shared_ptr<VulkanFrameBuffer> createFrameBuffer(VkFramebufferCreateInfo&& ci) const;
-	std::vector<std::shared_ptr<VulkanSubpass>> getSubpasses() const { return subpasses; }
+	const std::vector<std::shared_ptr<VulkanSubpass>>& getSubpasses() const { return subpasses; }
 
 private:
 	VulkanRenderPass(std::shared_ptr<const VulkanDevice> device,

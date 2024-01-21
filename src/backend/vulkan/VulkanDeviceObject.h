@@ -27,6 +27,8 @@ public:
 	VulkanDeviceObject& operator=(const VulkanDeviceObject& other) = delete;
 	VulkanDeviceObject& operator=(VulkanDeviceObject&& other) noexcept = delete;
 
+	const auto& getDesc() const { return desc; }  // Note: for test purpose only
+
 protected:
 	std::shared_ptr<const VulkanDevice> device;
 	ObjectDescType desc{};

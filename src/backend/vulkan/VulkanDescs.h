@@ -27,6 +27,11 @@ struct DescriptorSetLayoutDesc {
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 };
 struct SubpassDesc {
+	SubpassDesc() = default;
+	SubpassDesc(const SubpassDesc& other) = default;
+	SubpassDesc(SubpassDesc&& other) noexcept = default;
+	SubpassDesc& operator=(const SubpassDesc& other) = default;
+	SubpassDesc& operator=(SubpassDesc&& other) noexcept = default;
 	VkSubpassDescription2 desc;
 	std::vector<VkAttachmentReference2> inputAttaches;
 	std::vector<VkAttachmentReference2> colorAttaches;

@@ -9,6 +9,7 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include "backend/vulkan/FrameGraph.h"
 #include "backend/vulkan/ModelFactoryVk.h"
 #include "backend/vulkan/TriangleMeshVk.h"
 #include "backend/vulkan/VulkanBuffer.h"
@@ -28,7 +29,6 @@
 #include "backend/vulkan/VulkanShader.h"
 #include "backend/vulkan/VulkanSwapchain.h"
 #include "loader/ObjMeshLoader.h"
-
 namespace xd {
 VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
 	: width(width), height(height)
@@ -134,8 +134,8 @@ void VulkanGLFWApp::createResources()
 
 void VulkanGLFWApp::buildRenderPass()
 {
-	RenderPassDesc desc;
-	// build attachment desc
+	FrameGraphBuilder builder;
+	auto& subpass = builder.addSubpass();
 	VkAttachmentDescription2 colorAttachment{};
 	colorAttachment.sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
 	colorAttachment.pNext = nullptr;
@@ -147,69 +147,25 @@ void VulkanGLFWApp::buildRenderPass()
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	desc.attachments.emplace_back(colorAttachment);
-
-	SubpassDesc subpassDesc;
-	// build attachment ref
 	VkAttachmentReference2 colorAttachmentRef{};
 	colorAttachmentRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
 	colorAttachmentRef.pNext = nullptr;
-	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	colorAttachmentRef.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	subpassDesc.colorAttaches.emplace_back(colorAttachmentRef);
-	VkAttachmentReference2 depthStencilRef{};
-	depthStencilRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
-	depthStencilRef.pNext = nullptr;
-	depthStencilRef.attachment = VK_ATTACHMENT_UNUSED;
-	depthStencilRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	depthStencilRef.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	VkAttachmentReference2 resolveRef{};
-	resolveRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
-	resolveRef.pNext = nullptr;
-	resolveRef.attachment = VK_ATTACHMENT_UNUSED;
-	resolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	resolveRef.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	// build subpass
-	VkSubpassDescription2 subpass{};
-	subpass.sType = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
-	subpass.pNext = nullptr;
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.viewMask = 0;
-	subpass.inputAttachmentCount = 0;
-	subpass.pInputAttachments = nullptr;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-	subpass.pResolveAttachments = nullptr;
-	subpass.pDepthStencilAttachment = nullptr;
-	subpass.preserveAttachmentCount = 0;
-	subpass.pPreserveAttachments = nullptr;
-	desc.subpasses.emplace_back(subpass);
-	// build dependencies
-	VkSubpassDependency2 dependency{};
-	dependency.sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
-	dependency.pNext = nullptr;
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependency.dependencyFlags = 0;
-	dependency.viewOffset = 0;
-	// build render pass
-	desc.ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2;
-	desc.ci.pNext = nullptr;
-	desc.ci.flags = 0;
-	desc.ci.attachmentCount = 1;
-	desc.ci.pAttachments = &colorAttachment;
-	desc.ci.subpassCount = 1;
-	desc.ci.pSubpasses = &subpass;
-	desc.ci.dependencyCount = 1;
-	desc.ci.pDependencies = &dependency;
-	desc.ci.correlatedViewMaskCount = 0;
-	desc.ci.pCorrelatedViewMasks = nullptr;
-	renderPass = device->createRenderPass(desc);
+	VkSubpassDependency2 colorAttachExtDep{};
+	colorAttachExtDep.sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
+	colorAttachExtDep.pNext = nullptr;
+	colorAttachExtDep.srcSubpass = VK_SUBPASS_EXTERNAL;
+	colorAttachExtDep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	colorAttachExtDep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	colorAttachExtDep.srcAccessMask = 0;
+	colorAttachExtDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	colorAttachExtDep.dependencyFlags = 0;
+	colorAttachExtDep.viewOffset = 0;
+	const auto colorAttachHandle = subpass.addColorAttach(
+		std::move(colorAttachmentRef), std::move(colorAttachment), std::move(colorAttachExtDep));
+	const auto frameGraph = builder.build(device);
+	renderPass = frameGraph->renderPass;
 }
 
 void VulkanGLFWApp::buildDescriptors()
