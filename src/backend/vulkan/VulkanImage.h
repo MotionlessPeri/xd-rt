@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "VulkanDeviceObject.h"
+#include "VulkanMemory.h"
 #include "VulkanPlatformSpecific.h"
 #include "VulkanTypes.h"
 namespace xd {
@@ -22,11 +23,23 @@ public:
 	VulkanImage& operator=(VulkanImage&& other) noexcept = delete;
 	~VulkanImage();
 	std::shared_ptr<VulkanImageView> createImageView(VkImageViewCreateInfo&& ci) const;
+	void setData(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+				 uint32_t offset,
+				 void* ptr,
+				 uint32_t size) const;
+	void transitState(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+					  VkPipelineStageFlags srcStageMask,
+					  VkPipelineStageFlags dstStageMask,
+					  VkImageMemoryBarrier&& imageBarrier) const;
 
 private:
 	VulkanImage(std::shared_ptr<const VulkanDevice> device, VkImage image);
-	VulkanImage(std::shared_ptr<const VulkanDevice> device, VkImageCreateInfo desc, VkImage image);
+	VulkanImage(std::shared_ptr<const VulkanDevice> device,
+				VkImageCreateInfo desc,
+				VkImage image,
+				VkMemoryPropertyFlags properties);
 	VkImage image = VK_NULL_HANDLE;
+	std::unique_ptr<VulkanMemory> memory;
 	bool isSwapchainImage = false;
 };
 

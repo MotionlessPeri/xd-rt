@@ -21,7 +21,6 @@ public:
 	VulkanSubpass(VulkanSubpass&& other) noexcept = delete;
 	VulkanSubpass& operator=(const VulkanSubpass& other) = delete;
 	VulkanSubpass& operator=(VulkanSubpass&& other) noexcept = delete;
-	std::shared_ptr<VulkanFrameBuffer> createFrameBuffer(VkFramebufferCreateInfo&& ci) const;
 	std::shared_ptr<VulkanGraphicsPipeline> createGraphicsPipeline(
 		GraphicsPipelineDesc&& desc) const;
 
@@ -40,6 +39,7 @@ public:
 	friend class VulkanDevice;
 	friend class VulkanSubpass;
 	friend class VulkanGLFWApp;	 // TODO: remove it ASAP when FrameGraph is built
+	friend class FrameGraph;
 	VulkanRenderPass() = delete;
 	VulkanRenderPass(const VulkanRenderPass& other) = delete;
 	VulkanRenderPass(VulkanRenderPass&& other) noexcept = delete;

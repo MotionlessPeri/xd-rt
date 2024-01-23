@@ -10,110 +10,139 @@
 #include <unordered_set>
 
 #include "VulkanDevice.h"
+#include "VulkanImageView.h"
 #include "VulkanRenderPass.h"
 using namespace xd;
-
-const VkAttachmentReference2& getAttachmentRef(
-	const std::vector<FrameGraphBuilder::FrameGraphNode>& nodes,
-	const FrameGraphBuilder::FrameGraphResourceHandle& from)
+template <typename RefProviderType,
+		  typename Traits = typename std::is_base_of<SubpassDescBase, RefProviderType>::type>
+const VkAttachmentReference2& getAttachmentRef(const RefProviderType& refProvider,
+											   const FrameGraphResourceHandle& from)
 {
-	const auto& fromNode = nodes[from.passIndex];
-	if (from.inputIndex != FrameGraphBuilder::INVALID_INDEX) {
-		return fromNode.inputRefs[from.inputIndex];
+	if (from.inputIndex != FrameGraphResourceHandle::INVALID_INDEX) {
+		return refProvider.inputRefs[from.inputIndex];
 	}
-	else if (from.colorIndex != FrameGraphBuilder::INVALID_INDEX) {
-		return fromNode.colorRefs[from.colorIndex];
+	else if (from.colorIndex != FrameGraphResourceHandle::INVALID_INDEX) {
+		return refProvider.colorRefs[from.colorIndex];
 	}
-	else if (from.depthIndex != FrameGraphBuilder::INVALID_INDEX) {
-		return fromNode.depthRefs[from.depthIndex];
+	else if (from.depthIndex != FrameGraphResourceHandle::INVALID_INDEX) {
+		return refProvider.depthStencilRefs[from.depthIndex];
 	}
 	else {
 		throw std::runtime_error{"invalid from handle!\n"};
 	}
 }
 
-FrameGraphBuilder::FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addInput(
+FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addInput(
+
 	VkAttachmentReference2&& ref,
 	const FrameGraphResourceHandle& from,
 	VkSubpassDependency2&& dep)
 {
 	addExistingResource(ref, from, dep, inputRefs);
-	const FrameGraphResourceHandle to{index, (uint32_t)inputRefs.size() - 1, INVALID_INDEX,
-									  INVALID_INDEX};
+	const FrameGraphResourceHandle to{index, (uint32_t)inputRefs.size() - 1,
+									  FrameGraphResourceHandle::INVALID_INDEX,
+									  FrameGraphResourceHandle::INVALID_INDEX};
 	const ResourceTransitionEdge edge{from, to};
 	recordEdges(edge);
 	// trackPreserveAttaches(edge);
 	return to;
 }
 
-FrameGraphBuilder::FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addInput(
-	VkAttachmentReference2&& ref,
-	VkAttachmentDescription2&& desc,
-	VkSubpassDependency2&& extDep)
-{
-	addNewResource(ref, desc, extDep, inputRefs);
-	return {index, (uint32_t)inputRefs.size() - 1, INVALID_INDEX, INVALID_INDEX};
-}
+FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addColorAttach(
 
-FrameGraphBuilder::FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addColorAttach(
 	VkAttachmentReference2&& ref,
 	const FrameGraphResourceHandle& from,
 	VkSubpassDependency2&& dep)
 {
 	addExistingResource(ref, from, dep, colorRefs);
-	const FrameGraphResourceHandle to{index, INVALID_INDEX, (uint32_t)colorRefs.size() - 1,
-									  INVALID_INDEX};
+	const FrameGraphResourceHandle to{index, FrameGraphResourceHandle::INVALID_INDEX,
+									  (uint32_t)colorRefs.size() - 1,
+									  FrameGraphResourceHandle::INVALID_INDEX};
 	const ResourceTransitionEdge edge{from, to};
 	recordEdges(edge);
 	// trackPreserveAttaches(edge);
 	return to;
 }
 
-FrameGraphBuilder::FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addColorAttach(
+FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addColorAttach(
+
 	VkAttachmentReference2&& ref,
 	VkAttachmentDescription2&& desc,
 	VkSubpassDependency2&& extDep)
 {
 	addNewResource(ref, desc, extDep, colorRefs);
-	return {index, INVALID_INDEX, (uint32_t)colorRefs.size() - 1, INVALID_INDEX};
+	return {index, FrameGraphResourceHandle::INVALID_INDEX, (uint32_t)colorRefs.size() - 1,
+			FrameGraphResourceHandle::INVALID_INDEX};
 }
 
-FrameGraphBuilder::FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addDepthAttach(
+FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addDepthAttach(
+
 	VkAttachmentReference2&& ref,
 	const FrameGraphResourceHandle& from,
 	VkSubpassDependency2&& dep)
 {
-	addExistingResource(ref, from, dep, depthRefs);
-	const FrameGraphResourceHandle to{index, INVALID_INDEX, INVALID_INDEX,
-									  (uint32_t)depthRefs.size() - 1};
+	addExistingResource(ref, from, dep, depthStencilRefs);
+	const FrameGraphResourceHandle to{index, FrameGraphResourceHandle::INVALID_INDEX,
+									  FrameGraphResourceHandle::INVALID_INDEX,
+									  (uint32_t)depthStencilRefs.size() - 1};
 	const ResourceTransitionEdge edge{from, to};
 	recordEdges(edge);
 	// trackPreserveAttaches(edge);
 	return to;
 }
 
-FrameGraphBuilder::FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addDepthAttach(
+FrameGraphResourceHandle FrameGraphBuilder::FrameGraphNode::addDepthAttach(
+
 	VkAttachmentReference2&& ref,
 	VkAttachmentDescription2&& desc,
 	VkSubpassDependency2&& extDep)
 {
-	addNewResource(ref, desc, extDep, depthRefs);
-	return {index, INVALID_INDEX, INVALID_INDEX, (uint32_t)depthRefs.size() - 1};
+	addNewResource(ref, desc, extDep, depthStencilRefs);
+	return {index, FrameGraphResourceHandle::INVALID_INDEX, FrameGraphResourceHandle::INVALID_INDEX,
+			(uint32_t)depthStencilRefs.size() - 1};
 }
 
 void FrameGraphBuilder::FrameGraphNode::addNullDepth()
 {
-	depthRefs.emplace_back(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2, nullptr, VK_ATTACHMENT_UNUSED);
+	depthStencilRefs.emplace_back(VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2, nullptr,
+								  VK_ATTACHMENT_UNUSED);
+}
+
+SubpassDesc FrameGraphBuilder::FrameGraphNode::getSubpassDescription()
+{
+	SubpassDesc subpassDesc;
+	subpassDesc.inputRefs = std::move(inputRefs);
+	subpassDesc.colorRefs = std::move(colorRefs);
+	subpassDesc.depthStencilRefs = std::move(depthStencilRefs);
+	subpassDesc.preserveAttaches = std::move(preserveAttaches);
+	subpassDesc.desc.sType = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
+	subpassDesc.desc.pNext = nullptr;
+	subpassDesc.desc.flags = 0;
+	subpassDesc.desc.pipelineBindPoint = bindPoint;
+	subpassDesc.desc.viewMask = 0;
+	subpassDesc.desc.inputAttachmentCount = subpassDesc.inputRefs.size();
+	subpassDesc.desc.pInputAttachments =
+		subpassDesc.inputRefs.empty() ? nullptr : subpassDesc.inputRefs.data();
+	subpassDesc.desc.colorAttachmentCount = subpassDesc.colorRefs.size();
+	subpassDesc.desc.pColorAttachments =
+		subpassDesc.colorRefs.empty() ? nullptr : subpassDesc.colorRefs.data();
+	subpassDesc.desc.pResolveAttachments = nullptr;
+	subpassDesc.desc.pDepthStencilAttachment =
+		subpassDesc.depthStencilRefs.empty() ? nullptr : subpassDesc.depthStencilRefs.data();
+	subpassDesc.desc.preserveAttachmentCount = subpassDesc.preserveAttaches.size();
+	subpassDesc.desc.pPreserveAttachments =
+		subpassDesc.preserveAttaches.empty() ? nullptr : subpassDesc.preserveAttaches.data();
+	return subpassDesc;
 }
 
 void FrameGraphBuilder::FrameGraphNode::addExistingResource(
 	VkAttachmentReference2& ref,
 	const FrameGraphResourceHandle& from,
 	VkSubpassDependency2& dep,
-	std::vector<VkAttachmentReference2>& emplaceVec) const
+	std::vector<VkAttachmentReference2>& emplaceVec)
 {
 	const auto& nodes = owner->nodes;
-	const auto attachmentIndex = getAttachmentRef(nodes, from).attachment;
+	const auto attachmentIndex = getAttachmentRef(nodes[from.passIndex], from).attachment;
 	ref.attachment = attachmentIndex;
 	emplaceVec.emplace_back(ref);
 
@@ -130,10 +159,11 @@ void FrameGraphBuilder::FrameGraphNode::addNewResource(
 	VkAttachmentReference2& ref,
 	VkAttachmentDescription2& desc,
 	VkSubpassDependency2& dep,
-	std::vector<VkAttachmentReference2>& emplaceVec) const
+	std::vector<VkAttachmentReference2>& emplaceVec)
 {
 	auto& attaches = owner->attachments;
 	attaches.emplace_back(desc);
+	firstDeclaredAttaches.insert(attaches.size() - 1);
 
 	ref.attachment = attaches.size() - 1;
 	emplaceVec.emplace_back(ref);
@@ -148,6 +178,16 @@ void FrameGraphBuilder::FrameGraphNode::recordEdges(const ResourceTransitionEdge
 {
 	ins.emplace_back(edge);
 	owner->nodes[edge.from.passIndex].outs.emplace_back(edge);
+}
+
+FrameGraphBuilder::FrameGraphNode& FrameGraphBuilder::addSubpass(const std::string& name)
+{
+	nodes.emplace_back();
+	auto& ret = nodes.back();
+	ret.owner = this;
+	ret.index = static_cast<uint32_t>(nodes.size() - 1);
+	ret.name = name;
+	return nodes.back();
 }
 
 std::shared_ptr<FrameGraph> FrameGraphBuilder::build(std::shared_ptr<VulkanDevice> device)
@@ -181,15 +221,27 @@ std::shared_ptr<FrameGraph> FrameGraphBuilder::build(std::shared_ptr<VulkanDevic
 	renderPassDesc.ci.correlatedViewMaskCount = 0;
 	renderPassDesc.ci.pCorrelatedViewMasks = nullptr;
 	const auto renderPass = device->createRenderPass(renderPassDesc);
+
+	auto ret = std::make_shared<FrameGraph>(renderPass);
+	const auto& subpasses = renderPass->getSubpasses();
+	ret->subpasses.resize(nodes.size());  // make sure that vector does not re-allocate and move
+	// note: we can use enumerate_view in c++23
+	for (const auto i : std::views::iota(0ull, nodes.size())) {
+		auto& node = nodes[i];
+		ret->subpasses[i] = FrameGraphPass{ret, subpasses[i]};
+		ret->subpasses[i].firstDeclaredAttaches = std::move(node.firstDeclaredAttaches);
+		ret->subpassDict.insert({std::move(node.name), &ret->subpasses[i]});
+	}
+	ret->boundBuffers.resize(renderPassDesc.attachments.size());
 	nodes.clear();
-	return std::make_shared<FrameGraph>(renderPass);
+	return ret;
 }
 
 void FrameGraphBuilder::trackPreserveAttaches(const ResourceTransitionEdge& edge)
 {
 	const auto startIndex = edge.from.passIndex;
 	const auto targetIndex = edge.to.passIndex;
-	const auto attachmentIndex = getAttachmentRef(nodes, edge.from).attachment;
+	const auto attachmentIndex = getAttachmentRef(nodes[edge.from.passIndex], edge.from).attachment;
 	std::vector<bool> visited(nodes.size(), false);
 	visited[targetIndex] = true;
 	std::unordered_set<uint32_t> tagged;
@@ -220,4 +272,41 @@ void FrameGraphBuilder::trackPreserveAttaches(const ResourceTransitionEdge& edge
 		return foundPath;
 	}};
 	dfs(edge.from.passIndex);
+}
+
+void FrameGraphPass::bindAttachmentBuffer(FrameGraphResourceHandle pos,
+										  std::shared_ptr<VulkanImageView> imageView)
+{
+	const auto& attachDesc = getAttachmentRef(subpass->desc, pos);
+	const auto attachIndex = attachDesc.attachment;
+	if (!firstDeclaredAttaches.contains(attachIndex)) {
+		throw std::runtime_error{"Invalid pos\n"};
+	}
+	owner->boundBuffers[attachIndex] = imageView;
+}
+
+void FrameGraph::bindAttachmentBuffer(FrameGraphResourceHandle pos,
+									  std::shared_ptr<VulkanImageView> imageView)
+{
+	auto& pass = subpasses[pos.passIndex];
+	pass.bindAttachmentBuffer(pos, std::move(imageView));
+}
+
+void FrameGraph::buildFrameBuffer(uint32_t width, uint32_t height)
+{
+	const auto imageViewHandleView =
+		boundBuffers | std::views::transform([](const auto& view) { return view->imageView; });
+	const std::vector<VkImageView> attachmentHandles{imageViewHandleView.begin(),
+													 imageViewHandleView.end()};
+	VkFramebufferCreateInfo ci;
+	ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	ci.pNext = nullptr;
+	ci.flags = 0;
+	ci.renderPass = renderPass->pass;
+	ci.attachmentCount = attachmentHandles.size();
+	ci.pAttachments = attachmentHandles.data();
+	ci.width = width;
+	ci.height = height;
+	ci.layers = 1;
+	frameBuffer = renderPass->createFrameBuffer(std::move(ci));
 }

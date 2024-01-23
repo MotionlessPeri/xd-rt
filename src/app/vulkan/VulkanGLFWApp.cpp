@@ -23,6 +23,7 @@
 #include "backend/vulkan/VulkanFrameBuffer.h"
 #include "backend/vulkan/VulkanGlobal.h"
 #include "backend/vulkan/VulkanGraphicsPipeline.h"
+#include "backend/vulkan/VulkanImage.h"
 #include "backend/vulkan/VulkanImageView.h"
 #include "backend/vulkan/VulkanQueue.h"
 #include "backend/vulkan/VulkanRenderPass.h"
@@ -62,13 +63,13 @@ VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
 	poolCi.pNext = nullptr;
 	poolCi.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	poolCi.queueFamilyIndex = VulkanGlobal::graphicQueue->getQueueFamilyIndex();
-	cmdPool = device->createCommandPool(std::move(poolCi));
+	graphicCmdPool = device->createCommandPool(std::move(poolCi));
 	VkCommandBufferAllocateInfo cmdBufferInfo;
 	cmdBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	cmdBufferInfo.pNext = nullptr;
 	cmdBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	cmdBufferInfo.commandBufferCount = frameCount;
-	cmdBuffers = cmdPool->allocateCommandBuffers(std::move(cmdBufferInfo));
+	graphicCmdBuffers = graphicCmdPool->allocateCommandBuffers(std::move(cmdBufferInfo));
 	// create sync objects
 	for ([[maybe_unused]] const auto i : std::views::iota(0u, frameCount)) {
 		VkSemaphoreCreateInfo semaphoreCi;
@@ -111,7 +112,23 @@ void VulkanGLFWApp::loadAssets()
 {
 	ObjMeshLoader loader;
 	auto meshWithNoAccel = loader.load(R"(D:\qem-test.obj)");
+	VkCommandPoolCreateInfo poolCi;
+	poolCi.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolCi.pNext = nullptr;
+	poolCi.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+	poolCi.queueFamilyIndex = VulkanGlobal::transferQueue->getQueueFamilyIndex();
+	const auto transferPool = device->createCommandPool(std::move(poolCi));
+	VkCommandBufferAllocateInfo cmdBufferInfo;
+	cmdBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	cmdBufferInfo.pNext = nullptr;
+	cmdBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	cmdBufferInfo.commandBufferCount = 1;
+	const auto cmdBuffer = transferPool->allocateCommandBuffers(std::move(cmdBufferInfo)).front();
+	cmdBuffer->beginCommandBuffer({VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr,
+								   VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr});
 	model = ModelFactoryVk::get().buildTriangleMesh(meshWithNoAccel);
+	cmdBuffer->endCommandBuffer();
+	cmdBuffer->submitAndWait();
 }
 
 void VulkanGLFWApp::createResources()
@@ -135,7 +152,7 @@ void VulkanGLFWApp::createResources()
 void VulkanGLFWApp::buildRenderPass()
 {
 	FrameGraphBuilder builder;
-	auto& subpass = builder.addSubpass();
+	auto& subpass = builder.addSubpass("main pass");
 	VkAttachmentDescription2 colorAttachment{};
 	colorAttachment.sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
 	colorAttachment.pNext = nullptr;
@@ -162,9 +179,37 @@ void VulkanGLFWApp::buildRenderPass()
 	colorAttachExtDep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	colorAttachExtDep.dependencyFlags = 0;
 	colorAttachExtDep.viewOffset = 0;
-	const auto colorAttachHandle = subpass.addColorAttach(
+	fgHandles.color = subpass.addColorAttach(
 		std::move(colorAttachmentRef), std::move(colorAttachment), std::move(colorAttachExtDep));
-	const auto frameGraph = builder.build(device);
+	VkAttachmentDescription2 depthAttach{};
+	depthAttach.sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
+	depthAttach.pNext = nullptr;
+	depthAttach.format = VK_FORMAT_D32_SFLOAT;
+	depthAttach.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthAttach.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttach.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	depthAttach.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	depthAttach.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttach.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	depthAttach.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	VkAttachmentReference2 depthAttachRef{};
+	depthAttachRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
+	depthAttachRef.pNext = nullptr;
+	depthAttachRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	depthAttachRef.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	VkSubpassDependency2 depthAttachExtDep{};
+	depthAttachExtDep.sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
+	depthAttachExtDep.pNext = nullptr;
+	depthAttachExtDep.srcSubpass = VK_SUBPASS_EXTERNAL;
+	depthAttachExtDep.srcStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	depthAttachExtDep.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	depthAttachExtDep.srcAccessMask = 0;
+	depthAttachExtDep.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	depthAttachExtDep.dependencyFlags = 0;
+	depthAttachExtDep.viewOffset = 0;
+	fgHandles.depth = subpass.addDepthAttach(std::move(depthAttachRef), std::move(depthAttach),
+											 std::move(depthAttachExtDep));
+	frameGraph = builder.build(device);
 	renderPass = frameGraph->renderPass;
 }
 
@@ -333,7 +378,7 @@ void VulkanGLFWApp::buildPipeline()
 	pipelineDesc.ci.pViewportState = &viewportState;
 	pipelineDesc.ci.pRasterizationState = &rasterizer;
 	pipelineDesc.ci.pMultisampleState = &multisampling;
-	pipelineDesc.ci.pDepthStencilState = nullptr;  // Optional
+	pipelineDesc.ci.pDepthStencilState = &depthStencil;	 // Optional
 	pipelineDesc.ci.pColorBlendState = &colorBlending;
 	pipelineDesc.ci.pDynamicState = &dynamicState;
 
@@ -342,30 +387,66 @@ void VulkanGLFWApp::buildPipeline()
 
 void VulkanGLFWApp::buildFrameBuffers()
 {
+	frameBuffers.resize(frameCount);
+	frameBufferResources.resize(frameCount);
 	const auto& swapchainImages = swapchain->getSwapchainImages();
 	const auto swapchainExtent = swapchain->getExtent();
-	const auto subpass = renderPass->getSubpasses().front();
-	frameBuffers.resize(swapchainImages.size());
-	std::ranges::transform(swapchainImages, frameBuffers.begin(), [&](const auto& swapchainImage) {
-		VkFramebufferCreateInfo ci{};
-		ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		ci.attachmentCount = 1;
-		ci.pAttachments = &swapchainImage.view->imageView;
-		ci.width = swapchainExtent.width;
-		ci.height = swapchainExtent.height;
-		ci.layers = 1;
-		return subpass->createFrameBuffer(std::move(ci));
-	});
+	for (const auto i : std::views::iota(0ull, swapchainImages.size())) {
+		const auto& image = swapchainImages[i];
+		frameBufferResources[i].colorAttach = image.image;
+		frameBufferResources[i].colorAttachView = image.view;
+		frameGraph->bindAttachmentBuffer(fgHandles.color, image.view);
+		VkImageCreateInfo imageCi;
+		imageCi.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageCi.pNext = nullptr;
+		imageCi.flags = 0;
+		imageCi.imageType = VK_IMAGE_TYPE_2D;
+		imageCi.format = VK_FORMAT_D32_SFLOAT;
+		imageCi.extent.width = swapchainExtent.width;
+		imageCi.extent.height = swapchainExtent.height;
+		imageCi.extent.depth = 1;
+		imageCi.mipLevels = 1;
+		imageCi.arrayLayers = 1;
+		imageCi.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageCi.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageCi.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		imageCi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		imageCi.queueFamilyIndexCount = 0;
+		imageCi.pQueueFamilyIndices = nullptr;
+		imageCi.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		frameBufferResources[i].depthStencilAttach =
+			device->createImage(imageCi, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		VkImageViewCreateInfo viewCi;
+		viewCi.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewCi.pNext = nullptr;
+		viewCi.flags = 0;
+		viewCi.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewCi.format = VK_FORMAT_D32_SFLOAT;
+		viewCi.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		viewCi.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		viewCi.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		viewCi.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		viewCi.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		viewCi.subresourceRange.baseMipLevel = 0;
+		viewCi.subresourceRange.levelCount = 1;
+		viewCi.subresourceRange.baseArrayLayer = 0;
+		viewCi.subresourceRange.layerCount = 1;
+		frameBufferResources[i].depthStencilView =
+			frameBufferResources[i].depthStencilAttach->createImageView(std::move(viewCi));
+		frameGraph->bindAttachmentBuffer(fgHandles.depth, frameBufferResources[i].depthStencilView);
+		frameGraph->buildFrameBuffer(swapchainExtent.width, swapchainExtent.height);
+		frameBuffers[i] = frameGraph->frameBuffer;
+	}
 }
 
-void VulkanGLFWApp::recordCommandBuffer(uint32_t imageIndex)
+void VulkanGLFWApp::recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+										uint32_t imageIndex)
 {
-	const auto cmdBuffer = cmdBuffers[currentFrame];
-	cmdBuffer->reset();
-	cmdBuffer->beginCommandBuffer({VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr,
-								   VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr});
 	const auto swapchainExtent = swapchain->getExtent();
 	{
+		std::array<VkClearValue, 2> clearValues;
+		clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+		clearValues[1].depthStencil = {1.f, 0};
 		VkRenderPassBeginInfo info;
 		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		info.pNext = nullptr;
@@ -373,9 +454,8 @@ void VulkanGLFWApp::recordCommandBuffer(uint32_t imageIndex)
 		info.framebuffer = frameBuffers[imageIndex]->frameBuffer;
 		info.renderArea.offset = {0, 0};
 		info.renderArea.extent = swapchainExtent;
-		VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-		info.clearValueCount = 1;
-		info.pClearValues = &clearColor;
+		info.clearValueCount = clearValues.size();
+		info.pClearValues = clearValues.data();
 		cmdBuffer->beginRenderPass(info, VK_SUBPASS_CONTENTS_INLINE);
 	}
 	cmdBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
@@ -399,10 +479,9 @@ void VulkanGLFWApp::recordCommandBuffer(uint32_t imageIndex)
 	model->draw(cmdBuffer);
 
 	cmdBuffer->endRenderPass();
-	cmdBuffer->endCommandBuffer();
 }
 
-void VulkanGLFWApp::updateResources()
+void VulkanGLFWApp::updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBuffer)
 {
 	uniformBuffer->setData(0, &uniformData, sizeof(uniformData));
 }
@@ -412,19 +491,24 @@ void VulkanGLFWApp::draw()
 	// waiting for fence before using it
 	syncObjects[currentFrame].submitFence->wait();
 	syncObjects[currentFrame].submitFence->reset();
-	updateResources();
+	const auto cmdBuffer = graphicCmdBuffers[currentFrame];
+	cmdBuffer->reset();
+	cmdBuffer->beginCommandBuffer({VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr,
+								   VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr});
+	updateResources(cmdBuffer);
 	bindResources();
 
 	const auto imageIndex =
 		swapchain->acquireNextImage(syncObjects[currentFrame].imageAcquireComplete, nullptr);
-	recordCommandBuffer(imageIndex);
+	recordCommandBuffer(cmdBuffer, imageIndex);
+	cmdBuffer->endCommandBuffer();
 
 	SubmitInfoContainer submitData;
 	submitData.waitingSemaphores.emplace_back(syncObjects[currentFrame].imageAcquireComplete);
 	submitData.waitingStages.emplace_back(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 	submitData.signalingSemaphores.emplace_back(syncObjects[currentFrame].renderComplete);
 	submitData.signalingFence = syncObjects[currentFrame].submitFence;
-	cmdBuffers[currentFrame]->submit(submitData);
+	cmdBuffer->submit(submitData);
 
 	QueuePresentInfoContainer desc;
 	desc.waitSemaphores.emplace_back(syncObjects[currentFrame].renderComplete);

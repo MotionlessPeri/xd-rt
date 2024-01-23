@@ -33,12 +33,39 @@ void VulkanCommandBuffer::endCommandBuffer() const
 	CHECK_VK_ERROR(vkEndCommandBuffer(cmdBuffer));
 }
 
+void VulkanCommandBuffer::pipelineBarrier(
+	VkPipelineStageFlags srcStageMask,
+	VkPipelineStageFlags dstStageMask,
+	VkDependencyFlags dependencyFlags,
+	const std::vector<VkMemoryBarrier>& memoryBarriers,
+	const std::vector<VkBufferMemoryBarrier>& bufferMemoryBarriers,
+	const std::vector<VkImageMemoryBarrier>& imageMemoryBarriers) const
+{
+	vkCmdPipelineBarrier(cmdBuffer, srcStageMask, dstStageMask, dependencyFlags,
+						 memoryBarriers.size(), memoryBarriers.data(), bufferMemoryBarriers.size(),
+						 bufferMemoryBarriers.data(), imageMemoryBarriers.size(),
+						 imageMemoryBarriers.data());
+}
+
+void VulkanCommandBuffer::pipelineBarrier2(const VkDependencyInfo& info) const
+{
+	vkCmdPipelineBarrier2(cmdBuffer, &info);
+}
+
 void VulkanCommandBuffer::copyBuffers(VkBuffer srcBuffer,
 									  VkBuffer dstBuffer,
 									  uint32_t regionCount,
 									  VkBufferCopy&& pRegions) const
 {
 	vkCmdCopyBuffer(cmdBuffer, srcBuffer, dstBuffer, regionCount, &pRegions);
+}
+
+void VulkanCommandBuffer::copyBufferToImage(VkBuffer srcBuffer,
+											VkImage dstImage,
+											VkImageLayout dstImageLayout,
+											const VkBufferImageCopy& region) const
+{
+	vkCmdCopyBufferToImage(cmdBuffer, srcBuffer, dstImage, dstImageLayout, 1, &region);
 }
 
 void VulkanCommandBuffer::beginRenderPass(const VkRenderPassBeginInfo& info,
@@ -68,6 +95,33 @@ void VulkanCommandBuffer::setScissor(const VkRect2D& scissor) const
 	vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
 }
 
+void VulkanCommandBuffer::bindDescriptorSets(
+	VkPipelineLayout layout,
+	uint32_t firstSet,
+	const std::vector<VkDescriptorSet>& descriptorSets) const
+{
+	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, firstSet,
+							descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+}
+
+void VulkanCommandBuffer::bindVertexBuffer(uint32_t bindingPoint, VkBuffer buffer) const
+{
+	VkDeviceSize offsets[] = {0};
+	vkCmdBindVertexBuffers(cmdBuffer, bindingPoint, 1, &buffer, offsets);
+}
+
+void VulkanCommandBuffer::bindVertexBuffers(uint32_t firstBinding,
+											const std::vector<VkBuffer>& buffers,
+											const std::vector<VkDeviceSize>& offsets) const
+{
+	vkCmdBindVertexBuffers(cmdBuffer, firstBinding, buffers.size(), buffers.data(), offsets.data());
+}
+
+void VulkanCommandBuffer::bindIndexBuffer(VkBuffer buffer, VkIndexType indexType) const
+{
+	vkCmdBindIndexBuffer(cmdBuffer, buffer, 0, indexType);
+}
+
 void VulkanCommandBuffer::draw(uint32_t vertexCount,
 							   uint32_t instanceCount,
 							   uint32_t firstVertex,
@@ -87,10 +141,16 @@ void VulkanCommandBuffer::drawIndexed(uint32_t indexCount,
 
 void VulkanCommandBuffer::submitAndWait() const
 {
-	VkSubmitInfo submitInfo{};
+	VkSubmitInfo submitInfo;
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.pNext = nullptr;
+	submitInfo.waitSemaphoreCount = 0;
+	submitInfo.pWaitSemaphores = nullptr;
+	submitInfo.pWaitDstStageMask = nullptr;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &cmdBuffer;
+	submitInfo.signalSemaphoreCount = 0;
+	submitInfo.pSignalSemaphores = nullptr;
 	pool->getQueue()->submitAndWait({submitInfo}, nullptr);
 }
 
@@ -112,9 +172,10 @@ void VulkanCommandBuffer::submit(const SubmitInfoContainer& container) const
 	submitInfo.pWaitSemaphores = waitingHandles.data();
 	submitInfo.pWaitDstStageMask = container.waitingStages.data();
 	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &cmdBuffer;
 	submitInfo.signalSemaphoreCount = signalingHandles.size();
 	submitInfo.pSignalSemaphores = signalingHandles.data();
-	submitInfo.pCommandBuffers = &cmdBuffer;
+
 	pool->getQueue()->submit({submitInfo}, container.signalingFence);
 }
 

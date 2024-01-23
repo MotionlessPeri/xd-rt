@@ -53,11 +53,11 @@ void VulkanQueue::submitAndWait(const std::vector<VkSubmitInfo>& infos,
 void VulkanQueue::submit(const std::vector<VkSubmitInfo>& infos,
 						 std::shared_ptr<VulkanFence> signalingFence) const
 {
-	vkQueueSubmit(queue, infos.size(), infos.data(),
-				  signalingFence ? signalingFence->fence : VK_NULL_HANDLE);
+	CHECK_VK_ERROR(vkQueueSubmit(queue, infos.size(), infos.data(),
+								 signalingFence ? signalingFence->fence : VK_NULL_HANDLE));
 }
 
 void VulkanQueue::waitIdle() const
 {
-	vkQueueWaitIdle(queue);
+	CHECK_VK_ERROR(vkQueueWaitIdle(queue));
 }

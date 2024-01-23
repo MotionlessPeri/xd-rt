@@ -123,6 +123,15 @@ std::vector<std::shared_ptr<VulkanImage>> VulkanDevice::getSwapchainImages(
 	return {transformedView.begin(), transformedView.end()};
 }
 
+std::shared_ptr<VulkanImage> VulkanDevice::createImage(const VkImageCreateInfo& ci,
+													   VkMemoryPropertyFlags properties) const
+{
+	VkImage handle;
+	vkCreateImage(device, &ci, nullptr, &handle);
+	return std::shared_ptr<VulkanImage>{
+		new VulkanImage{shared_from_this(), ci, handle, properties}};
+}
+
 void VulkanDevice::destroyImage(VkImage image) const
 {
 	vkDestroyImage(device, image, nullptr);
@@ -178,7 +187,7 @@ std::vector<std::shared_ptr<VulkanCommandBuffer>> VulkanDevice::createCommandBuf
 	const std::shared_ptr<const VulkanCommandPool>& poolRef) const
 {
 	std::vector<VkCommandBuffer> handles(ai.commandBufferCount);
-	vkAllocateCommandBuffers(device, &ai, handles.data());
+	CHECK_VK_ERROR(vkAllocateCommandBuffers(device, &ai, handles.data()));
 	std::vector<std::shared_ptr<VulkanCommandBuffer>> ret(ai.commandBufferCount);
 	std::ranges::transform(
 		handles, ret.begin(), [&](VkCommandBuffer handle) -> std::shared_ptr<VulkanCommandBuffer> {
@@ -215,11 +224,25 @@ VkMemoryRequirements VulkanDevice::getBufferMemoryRequirements(VkBuffer buffer) 
 	return memRequirements;
 }
 
+VkMemoryRequirements VulkanDevice::getImageMemoryRequirements(VkImage image) const
+{
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(device, image, &memRequirements);
+	return memRequirements;
+}
+
 void VulkanDevice::bindBufferMemory(VkBuffer buffer,
 									VkDeviceMemory memory,
 									VkDeviceSize memoryOffset) const
 {
 	CHECK_VK_ERROR(vkBindBufferMemory(device, buffer, memory, memoryOffset));
+}
+
+void VulkanDevice::bindImageMemory(VkImage image,
+								   VkDeviceMemory memory,
+								   VkDeviceSize memoryOffset) const
+{
+	CHECK_VK_ERROR(vkBindImageMemory(device, image, memory, memoryOffset));
 }
 
 void VulkanDevice::destroyBuffer(VkBuffer bufferHandle) const

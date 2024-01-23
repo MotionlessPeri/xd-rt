@@ -17,6 +17,7 @@ class VulkanImageView : public VulkanDeviceObject<VkImageViewCreateInfo> {
 public:
 	friend class VulkanDevice;
 	friend class VulkanGLFWApp;	 // TODO: I don't know if this works. Delete it ASAP
+	friend class FrameGraph;
 	VulkanImageView() = delete;
 	VulkanImageView(const VulkanImageView& other) = delete;
 	VulkanImageView(VulkanImageView&& other) noexcept = delete;

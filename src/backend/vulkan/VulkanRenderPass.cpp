@@ -8,13 +8,6 @@
 #include "VulkanDevice.h"
 using namespace xd;
 
-std::shared_ptr<VulkanFrameBuffer> VulkanSubpass::createFrameBuffer(
-	VkFramebufferCreateInfo&& ci) const
-{
-	ci.renderPass = renderPass->pass;
-	return device->createFrameBuffer(ci);
-}
-
 std::shared_ptr<VulkanGraphicsPipeline> VulkanSubpass::createGraphicsPipeline(
 	GraphicsPipelineDesc&& desc) const
 {

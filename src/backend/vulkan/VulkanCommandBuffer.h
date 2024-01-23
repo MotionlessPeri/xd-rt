@@ -23,12 +23,21 @@ public:
 	~VulkanCommandBuffer();
 	void beginCommandBuffer(const VkCommandBufferBeginInfo& info) const;
 	void endCommandBuffer() const;
-
+	void pipelineBarrier(VkPipelineStageFlags srcStageMask,
+						 VkPipelineStageFlags dstStageMask,
+						 VkDependencyFlags dependencyFlags,
+						 const std::vector<VkMemoryBarrier>& memoryBarriers,
+						 const std::vector<VkBufferMemoryBarrier>& bufferMemoryBarriers,
+						 const std::vector<VkImageMemoryBarrier>& imageMemoryBarriers) const;
+	void pipelineBarrier2(const VkDependencyInfo& info) const;
 	void copyBuffers(VkBuffer srcBuffer,
 					 VkBuffer dstBuffer,
 					 uint32_t regionCount,
 					 VkBufferCopy&& pRegions) const;
-
+	void copyBufferToImage(VkBuffer srcBuffer,
+						   VkImage dstImage,
+						   VkImageLayout dstImageLayout,
+						   const VkBufferImageCopy& region) const;
 	void beginRenderPass(const VkRenderPassBeginInfo& info, VkSubpassContents subpass) const;
 	void endRenderPass() const;
 
@@ -37,27 +46,15 @@ public:
 	void setScissor(const VkRect2D& scissor) const;
 	void bindDescriptorSets(VkPipelineLayout layout,
 							uint32_t firstSet,
-							const std::vector<VkDescriptorSet>& descriptorSets) const
-	{
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, firstSet,
-								descriptorSets.size(), descriptorSets.data(), 0, nullptr);
-	}
-	void bindVertexBuffer(uint32_t bindingPoint, VkBuffer buffer) const
-	{
-		VkDeviceSize offsets[] = {0};
-		vkCmdBindVertexBuffers(cmdBuffer, bindingPoint, 1, &buffer, offsets);
-	}
+							const std::vector<VkDescriptorSet>& descriptorSets) const;
+
+	void bindVertexBuffer(uint32_t bindingPoint, VkBuffer buffer) const;
+
 	void bindVertexBuffers(uint32_t firstBinding,
 						   const std::vector<VkBuffer>& buffers,
-						   const std::vector<VkDeviceSize>& offsets) const
-	{
-		vkCmdBindVertexBuffers(cmdBuffer, firstBinding, buffers.size(), buffers.data(),
-							   offsets.data());
-	}
-	void bindIndexBuffer(VkBuffer buffer, VkIndexType indexType) const
-	{
-		vkCmdBindIndexBuffer(cmdBuffer, buffer, 0, indexType);
-	}
+						   const std::vector<VkDeviceSize>& offsets) const;
+
+	void bindIndexBuffer(VkBuffer buffer, VkIndexType indexType) const;
 	void draw(uint32_t vertexCount,
 			  uint32_t instanceCount,
 			  uint32_t firstVertex,

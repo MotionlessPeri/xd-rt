@@ -12,13 +12,14 @@ class VulkanMemory : public VulkanDeviceObject<VkMemoryAllocateInfo> {
 public:
 	friend class VulkanDevice;
 	friend class VulkanBuffer;
+	friend class VulkanImage;
 	VulkanMemory() = delete;
 	VulkanMemory(const VulkanMemory& other) = delete;
 	VulkanMemory(VulkanMemory&& other) noexcept = delete;
 	VulkanMemory& operator=(const VulkanMemory& other) = delete;
 	VulkanMemory& operator=(VulkanMemory&& other) noexcept = delete;
 	~VulkanMemory();
-	void setData(uint32_t offset, void* ptr, uint32_t size) const;
+	void map(uint32_t offset, void* ptr, uint32_t size) const;
 
 private:
 	VulkanMemory(std::shared_ptr<const VulkanDevice> device,

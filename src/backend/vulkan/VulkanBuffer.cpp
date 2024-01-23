@@ -7,9 +7,25 @@
 #include "VulkanCommandPool.h"
 #include "VulkanDevice.h"
 #include "VulkanGlobal.h"
-#include "VulkanPhysicalDevice.h"
 #include "VulkanQueue.h"
 using namespace xd;
+
+void VulkanBuffer::copyToImage(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+							   VkImage dstImage,
+							   VkImageLayout dstImageLayout,
+							   const VkBufferImageCopy& region) const
+{
+	cmdBuffer->copyBufferToImage(buffer, dstImage, dstImageLayout, region);
+}
+
+void VulkanBuffer::transitState(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+								VkPipelineStageFlags srcStageMask,
+								VkPipelineStageFlags dstStageMask,
+								VkBufferMemoryBarrier&& bufferBarrier) const
+{
+	bufferBarrier.buffer = buffer;
+	cmdBuffer->pipelineBarrier(srcStageMask, dstStageMask, 0, {}, {bufferBarrier}, {});
+}
 
 VulkanBuffer::VulkanBuffer(std::shared_ptr<const VulkanDevice> _device,
 						   VkBufferCreateInfo _desc,
@@ -34,7 +50,7 @@ void VulkanBuffer::setData(uint32_t offset, void* ptr, uint32_t size) const
 	const auto memoryType = device->getMemoryType(memory->desc.memoryTypeIndex);
 	if ((memoryType.propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0) {
 		// memory can be accessed by host(CPU)
-		memory->setData(offset, ptr, size);
+		memory->map(offset, ptr, size);
 	}
 	else {
 		// memory can not be directly accessed by host(CPU), a staging buffer is required

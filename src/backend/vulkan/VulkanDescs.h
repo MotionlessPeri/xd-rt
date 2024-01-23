@@ -26,23 +26,21 @@ struct DescriptorSetLayoutDesc {
 	VkDescriptorSetLayoutCreateInfo ci;
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 };
-struct SubpassDesc {
+struct SubpassDescBase {
+	std::vector<VkAttachmentReference2> inputRefs;
+	std::vector<VkAttachmentReference2> colorRefs;
+	std::vector<VkAttachmentReference2>
+		resolveRefs;  // resolve attaches must be in the same size of color attaches
+	std::vector<VkAttachmentReference2> depthStencilRefs;
+	std::vector<uint32_t> preserveAttaches;
+};
+struct SubpassDesc : public SubpassDescBase {
 	SubpassDesc() = default;
 	SubpassDesc(const SubpassDesc& other) = default;
 	SubpassDesc(SubpassDesc&& other) noexcept = default;
 	SubpassDesc& operator=(const SubpassDesc& other) = default;
 	SubpassDesc& operator=(SubpassDesc&& other) noexcept = default;
 	VkSubpassDescription2 desc;
-	std::vector<VkAttachmentReference2> inputAttaches;
-	std::vector<VkAttachmentReference2> colorAttaches;
-	std::vector<VkAttachmentReference2>
-		resolveAttaches;  // resolve attaches must be in the same size of color attaches
-	std::vector<VkAttachmentReference2> depthStencilAttaches;
-	std::vector<uint32_t> preserveAttaches;
-	uint32_t getAttachmentCount() const
-	{
-		return colorAttaches.size() + depthStencilAttaches.size();
-	}
 };
 struct RenderPassDesc {
 	VkRenderPassCreateInfo2 ci;

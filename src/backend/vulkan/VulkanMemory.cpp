@@ -5,13 +5,14 @@
 #include "VulkanMemory.h"
 
 #include "VulkanDevice.h"
+#include "VulkanGlobal.h"
 using namespace xd;
 VulkanMemory::~VulkanMemory()
 {
 	device->freeMemory(memory);
 }
 
-void VulkanMemory::setData(uint32_t offset, void* ptr, uint32_t size) const
+void VulkanMemory::map(uint32_t offset, void* ptr, uint32_t size) const
 {
 	const auto memoryType = device->getMemoryType(desc.memoryTypeIndex);
 	if ((memoryType.propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == 0)

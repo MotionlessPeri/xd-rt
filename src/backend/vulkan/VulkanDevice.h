@@ -35,6 +35,8 @@ public:
 	void destroySwapchain(VkSwapchainKHR swapchainHandle) const;
 
 	std::vector<std::shared_ptr<VulkanImage>> getSwapchainImages(VkSwapchainKHR swapchain) const;
+	std::shared_ptr<VulkanImage> createImage(const VkImageCreateInfo& ci,
+											 VkMemoryPropertyFlags properties) const;
 	void destroyImage(VkImage image) const;
 
 	std::shared_ptr<VulkanImageView> createImageView(const VkImageViewCreateInfo& ci) const;
@@ -58,7 +60,10 @@ public:
 	std::shared_ptr<VulkanBuffer> createBuffer(const VkBufferCreateInfo& ci,
 											   VkMemoryPropertyFlags properties) const;
 	VkMemoryRequirements getBufferMemoryRequirements(VkBuffer buffer) const;
+	VkMemoryRequirements getImageMemoryRequirements(VkImage image) const;
+
 	void bindBufferMemory(VkBuffer buffer, VkDeviceMemory memory, VkDeviceSize memoryOffset) const;
+	void bindImageMemory(VkImage image, VkDeviceMemory memory, VkDeviceSize memoryOffset) const;
 	void destroyBuffer(VkBuffer bufferHandle) const;
 
 	const VkMemoryType& getMemoryType(uint32_t index) const;

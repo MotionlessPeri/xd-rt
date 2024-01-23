@@ -80,7 +80,7 @@ void VulkanGlobal::init(std::vector<const char*> instanceEnabledExtensions,
 		}
 		const auto transferQueueIndex = physicalDevice->getSuitableQueueFamilyIndex(
 			[](VkPhysicalDevice device, const VkQueueFamilyProperties& properties,
-			   int index) -> bool { return properties.queueFlags & (VK_QUEUE_GRAPHICS_BIT); });
+			   int index) -> bool { return properties.queueFlags & (VK_QUEUE_TRANSFER_BIT); });
 		queueFamilyIndexesDup.insert(transferQueueIndex);
 		DeviceDesc deviceDesc;
 		deviceDesc.enabledExtensionNames = std::move(deviceExtensions);

@@ -12,6 +12,7 @@ class VulkanBuffer : public VulkanDeviceObject<VkBufferCreateInfo> {
 public:
 	friend class VulkanDevice;
 	friend class TriangleMeshVk;
+	friend class VulkanGLFWApp;	 // TODO: only for debug purpose, delete it asap
 	VulkanBuffer() = delete;
 	VulkanBuffer(const VulkanBuffer& other) = delete;
 	VulkanBuffer(VulkanBuffer&& other) noexcept = delete;
@@ -28,6 +29,14 @@ public:
 		ret.range = VK_WHOLE_SIZE;
 		return ret;
 	}
+	void copyToImage(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+					 VkImage dstImage,
+					 VkImageLayout dstImageLayout,
+					 const VkBufferImageCopy& region) const;
+	void transitState(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+					  VkPipelineStageFlags srcStageMask,
+					  VkPipelineStageFlags dstStageMask,
+					  VkBufferMemoryBarrier&& bufferBarrier) const;
 
 private:
 	VulkanBuffer(std::shared_ptr<const VulkanDevice> _device,
