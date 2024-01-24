@@ -8,15 +8,17 @@
 
 using namespace xd;
 
-VulkanImageView::VulkanImageView(std::shared_ptr<const VulkanDevice> device,
-								 VkImageViewCreateInfo desc,
-								 VkImageView image_view)
-	: VulkanDeviceObject<VkImageViewCreateInfo>(std::move(device), std::move(desc)),
-	  imageView(image_view)
-{
-}
-
 VulkanImageView::~VulkanImageView()
 {
 	device->destroyImageView(imageView);
+}
+
+VulkanImageView::VulkanImageView(std::shared_ptr<const VulkanDevice> device,
+								 const VkImageViewCreateInfo& desc,
+								 std::shared_ptr<const VulkanImage> image_ref,
+								 VkImageView image_view)
+	: VulkanDeviceObject(std::move(device), desc),
+	  imageRef(std::move(image_ref)),
+	  imageView(image_view)
+{
 }

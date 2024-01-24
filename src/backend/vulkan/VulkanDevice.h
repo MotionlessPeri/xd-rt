@@ -39,7 +39,8 @@ public:
 											 VkMemoryPropertyFlags properties) const;
 	void destroyImage(VkImage image) const;
 
-	std::shared_ptr<VulkanImageView> createImageView(const VkImageViewCreateInfo& ci) const;
+	std::shared_ptr<VulkanImageView> createImageView(std::shared_ptr<const VulkanImage> image,
+													 const VkImageViewCreateInfo& ci) const;
 	void destroyImageView(VkImageView imageView) const;
 
 	std::shared_ptr<VulkanShader> createShader(const VkShaderModuleCreateInfo& ci,
@@ -121,6 +122,9 @@ public:
 
 	void resetFences(const std::vector<std::shared_ptr<VulkanFence>>& fences) const;
 	void resetFences(const std::vector<VkFence>& fenceHandles) const;
+
+	std::shared_ptr<VulkanSampler> createSampler(const SamplerDesc& desc) const;
+	void destroySampler(VkSampler sampler) const;
 
 private:
 	VulkanDevice(VkDevice device,

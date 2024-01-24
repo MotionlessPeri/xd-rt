@@ -40,13 +40,10 @@ VulkanImage::~VulkanImage()
 std::shared_ptr<VulkanImageView> VulkanImage::createImageView(VkImageViewCreateInfo&& ci) const
 {
 	ci.image = image;
-	return device->createImageView(ci);
+	return device->createImageView(shared_from_this(), ci);
 }
 
-void VulkanImage::setData(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
-						  uint32_t offset,
-						  void* ptr,
-						  uint32_t size) const
+void VulkanImage::setData(uint32_t offset, void* ptr, uint32_t size) const
 {
 	const auto memoryType = device->getMemoryType(memory->desc.memoryTypeIndex);
 	if ((memoryType.propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0) {
@@ -67,7 +64,21 @@ void VulkanImage::setData(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
 		const auto stagingBuffer =
 			device->createBuffer(std::move(stagingBufferCi), VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		stagingBuffer->setData(offset, ptr, size);
-		// Copy staging buffer contents to origin buffer
+		// Copy staging buffer contents to origin image
+		const auto transferQueue = VulkanGlobal::transferQueue;
+		VkCommandPoolCreateInfo poolInfo{};
+		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		poolInfo.queueFamilyIndex = transferQueue->getQueueFamilyIndex();
+		const auto cmdPool = device->createCommandPool(std::move(poolInfo));
+
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandBufferCount = 1;
+		const auto cmdBuffer = cmdPool->allocateCommandBuffers(std::move(allocInfo)).front();
+		cmdBuffer->beginCommandBuffer({VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr,
+									   VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr});
 
 		const auto imageAspect = VK_IMAGE_ASPECT_COLOR_BIT;	 // TODO: determine this by other infos
 		VkBufferImageCopy copyDesc;
@@ -82,14 +93,31 @@ void VulkanImage::setData(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
 		copyDesc.imageExtent = desc.extent;
 		stagingBuffer->copyToImage(cmdBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 								   copyDesc);
+		cmdBuffer->endCommandBuffer();
+		cmdBuffer->submitAndWait();
 	}
 }
 
-void VulkanImage::transitState(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
-							   VkPipelineStageFlags srcStageMask,
+void VulkanImage::transitState(VkPipelineStageFlags srcStageMask,
 							   VkPipelineStageFlags dstStageMask,
 							   VkImageMemoryBarrier&& imageBarrier) const
 {
 	imageBarrier.image = image;
+	const auto transferQueue = VulkanGlobal::transferQueue;
+	VkCommandPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	poolInfo.queueFamilyIndex = transferQueue->getQueueFamilyIndex();
+	const auto cmdPool = device->createCommandPool(std::move(poolInfo));
+
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandBufferCount = 1;
+	const auto cmdBuffer = cmdPool->allocateCommandBuffers(std::move(allocInfo)).front();
+	cmdBuffer->beginCommandBuffer({VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr,
+								   VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr});
 	cmdBuffer->pipelineBarrier(srcStageMask, dstStageMask, 0, {}, {}, {imageBarrier});
+	cmdBuffer->endCommandBuffer();
+	cmdBuffer->submitAndWait();
 }

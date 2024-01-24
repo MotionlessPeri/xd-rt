@@ -78,6 +78,8 @@ private:
 	} uniformData;
 	std::shared_ptr<VulkanBuffer> uniformBuffer = nullptr;
 	float elapsedTime = 0.f;
+
+	std::shared_ptr<TextureVk> texture = nullptr;
 };
 
 }  // namespace xd

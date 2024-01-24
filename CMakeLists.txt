@@ -266,6 +266,14 @@ set(VULKAN_FILES
         src/backend/vulkan/VulkanFence.h
         src/backend/vulkan/VulkanSemaphore.cpp
         src/backend/vulkan/VulkanSemaphore.h
+        src/backend/vulkan/TextureFactoryVk.cpp
+        src/backend/vulkan/TextureFactoryVk.h
+        src/backend/vulkan/TextureVk.cpp
+        src/backend/vulkan/TextureVk.h
+        src/backend/vulkan/VulkanSampler.cpp
+        src/backend/vulkan/VulkanSampler.h
+        src/backend/vulkan/SamplerCache.cpp
+        src/backend/vulkan/SamplerCache.h
 )
 
 set(SRC_FILES

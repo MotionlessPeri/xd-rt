@@ -20,6 +20,7 @@
 #include "VulkanMemory.h"
 #include "VulkanQueue.h"
 #include "VulkanRenderPass.h"
+#include "VulkanSampler.h"
 #include "VulkanSemaphore.h"
 #include "VulkanShader.h"
 #include "VulkanSurface.h"
@@ -138,12 +139,13 @@ void VulkanDevice::destroyImage(VkImage image) const
 }
 
 std::shared_ptr<VulkanImageView> VulkanDevice::createImageView(
+	std::shared_ptr<const VulkanImage> image,
 	const VkImageViewCreateInfo& ci) const
 {
 	VkImageView viewHandle;
 	CHECK_VK_ERROR(vkCreateImageView(device, &ci, nullptr, &viewHandle));
 	return std::shared_ptr<VulkanImageView>{
-		new VulkanImageView{shared_from_this(), std::move(ci), viewHandle}};
+		new VulkanImageView{shared_from_this(), std::move(ci), image, viewHandle}};
 }
 
 void VulkanDevice::destroyImageView(VkImageView imageView) const
@@ -442,4 +444,16 @@ void VulkanDevice::resetFences(const std::vector<std::shared_ptr<VulkanFence>>& 
 void VulkanDevice::resetFences(const std::vector<VkFence>& fenceHandles) const
 {
 	CHECK_VK_ERROR(vkResetFences(device, fenceHandles.size(), fenceHandles.data()));
+}
+
+std::shared_ptr<VulkanSampler> VulkanDevice::createSampler(const SamplerDesc& desc) const
+{
+	VkSampler handle;
+	vkCreateSampler(device, &desc, nullptr, &handle);
+	return std::shared_ptr<VulkanSampler>{new VulkanSampler{shared_from_this(), desc, handle}};
+}
+
+void VulkanDevice::destroySampler(VkSampler sampler) const
+{
+	vkDestroySampler(device, sampler, nullptr);
 }

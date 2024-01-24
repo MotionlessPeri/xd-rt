@@ -5,6 +5,8 @@
 #include "VulkanGlobal.h"
 
 #include "ModelFactoryVk.h"
+#include "SamplerCache.h"
+#include "TextureFactoryVk.h"
 #include "backend/vulkan/VulkanDevice.h"
 #include "backend/vulkan/VulkanInstance.h"
 #include "backend/vulkan/VulkanPhysicalDevice.h"
@@ -18,14 +20,14 @@ void VulkanGlobal::init(std::vector<const char*> instanceEnabledExtensions,
 						NativeWindowType handle,
 						int width,
 						int height,
-						VkPhysicalDeviceFeatures features,
+						VkPhysicalDeviceFeatures enabledFeatures,
 						std::vector<const char*> deviceExtensions)
 {
 	std::call_once(initFlag, [&]() {
 		instance = std::make_shared<VulkanInstance>(std::move(instanceEnabledExtensions),
 													std::move(instanceEnabledLayers));
 		physicalDevice =
-			instance->pickPhysicalDevice([](std::shared_ptr<VulkanPhysicalDevice> physicalDevice) {
+			instance->pickPhysicalDevice([&](std::shared_ptr<VulkanPhysicalDevice> physicalDevice) {
 				const VkPhysicalDeviceProperties2 deviceProperties =
 					physicalDevice->getPhysicalDeviceProperties2();
 				const VkBaseOutStructure* ptr =
@@ -41,9 +43,18 @@ void VulkanGlobal::init(std::vector<const char*> instanceEnabledExtensions,
 					reinterpret_cast<const VkPhysicalDeviceDepthStencilResolveProperties&>(*ptr);
 				const VkPhysicalDeviceFeatures deviceFeatures =
 					physicalDevice->getPhysicalDeviceFeatures();
+				const VkBool32* compareSupported =
+					reinterpret_cast<const VkBool32*>(&deviceFeatures);
+				const VkBool32* compareWanted = reinterpret_cast<const VkBool32*>(&enabledFeatures);
+				for (const auto i :
+					 std::views::iota(0ull, sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32))) {
+					if (compareSupported[i] == 0 && compareWanted[i] == 1) {
+						assert(false);
+						return false;
+					}
+				}
 				return deviceProperties.properties.deviceType ==
 						   VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-					   deviceFeatures.geometryShader &&
 					   ((depthResolveProps.supportedDepthResolveModes &
 						 VK_RESOLVE_MODE_SAMPLE_ZERO_BIT) != 0);
 			});
@@ -118,10 +129,14 @@ void VulkanGlobal::init(std::vector<const char*> instanceEnabledExtensions,
 		}
 
 		ModelFactoryVk::init(device);
+		TextureFactoryVk::init(device);
+		SamplerCache::init(device);
 	});
 }
 
 void VulkanGlobal::terminate()
 {
 	ModelFactoryVk::terminate();
+	TextureFactoryVk::terminate();
+	SamplerCache::terminate();
 }

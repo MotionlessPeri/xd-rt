@@ -30,9 +30,18 @@ class VulkanRenderPass;
 class VulkanFrameBuffer;
 class VulkanFence;
 class VulkanSemaphore;
+class VulkanSampler;
+
 class MaterialTemplateVk;
 class MaterialInstanceVk;
+
+class ModelFactoryVk;
 class TriangleMeshVk;
+
+class TextureFactoryVk;
+class TextureVk;
+
+class SamplerCache;
 
 class FrameGraphBuilder;
 class FrameGraphPass;

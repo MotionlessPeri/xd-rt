@@ -22,6 +22,8 @@ public:
 	ImageFilter2D(WrapMode wrap_s, WrapMode wrap_t) : wrapS(wrap_s), wrapT(wrap_t) {}
 
 	virtual ColorRGBA filter(const std::shared_ptr<Image2D>& image, const Vector2f& pos) const = 0;
+	WrapMode getWrapS() const { return wrapS; }
+	WrapMode getWrapT() const { return wrapT; }
 
 protected:
 	/**

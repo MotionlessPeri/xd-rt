@@ -13,9 +13,11 @@
 #include "VulkanTypes.h"
 namespace xd {
 
-class VulkanImage : public VulkanDeviceObject<VkImageCreateInfo> {
+class VulkanImage : public VulkanDeviceObject<VkImageCreateInfo>,
+					public std::enable_shared_from_this<VulkanImage> {
 public:
 	friend class VulkanDevice;
+	friend class TextureVk;
 	VulkanImage() = delete;
 	VulkanImage(const VulkanImage& other) = delete;
 	VulkanImage(VulkanImage&& other) noexcept = delete;
@@ -23,12 +25,8 @@ public:
 	VulkanImage& operator=(VulkanImage&& other) noexcept = delete;
 	~VulkanImage();
 	std::shared_ptr<VulkanImageView> createImageView(VkImageViewCreateInfo&& ci) const;
-	void setData(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
-				 uint32_t offset,
-				 void* ptr,
-				 uint32_t size) const;
-	void transitState(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
-					  VkPipelineStageFlags srcStageMask,
+	void setData(uint32_t offset, void* ptr, uint32_t size) const;
+	void transitState(VkPipelineStageFlags srcStageMask,
 					  VkPipelineStageFlags dstStageMask,
 					  VkImageMemoryBarrier&& imageBarrier) const;
 

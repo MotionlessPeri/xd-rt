@@ -77,5 +77,26 @@ struct DescriptorPoolDesc {
 	VkDescriptorPoolCreateInfo ci;
 	std::vector<VkDescriptorPoolSize> poolSizes;
 };
+struct SamplerDesc : public VkSamplerCreateInfo {
+	friend bool operator<(const SamplerDesc& lhs, const SamplerDesc& rhs)
+	{
+		return std::tie(lhs.sType, lhs.pNext, lhs.flags, lhs.magFilter, lhs.minFilter,
+						lhs.mipmapMode, lhs.addressModeU, lhs.addressModeV, lhs.addressModeW,
+						lhs.mipLodBias, lhs.anisotropyEnable, lhs.maxAnisotropy, lhs.compareEnable,
+						lhs.compareOp, lhs.minLod, lhs.maxLod, lhs.borderColor,
+						lhs.unnormalizedCoordinates) <
+			   std::tie(rhs.sType, rhs.pNext, rhs.flags, rhs.magFilter, rhs.minFilter,
+						rhs.mipmapMode, rhs.addressModeU, rhs.addressModeV, rhs.addressModeW,
+						rhs.mipLodBias, rhs.anisotropyEnable, rhs.maxAnisotropy, rhs.compareEnable,
+						rhs.compareOp, rhs.minLod, rhs.maxLod, rhs.borderColor,
+						rhs.unnormalizedCoordinates);
+	}
+
+	friend bool operator<=(const SamplerDesc& lhs, const SamplerDesc& rhs) { return !(rhs < lhs); }
+
+	friend bool operator>(const SamplerDesc& lhs, const SamplerDesc& rhs) { return rhs < lhs; }
+
+	friend bool operator>=(const SamplerDesc& lhs, const SamplerDesc& rhs) { return !(lhs < rhs); }
+};
 }  // namespace xd
 #endif	// XD_RT_VULKANDESCS_H

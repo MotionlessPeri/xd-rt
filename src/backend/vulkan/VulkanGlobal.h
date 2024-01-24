@@ -19,7 +19,7 @@ public:
 					 NativeWindowType handle,
 					 int width,
 					 int height,
-					 VkPhysicalDeviceFeatures features,
+					 VkPhysicalDeviceFeatures enabledFeatures,
 					 std::vector<const char*> deviceExtensions);
 	static void terminate();
 	inline static std::shared_ptr<VulkanInstance> instance = nullptr;

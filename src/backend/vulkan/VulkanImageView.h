@@ -18,6 +18,7 @@ public:
 	friend class VulkanDevice;
 	friend class VulkanGLFWApp;	 // TODO: I don't know if this works. Delete it ASAP
 	friend class FrameGraph;
+	friend class TextureVk;
 	VulkanImageView() = delete;
 	VulkanImageView(const VulkanImageView& other) = delete;
 	VulkanImageView(VulkanImageView&& other) noexcept = delete;
@@ -27,8 +28,11 @@ public:
 
 private:
 	VulkanImageView(std::shared_ptr<const VulkanDevice> device,
-					VkImageViewCreateInfo desc,
+					const VkImageViewCreateInfo& desc,
+					std::shared_ptr<const VulkanImage> image_ref,
 					VkImageView image_view);
+
+	std::shared_ptr<const VulkanImage> imageRef = nullptr;
 	VkImageView imageView;
 };
 

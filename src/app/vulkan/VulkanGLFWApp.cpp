@@ -11,6 +11,8 @@
 #include <string>
 #include "backend/vulkan/FrameGraph.h"
 #include "backend/vulkan/ModelFactoryVk.h"
+#include "backend/vulkan/TextureFactoryVk.h"
+#include "backend/vulkan/TextureVk.h"
 #include "backend/vulkan/TriangleMeshVk.h"
 #include "backend/vulkan/VulkanBuffer.h"
 #include "backend/vulkan/VulkanCommandBuffer.h"
@@ -30,6 +32,8 @@
 #include "backend/vulkan/VulkanShader.h"
 #include "backend/vulkan/VulkanSwapchain.h"
 #include "loader/ObjMeshLoader.h"
+#include "loader/TextureFactory.h"
+
 namespace xd {
 VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
 	: width(width), height(height)
@@ -48,7 +52,8 @@ VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
 	window = glfwCreateWindow(width, height, title, nullptr, nullptr);
 
 	VulkanGlobal::init(std::move(instanceEnabledExtensions), {"VK_LAYER_KHRONOS_validation"}, true,
-					   glfwGetWin32Window(window), width, height, {},
+					   glfwGetWin32Window(window), width, height,
+					   VkPhysicalDeviceFeatures{.geometryShader = true, .samplerAnisotropy = true},
 					   {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
 	instance = VulkanGlobal::instance;
 	physicalDevice = VulkanGlobal::physicalDevice;
@@ -112,23 +117,26 @@ void VulkanGLFWApp::loadAssets()
 {
 	ObjMeshLoader loader;
 	auto meshWithNoAccel = loader.load(R"(D:\qem-test.obj)");
-	VkCommandPoolCreateInfo poolCi;
-	poolCi.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolCi.pNext = nullptr;
-	poolCi.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-	poolCi.queueFamilyIndex = VulkanGlobal::transferQueue->getQueueFamilyIndex();
-	const auto transferPool = device->createCommandPool(std::move(poolCi));
-	VkCommandBufferAllocateInfo cmdBufferInfo;
-	cmdBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	cmdBufferInfo.pNext = nullptr;
-	cmdBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	cmdBufferInfo.commandBufferCount = 1;
-	const auto cmdBuffer = transferPool->allocateCommandBuffers(std::move(cmdBufferInfo)).front();
-	cmdBuffer->beginCommandBuffer({VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr,
-								   VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr});
 	model = ModelFactoryVk::get().buildTriangleMesh(meshWithNoAccel);
-	cmdBuffer->endCommandBuffer();
-	cmdBuffer->submitAndWait();
+
+	const auto cpuImage = TextureFactory::get().loadUVTexture(R"(D:\uv_checker.jpg)");
+	texture = TextureFactoryVk::get().buildTexture(cpuImage);
+	VkImageMemoryBarrier barrier;
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.pNext = nullptr;
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+	texture->image->transitState(VK_PIPELINE_STAGE_TRANSFER_BIT,
+								 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, std::move(barrier));
 }
 
 void VulkanGLFWApp::createResources()
@@ -216,7 +224,10 @@ void VulkanGLFWApp::buildRenderPass()
 void VulkanGLFWApp::buildDescriptors()
 {
 	DescriptorPoolDesc poolDesc;
-	poolDesc.poolSizes = std::vector<VkDescriptorPoolSize>{{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+	poolDesc.poolSizes = std::vector<VkDescriptorPoolSize>{
+		{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+		{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+	};
 	poolDesc.ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolDesc.ci.pNext = nullptr;
 	poolDesc.ci.flags = 0;
@@ -226,7 +237,8 @@ void VulkanGLFWApp::buildDescriptors()
 	descPool = device->createDescriptorPool(poolDesc);
 	DescriptorSetLayoutDesc layoutDesc;
 	layoutDesc.bindings = std::vector<VkDescriptorSetLayoutBinding>{
-		{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr}};
+		{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr},
+		{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}};
 	layoutDesc.ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutDesc.ci.pNext = nullptr;
 	layoutDesc.ci.flags = 0;
@@ -243,6 +255,7 @@ void VulkanGLFWApp::bindResources()
 {
 	const auto& descSet = frameResources[currentFrame].descSet;
 	descSet->bindResource(0, uniformBuffer->getBindingInfo());
+	descSet->bindResource(1, texture->getBindingInfo(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
 	descSet->updateDescriptors();
 }
 

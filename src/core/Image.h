@@ -46,6 +46,8 @@ public:
 	uint32_t getWidth() const { return extent.x(); }
 	uint32_t getHeight() const { return extent.y(); }
 	Vector2i getExtent() const { return extent; }
+	PixelFormat getFormat() const { return format; }
+	const std::vector<uint8_t>& getData() const { return data; }
 
 private:
 	uint32_t getPixelIndex(uint32_t row, uint32_t col) const;
