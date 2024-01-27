@@ -48,10 +48,12 @@ struct RenderPassDesc {
 	std::vector<SubpassDesc> subpasses;
 	std::vector<VkSubpassDependency2> dependencys;
 };
-struct PipelineDescBase {
-	VkPipelineLayoutCreateInfo layoutCi;
+struct PipelineLayoutDesc {
+	VkPipelineLayoutCreateInfo ci;
+	std::vector<std::shared_ptr<VulkanDescriptorSetLayout>> setLayouts;
+	std::vector<VkPushConstantRange> pushConstants;
 };
-struct GraphicsPipelineDesc : public PipelineDescBase {
+struct GraphicsPipelineDesc {
 	VkGraphicsPipelineCreateInfo ci;
 	std::vector<VkDynamicState> dynamicStates;
 	std::vector<VkPipelineColorBlendAttachmentState> colorBlendStates;

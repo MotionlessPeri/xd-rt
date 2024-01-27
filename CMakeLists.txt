@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 project(xd_rt)
-
+add_compile_definitions(PROJECT_ROOT=R\"\(${PROJECT_SOURCE_DIR}\)\")
 set(USE_VULKAN TRUE)
 set(PLATFORM_WINDOWS TRUE)
 set(CMAKE_CXX_STANDARD 20)
@@ -196,6 +196,7 @@ set(TEXTURE_FILES
 )
 set(MISC_FILES
         src/MathUtil.h
+        src/ConcurrentUtil.h
 )
 set(NON_BUILD_FILES
         ./.clang-format
@@ -274,6 +275,12 @@ set(VULKAN_FILES
         src/backend/vulkan/VulkanSampler.h
         src/backend/vulkan/SamplerCache.cpp
         src/backend/vulkan/SamplerCache.h
+        src/backend/vulkan/MaterialFactoryVk.cpp
+        src/backend/vulkan/MaterialFactoryVk.h
+        src/backend/vulkan/VulkanPipelineLayout.cpp
+        src/backend/vulkan/VulkanPipelineLayout.h
+        src/backend/vulkan/LightManager.cpp
+        src/backend/vulkan/LightManager.h
 )
 
 set(SRC_FILES
@@ -383,3 +390,19 @@ add_custom_command(TARGET xd_rt_playground
         "${GLFW_LIB_DIR}/glfw3.dll"
         $<TARGET_FILE_DIR:xd_rt_playground>
 )
+
+file(GLOB files "src/backend/vulkan/shader/*.vert" "src/backend/vulkan/shader/*.frag")
+set(generated_spvs)
+foreach (file ${files})
+    add_custom_command(
+            OUTPUT ${file}.spv
+            COMMAND Vulkan::glslc ${file} -o ${file}.spv
+            COMMAND ${CMAKE_COMMAND} -E echo "Compiling ${file} to ${file}.spv"
+            MAIN_DEPENDENCY ${file}
+            VERBATIM
+    )
+    list(APPEND generated_spvs ${file}.spv)
+endforeach ()
+add_custom_target(compile_shaders ALL DEPENDS ${generated_spvs})
+add_dependencies(xd_rt compile_shaders)
+unset(generated_spvs)

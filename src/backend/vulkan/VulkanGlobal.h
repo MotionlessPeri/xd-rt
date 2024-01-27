@@ -7,8 +7,8 @@
 #include <memory>
 #include <mutex>
 #include <vector>
-#include "backend/vulkan/VulkanPlatformSpecific.h"
-#include "backend/vulkan/VulkanTypes.h"
+#include "VulkanPlatformSpecific.h"
+#include "VulkanTypes.h"
 namespace xd {
 static std::once_flag initFlag;
 class VulkanGlobal {

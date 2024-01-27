@@ -5,8 +5,9 @@
 #ifndef XD_RT_MATERIALINSTANCEVK_H
 #define XD_RT_MATERIALINSTANCEVK_H
 #include <memory>
+#include <string>
+#include <unordered_map>
 #include <vector>
-
 #include "VulkanTypes.h"
 namespace xd {
 
@@ -14,6 +15,9 @@ class MaterialInstanceVk {
 public:
 	MaterialInstanceVk(std::shared_ptr<VulkanDevice> device,
 					   std::shared_ptr<const MaterialTemplateVk> mtl_template);
+	std::shared_ptr<VulkanDescriptorSet> queryDescriptorSet(const std::string& name) const;
+	void updateDescriptorSets() const;
+	void bindDescriptorSets(std::shared_ptr<VulkanCommandBuffer> cmdBuffer) const;
 
 private:
 	std::shared_ptr<VulkanDevice> device = nullptr;

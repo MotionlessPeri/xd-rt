@@ -12,7 +12,7 @@ VulkanMemory::~VulkanMemory()
 	device->freeMemory(memory);
 }
 
-void VulkanMemory::map(uint32_t offset, void* ptr, uint32_t size) const
+void VulkanMemory::map(uint32_t offset, const void* ptr, uint32_t size) const
 {
 	const auto memoryType = device->getMemoryType(desc.memoryTypeIndex);
 	if ((memoryType.propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == 0)

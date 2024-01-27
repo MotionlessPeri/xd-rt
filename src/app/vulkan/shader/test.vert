@@ -18,6 +18,6 @@ layout(location = 2) out vec3 fragTangent;
 void main() {
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
     fragUV = inUV;
-    // fragNormal = ubo.normalTransform * inNormal;
-    // fragTangent = inTangent;
+    fragNormal = mat3(ubo.normalTransform) * inNormal;
+    fragTangent = inTangent;
 }

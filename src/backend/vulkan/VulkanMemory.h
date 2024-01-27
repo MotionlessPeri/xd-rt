@@ -19,7 +19,7 @@ public:
 	VulkanMemory& operator=(const VulkanMemory& other) = delete;
 	VulkanMemory& operator=(VulkanMemory&& other) noexcept = delete;
 	~VulkanMemory();
-	void map(uint32_t offset, void* ptr, uint32_t size) const;
+	void map(uint32_t offset, const void* ptr, uint32_t size) const;
 
 private:
 	VulkanMemory(std::shared_ptr<const VulkanDevice> device,

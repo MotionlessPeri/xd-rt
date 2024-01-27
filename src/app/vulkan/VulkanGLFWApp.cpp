@@ -10,6 +10,9 @@
 #include <sstream>
 #include <string>
 #include "backend/vulkan/FrameGraph.h"
+#include "backend/vulkan/MaterialFactoryVk.h"
+#include "backend/vulkan/MaterialInstanceVk.h"
+#include "backend/vulkan/MaterialTemplateVk.h"
 #include "backend/vulkan/ModelFactoryVk.h"
 #include "backend/vulkan/TextureFactoryVk.h"
 #include "backend/vulkan/TextureVk.h"
@@ -33,6 +36,7 @@
 #include "backend/vulkan/VulkanSwapchain.h"
 #include "loader/ObjMeshLoader.h"
 #include "loader/TextureFactory.h"
+#include "model/Sphere.h"
 
 namespace xd {
 VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
@@ -91,9 +95,8 @@ VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
 	}
 	loadAssets();
 	createResources();
-	buildDescriptors();
 	buildRenderPass();
-	buildPipeline();
+	buildMaterial();
 	buildFrameBuffers();
 }
 
@@ -115,46 +118,57 @@ void VulkanGLFWApp::handleInput(GLFWwindow* window) {}
 
 void VulkanGLFWApp::loadAssets()
 {
-	ObjMeshLoader loader;
-	auto meshWithNoAccel = loader.load(R"(D:\qem-test.obj)");
-	model = ModelFactoryVk::get().buildTriangleMesh(meshWithNoAccel);
+	// ObjMeshLoader loader;
+	// auto mesh = loader.load(R"(D:\qem-test.obj)");
 
-	const auto cpuImage = TextureFactory::get().loadUVTexture(R"(D:\uv_checker.jpg)");
-	texture = TextureFactoryVk::get().buildTexture(cpuImage);
-	VkImageMemoryBarrier barrier;
-	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.pNext = nullptr;
-	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	barrier.subresourceRange.baseMipLevel = 0;
-	barrier.subresourceRange.levelCount = 1;
-	barrier.subresourceRange.baseArrayLayer = 0;
-	barrier.subresourceRange.layerCount = 1;
-	texture->image->transitState(VK_PIPELINE_STAGE_TRANSFER_BIT,
-								 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, std::move(barrier));
+	auto mesh = std::make_shared<Sphere>(1.f)->getTriangulatedMesh();
+	model = ModelFactoryVk::get().buildTriangleMesh(mesh);
+
+	const auto loadImage = [](const std::string& path) {
+		const auto cpuImage = TextureFactory::get().loadUVTexture(path);
+		auto texture = TextureFactoryVk::get().buildTexture(cpuImage);
+		VkImageMemoryBarrier barrier;
+		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrier.pNext = nullptr;
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+		texture->image->transitState(VK_PIPELINE_STAGE_TRANSFER_BIT,
+									 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, std::move(barrier));
+		return texture;
+	};
+	mtlResources.diffuse = loadImage(R"(D:\uv_checker.jpg)");
+	mtlResources.normal = loadImage(R"(D:\normal_map.png)");
 }
 
 void VulkanGLFWApp::createResources()
 {
 	uniformData.model = glm::mat4{1.f};
-	uniformData.view = glm::lookAt(glm::vec3{2, 0, 0}, glm::vec3{0, 0, 0}, -glm::vec3{0, 1, 0});
+	const auto cameraPos = glm::vec3{1.5, 0, 0};
+	uniformData.view = glm::lookAt(cameraPos, glm::vec3{0, 0, 0}, -glm::vec3{0, 0, 1});
 	uniformData.proj = glm::perspective(90.f, (float)width / height, 0.1f, 100.f);
 	uniformData.normalTransform = glm::transpose(glm::inverse(uniformData.model));
+	uniformData.cameraWorldPos = glm::vec4{cameraPos, 1.f};
 
 	VkBufferCreateInfo bufferCi;
 	bufferCi.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferCi.pNext = nullptr;
 	bufferCi.flags = 0;
 	bufferCi.size = sizeof(uniformData);
-	bufferCi.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+	bufferCi.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	bufferCi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	uniformBuffer = device->createBuffer(
-		bufferCi, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	uniformBuffer = device->createBuffer(bufferCi, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+	lightManager = std::make_shared<LightManager>(device);
+	lightManager->addPointLight({cameraPos, {1, 1, 1}});
 }
 
 void VulkanGLFWApp::buildRenderPass()
@@ -218,184 +232,31 @@ void VulkanGLFWApp::buildRenderPass()
 	fgHandles.depth = subpass.addDepthAttach(std::move(depthAttachRef), std::move(depthAttach),
 											 std::move(depthAttachExtDep));
 	frameGraph = builder.build(device);
-	renderPass = frameGraph->renderPass;
 }
 
-void VulkanGLFWApp::buildDescriptors()
+void VulkanGLFWApp::buildMaterial()
 {
-	DescriptorPoolDesc poolDesc;
-	poolDesc.poolSizes = std::vector<VkDescriptorPoolSize>{
-		{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
-		{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
-	};
-	poolDesc.ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolDesc.ci.pNext = nullptr;
-	poolDesc.ci.flags = 0;
-	poolDesc.ci.maxSets = frameCount;
-	poolDesc.ci.poolSizeCount = poolDesc.poolSizes.size();
-	poolDesc.ci.pPoolSizes = poolDesc.poolSizes.data();
-	descPool = device->createDescriptorPool(poolDesc);
-	DescriptorSetLayoutDesc layoutDesc;
-	layoutDesc.bindings = std::vector<VkDescriptorSetLayoutBinding>{
-		{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr},
-		{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr}};
-	layoutDesc.ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutDesc.ci.pNext = nullptr;
-	layoutDesc.ci.flags = 0;
-	layoutDesc.ci.bindingCount = layoutDesc.bindings.size();
-	layoutDesc.ci.pBindings = layoutDesc.bindings.data();
-	descSetLayout = device->createDescriptorSetLayout(layoutDesc);
-	frameResources.resize(frameCount);
-	for (auto& resource : frameResources) {
-		resource.descSet = descSetLayout->createDescriptorSet(descPool);
-	}
+	mtlTemplate = MaterialFactoryVk::get().createLambertian(frameGraph->subpasses.front().subpass);
+	mtlInstance = mtlTemplate->createInstance();
 }
 
 void VulkanGLFWApp::bindResources()
 {
-	const auto& descSet = frameResources[currentFrame].descSet;
-	descSet->bindResource(0, uniformBuffer->getBindingInfo());
-	descSet->bindResource(1, texture->getBindingInfo(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
-	descSet->updateDescriptors();
-}
-
-void VulkanGLFWApp::buildPipeline()
-{
-	GraphicsPipelineDesc pipelineDesc;
-	// build pipeline layout
-	pipelineDesc.layoutCi.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineDesc.layoutCi.pNext = nullptr;
-	pipelineDesc.layoutCi.flags = 0;
-	pipelineDesc.layoutCi.setLayoutCount = 1;
-	pipelineDesc.layoutCi.pSetLayouts = &descSetLayout->layout;
-	pipelineDesc.layoutCi.pushConstantRangeCount = 0;	  // Optional
-	pipelineDesc.layoutCi.pPushConstantRanges = nullptr;  // Optional
-	std::shared_ptr<VulkanShader> vs, fs;
-	using namespace std::string_literals;
 	{
-		// std::istringstream stream{"./shader/test.vert"};
-		std::ifstream fstream{PROJECT_ROOT + "/vulkan/shader/test.vert.spv"s,
-							  std::ios::ate | std::ios::binary};
-		const std::size_t fileSize = fstream.tellg();
-		fstream.seekg(0);
-		std::vector<char> code(fileSize);
-		fstream.read(code.data(), fileSize);
-		VkShaderModuleCreateInfo ci;
-		ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		ci.pNext = nullptr;
-		ci.flags = 0;
-		ci.codeSize = code.size();
-		ci.pCode = reinterpret_cast<const uint32_t*>(code.data());
-		vs = device->createShader(ci, VK_SHADER_STAGE_VERTEX_BIT);
-		shaders.emplace_back(vs);
+		const auto& set = mtlInstance->queryDescriptorSet("Scene");
+		set->bindResource(0, uniformBuffer->getBindingInfo());
 	}
 	{
-		std::ifstream fstream{PROJECT_ROOT + "/vulkan/shader/test.frag.spv"s,
-							  std::ios::ate | std::ios::binary};
-		const std::size_t fileSize = fstream.tellg();
-		fstream.seekg(0);
-		std::vector<char> code(fileSize);
-		fstream.read(code.data(), fileSize);
-		VkShaderModuleCreateInfo ci;
-		ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		ci.pNext = nullptr;
-		ci.flags = 0;
-		ci.codeSize = code.size();
-		ci.pCode = reinterpret_cast<const uint32_t*>(code.data());
-		fs = device->createShader(ci, VK_SHADER_STAGE_FRAGMENT_BIT);
-		shaders.emplace_back(fs);
+		const auto& set = mtlInstance->queryDescriptorSet("Material");
+		set->bindResource(
+			0, mtlResources.diffuse->getBindingInfo(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+		set->bindResource(
+			1, mtlResources.normal->getBindingInfo(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
 	}
-
-	pipelineDesc.dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-
-	VkPipelineDynamicStateCreateInfo dynamicState{};
-	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicState.dynamicStateCount = static_cast<uint32_t>(pipelineDesc.dynamicStates.size());
-	dynamicState.pDynamicStates = pipelineDesc.dynamicStates.data();
-
-	const auto vertexInputInfo = ModelFactoryVk::get().getVertexInputState();
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-	// dynamic viewport and scissor state
-	VkPipelineViewportStateCreateInfo viewportState{};
-	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount = 1;
-	viewportState.scissorCount = 1;
-
-	VkPipelineRasterizationStateCreateInfo rasterizer{};
-	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterizer.depthClampEnable = VK_FALSE;
-	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterizer.lineWidth = 1.0f;
-	rasterizer.depthBiasEnable = VK_FALSE;
-	rasterizer.depthBiasConstantFactor = 0.0f;	// Optional
-	rasterizer.depthBiasClamp = 0.0f;			// Optional
-	rasterizer.depthBiasSlopeFactor = 0.0f;		// Optional
-
-	VkPipelineMultisampleStateCreateInfo multisampling{};
-	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-	multisampling.minSampleShading = 1.0f;			 // Optional
-	multisampling.pSampleMask = nullptr;			 // Optional
-	multisampling.alphaToCoverageEnable = VK_FALSE;	 // Optional
-	multisampling.alphaToOneEnable = VK_FALSE;		 // Optional
-
-	VkPipelineDepthStencilStateCreateInfo depthStencil{};
-	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_TRUE;
-	depthStencil.depthWriteEnable = VK_TRUE;
-	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-	depthStencil.depthBoundsTestEnable = VK_FALSE;
-	depthStencil.minDepthBounds = 0.0f;	 // Optional
-	depthStencil.maxDepthBounds = 1.0f;	 // Optional
-	depthStencil.stencilTestEnable = VK_FALSE;
-	depthStencil.front = {};  // Optional
-	depthStencil.back = {};	  // Optional
-
-	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-										  VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_TRUE;
-	// over op
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-	pipelineDesc.colorBlendStates.emplace_back(colorBlendAttachment);
-
-	VkPipelineColorBlendStateCreateInfo colorBlending{};
-	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlending.logicOpEnable = VK_FALSE;
-	colorBlending.logicOp = VK_LOGIC_OP_COPY;  // Optional
-	colorBlending.attachmentCount = pipelineDesc.colorBlendStates.size();
-	colorBlending.pAttachments = pipelineDesc.colorBlendStates.data();
-
-	pipelineDesc.shaderStages = {vs->getShaderStageCi(), fs->getShaderStageCi()};
-
-	pipelineDesc.ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineDesc.ci.pNext = nullptr;
-	pipelineDesc.ci.flags = 0;
-	pipelineDesc.ci.stageCount = pipelineDesc.shaderStages.size();
-	pipelineDesc.ci.pStages = pipelineDesc.shaderStages.data();
-
-	pipelineDesc.ci.pVertexInputState = &vertexInputInfo.ci;
-	pipelineDesc.ci.pInputAssemblyState = &inputAssembly;
-	pipelineDesc.ci.pViewportState = &viewportState;
-	pipelineDesc.ci.pRasterizationState = &rasterizer;
-	pipelineDesc.ci.pMultisampleState = &multisampling;
-	pipelineDesc.ci.pDepthStencilState = &depthStencil;	 // Optional
-	pipelineDesc.ci.pColorBlendState = &colorBlending;
-	pipelineDesc.ci.pDynamicState = &dynamicState;
-
-	pipeline = renderPass->getSubpasses().front()->createGraphicsPipeline(std::move(pipelineDesc));
+	{
+		lightManager->bindLightInfos(mtlInstance);
+	}
+	mtlInstance->updateDescriptorSets();
 }
 
 void VulkanGLFWApp::buildFrameBuffers()
@@ -463,7 +324,7 @@ void VulkanGLFWApp::recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmd
 		VkRenderPassBeginInfo info;
 		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		info.pNext = nullptr;
-		info.renderPass = renderPass->pass;
+		info.renderPass = frameGraph->renderPass->pass;
 		info.framebuffer = frameBuffers[imageIndex]->frameBuffer;
 		info.renderArea.offset = {0, 0};
 		info.renderArea.extent = swapchainExtent;
@@ -471,7 +332,7 @@ void VulkanGLFWApp::recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmd
 		info.pClearValues = clearValues.data();
 		cmdBuffer->beginRenderPass(info, VK_SUBPASS_CONTENTS_INLINE);
 	}
-	cmdBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
+	mtlTemplate->bindPipeline(cmdBuffer);
 	VkViewport viewport;
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
@@ -486,7 +347,7 @@ void VulkanGLFWApp::recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmd
 	scissor.extent = swapchainExtent;
 	cmdBuffer->setScissor(scissor);
 
-	pipeline->bindDescriptorSets(cmdBuffer, 0, {frameResources[currentFrame].descSet});
+	mtlInstance->bindDescriptorSets(cmdBuffer);
 
 	model->bind(cmdBuffer);
 	model->draw(cmdBuffer);
@@ -496,6 +357,18 @@ void VulkanGLFWApp::recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmd
 
 void VulkanGLFWApp::updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBuffer)
 {
+	// VkBufferMemoryBarrier barrier;
+	// barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+	// barrier.pNext = nullptr;
+	// barrier.srcAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
+	// barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	// barrier.srcQueueFamilyIndex = 0;
+	// barrier.dstQueueFamilyIndex = 0;
+	// barrier.offset = 0;
+	// barrier.size = VK_WHOLE_SIZE;
+	// uniformBuffer->transitState(
+	//	cmdBuffer, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+	//	VK_PIPELINE_STAGE_TRANSFER_BIT, std::move(barrier));
 	uniformBuffer->setData(0, &uniformData, sizeof(uniformData));
 }
 

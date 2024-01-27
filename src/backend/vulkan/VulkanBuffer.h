@@ -19,7 +19,7 @@ public:
 	VulkanBuffer& operator=(const VulkanBuffer& other) = delete;
 	VulkanBuffer& operator=(VulkanBuffer&& other) noexcept = delete;
 	~VulkanBuffer();
-	void setData(uint32_t offset, void* ptr, uint32_t size) const;
+	void setData(uint32_t offset, const void* ptr, uint32_t size) const;
 	VkDescriptorBufferInfo getBindingInfo(VkDeviceSize offset = 0,
 										  VkDeviceSize range = VK_WHOLE_SIZE) const
 	{

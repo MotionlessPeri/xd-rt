@@ -82,7 +82,8 @@ public:
 	std::shared_ptr<const VulkanPhysicalDevice> getPhysicalDevice() const { return physicalDevice; }
 
 	std::shared_ptr<VulkanDescriptorSetLayout> createDescriptorSetLayout(
-		const DescriptorSetLayoutDesc& desc) const;
+		const DescriptorSetLayoutDesc& desc,
+		std::unordered_map<std::string, uint32_t> nameToBinding) const;
 	void destroyDescriptorSetLayout(VkDescriptorSetLayout layout) const;
 
 	std::shared_ptr<VulkanDescriptorPool> createDescriptorPool(
@@ -103,8 +104,12 @@ public:
 	std::shared_ptr<VulkanFrameBuffer> createFrameBuffer(const VkFramebufferCreateInfo& ci) const;
 	void destroyFrameBuffer(VkFramebuffer buffer) const;
 
+	std::shared_ptr<VulkanPipelineLayout> createPipelineLayout(PipelineLayoutDesc&& desc) const;
+	void destroyPipelineLayout(VkPipelineLayout layout) const;
+
 	std::shared_ptr<VulkanGraphicsPipeline> createGraphicsPipeline(
-		GraphicsPipelineDesc&& desc) const;
+		GraphicsPipelineDesc&& desc,
+		std::shared_ptr<VulkanPipelineLayout> layout) const;
 	void destroyPipeline(VkPipeline pipeline) const;
 
 	std::shared_ptr<VulkanFence> createFence(const VkFenceCreateInfo& ci) const;
@@ -131,9 +136,6 @@ private:
 				 DeviceDesc desc,
 				 std::shared_ptr<const VulkanPhysicalDevice> physical_device,
 				 std::shared_ptr<const VulkanInstance> instance);
-
-	VkPipelineLayout createPipelineLayout(const VkPipelineLayoutCreateInfo& ci) const;
-	VkPipeline createPipeline(const VkGraphicsPipelineCreateInfo& ci) const;
 	VkDevice device;
 	DeviceDesc desc;
 	std::shared_ptr<const VulkanPhysicalDevice> physicalDevice;

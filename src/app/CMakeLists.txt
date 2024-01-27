@@ -56,19 +56,6 @@ target_link_libraries(xd_rt_app ${GLFW_LIBRARIES})
 target_link_libraries(xd_rt_app xd_rt)
 
 file(GLOB files "vulkan/shader/*.vert" "vulkan/shader/*.frag")
-# Custom target will always cause its dependencies to be evaluated and is
-# run by default
-#add_custom_target(compile_app_shaders ALL
-#        DEPENDS dummy_output)
-#add_custom_command(
-#        OUTPUT dummy_output
-#        DEPENDS always_rebuild
-#)
-#add_custom_command(
-#        OUTPUT always_rebuild
-#        COMMAND ${CMAKE_COMMAND} -E echo
-#)
-# add_dependencies(xd_rt_app compile_shaders)
 
 set(generated_spvs)
 foreach (file ${files})
@@ -83,3 +70,4 @@ foreach (file ${files})
 endforeach ()
 add_custom_target(compile_app_shaders ALL DEPENDS ${generated_spvs})
 add_dependencies(xd_rt_app compile_app_shaders)
+unset(generated_spvs)

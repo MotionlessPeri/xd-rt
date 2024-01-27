@@ -3,15 +3,14 @@
 //
 
 #include "VulkanGlobal.h"
-
+#include "MaterialFactoryVk.h"
 #include "ModelFactoryVk.h"
 #include "SamplerCache.h"
 #include "TextureFactoryVk.h"
-#include "backend/vulkan/VulkanDevice.h"
-#include "backend/vulkan/VulkanInstance.h"
-#include "backend/vulkan/VulkanPhysicalDevice.h"
-#include "backend/vulkan/VulkanSurface.h"
-#include "loader/ObjMeshLoader.h"
+#include "VulkanDevice.h"
+#include "VulkanInstance.h"
+#include "VulkanPhysicalDevice.h"
+#include "VulkanSurface.h"
 using namespace xd;
 
 void VulkanGlobal::init(std::vector<const char*> instanceEnabledExtensions,
@@ -131,6 +130,7 @@ void VulkanGlobal::init(std::vector<const char*> instanceEnabledExtensions,
 		ModelFactoryVk::init(device);
 		TextureFactoryVk::init(device);
 		SamplerCache::init(device);
+		MaterialFactoryVk::init(device);
 	});
 }
 
@@ -139,4 +139,5 @@ void VulkanGlobal::terminate()
 	ModelFactoryVk::terminate();
 	TextureFactoryVk::terminate();
 	SamplerCache::terminate();
+	MaterialFactoryVk::terminate();
 }

@@ -18,6 +18,7 @@
 #include "VulkanInstance.h"
 #include "VulkanMacros.h"
 #include "VulkanMemory.h"
+#include "VulkanPipelineLayout.h"
 #include "VulkanQueue.h"
 #include "VulkanRenderPass.h"
 #include "VulkanSampler.h"
@@ -37,18 +38,6 @@ VulkanDevice::VulkanDevice(VkDevice device,
 {
 }
 
-VkPipelineLayout VulkanDevice::createPipelineLayout(const VkPipelineLayoutCreateInfo& ci) const
-{
-	VkPipelineLayout layout;
-	CHECK_VK_ERROR(vkCreatePipelineLayout(device, &ci, nullptr, &layout));
-	return layout;
-}
-VkPipeline VulkanDevice::createPipeline(const VkGraphicsPipelineCreateInfo& ci) const
-{
-	VkPipeline pipeline;
-	CHECK_VK_ERROR(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &ci, nullptr, &pipeline));
-	return pipeline;
-}
 VulkanDevice::~VulkanDevice()
 {
 	vkDestroyDevice(device, nullptr);
@@ -295,12 +284,13 @@ void VulkanDevice::flushMemory(const std::vector<VkMappedMemoryRange>& ranges) c
 }
 
 std::shared_ptr<VulkanDescriptorSetLayout> VulkanDevice::createDescriptorSetLayout(
-	const DescriptorSetLayoutDesc& desc) const
+	const DescriptorSetLayoutDesc& desc,
+	std::unordered_map<std::string, uint32_t> nameToBinding) const
 {
 	VkDescriptorSetLayout layoutHandle;
 	CHECK_VK_ERROR(vkCreateDescriptorSetLayout(device, &desc.ci, nullptr, &layoutHandle));
-	return std::shared_ptr<VulkanDescriptorSetLayout>{
-		new VulkanDescriptorSetLayout{shared_from_this(), desc, layoutHandle}};
+	return std::shared_ptr<VulkanDescriptorSetLayout>{new VulkanDescriptorSetLayout{
+		shared_from_this(), desc, layoutHandle, std::move(nameToBinding)}};
 }
 
 void VulkanDevice::destroyDescriptorSetLayout(VkDescriptorSetLayout layout) const
@@ -328,7 +318,8 @@ std::shared_ptr<VulkanDescriptorSet> VulkanDevice::createDescriptorSet(
 	std::shared_ptr<const VulkanDescriptorPool> pool) const
 {
 	VkDescriptorSet set;
-	CHECK_VK_ERROR(vkAllocateDescriptorSets(device, &ai, &set));
+	const auto res = vkAllocateDescriptorSets(device, &ai, &set);
+	CHECK_VK_ERROR(res);
 	return std::shared_ptr<VulkanDescriptorSet>{
 		new VulkanDescriptorSet{shared_from_this(), ai, std::move(layout), std::move(pool), set}};
 }
@@ -370,12 +361,37 @@ void VulkanDevice::destroyFrameBuffer(VkFramebuffer buffer) const
 	vkDestroyFramebuffer(device, buffer, nullptr);
 }
 
-std::shared_ptr<VulkanGraphicsPipeline> VulkanDevice::createGraphicsPipeline(
-	GraphicsPipelineDesc&& desc) const
+std::shared_ptr<VulkanPipelineLayout> VulkanDevice::createPipelineLayout(
+	PipelineLayoutDesc&& desc) const
 {
-	desc.ci.layout = createPipelineLayout(desc.layoutCi);
+	const auto layoutsView = desc.setLayouts | std::views::transform([](const auto& setLayoutPtr) {
+								 return setLayoutPtr->layout;
+							 });
+	const std::vector<VkDescriptorSetLayout> layouts{layoutsView.begin(), layoutsView.end()};
+	desc.ci.setLayoutCount = layouts.size();
+	desc.ci.pSetLayouts = layouts.data();
+	desc.ci.pushConstantRangeCount = desc.pushConstants.size();
+	desc.ci.pPushConstantRanges = desc.pushConstants.data();
+	VkPipelineLayout handle;
+	vkCreatePipelineLayout(device, &desc.ci, nullptr, &handle);
+	return std::shared_ptr<VulkanPipelineLayout>{
+		new VulkanPipelineLayout{shared_from_this(), desc, handle}};
+}
+
+void VulkanDevice::destroyPipelineLayout(VkPipelineLayout layout) const
+{
+	vkDestroyPipelineLayout(device, layout, nullptr);
+}
+
+std::shared_ptr<VulkanGraphicsPipeline> VulkanDevice::createGraphicsPipeline(
+	GraphicsPipelineDesc&& desc,
+	std::shared_ptr<VulkanPipelineLayout> layout) const
+{
+	desc.ci.layout = layout->handle;
+	VkPipeline handle;
+	vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &desc.ci, nullptr, &handle);
 	return std::shared_ptr<VulkanGraphicsPipeline>{
-		new VulkanGraphicsPipeline{shared_from_this(), desc, createPipeline(desc.ci)}};
+		new VulkanGraphicsPipeline{shared_from_this(), desc, handle, layout}};
 }
 
 void VulkanDevice::destroyPipeline(VkPipeline pipeline) const

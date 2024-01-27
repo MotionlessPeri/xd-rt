@@ -9,20 +9,32 @@
 #include "VulkanDevice.h"
 
 using namespace xd;
-void VulkanDescriptorSet::bindResource(uint32_t index, const VkDescriptorBufferInfo& bufferInfo)
+void VulkanDescriptorSet::bindResource(uint32_t binding, const VkDescriptorBufferInfo& bufferInfo)
 {
-	if (boundBuffers.contains(index)) {
+	if (boundBuffers.contains(binding)) {
 		throw std::runtime_error{"Resource is already bound!\n"};
 	}
-	boundBuffers[index] = bufferInfo;
+	boundBuffers[binding] = bufferInfo;
 }
 
-void VulkanDescriptorSet::bindResource(uint32_t index, const VkDescriptorImageInfo& imageInfo)
+void VulkanDescriptorSet::bindResource(uint32_t binding, const VkDescriptorImageInfo& imageInfo)
 {
-	if (boundImages.contains(index)) {
+	if (boundImages.contains(binding)) {
 		throw std::runtime_error{"Resource is already bound!\n"};
 	}
-	boundImages[index] = imageInfo;
+	boundImages[binding] = imageInfo;
+}
+
+void VulkanDescriptorSet::bindResource(const std::string& name,
+									   const VkDescriptorBufferInfo& bufferInfo)
+{
+	bindResource(layoutRef->queryBinding(name), bufferInfo);
+}
+
+void VulkanDescriptorSet::bindResource(const std::string& name,
+									   const VkDescriptorImageInfo& imageInfo)
+{
+	bindResource(layoutRef->queryBinding(name), imageInfo);
 }
 
 void VulkanDescriptorSet::updateDescriptors()

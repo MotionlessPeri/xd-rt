@@ -8,6 +8,7 @@
 #include <vector>
 #include "GLFWInclude.h"
 #include "backend/vulkan/FrameGraph.h"
+#include "backend/vulkan/LightManager.h"
 #include "backend/vulkan/VulkanTypes.h"
 #include "glm/glm.hpp"
 namespace xd {
@@ -22,9 +23,8 @@ private:
 	void loadAssets();
 	void createResources();
 	void buildRenderPass();
-	void buildDescriptors();
+	void buildMaterial();
 	void bindResources();
-	void buildPipeline();
 	void buildFrameBuffers();
 	void recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmdBuffer, uint32_t imageIndex);
 	void updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBuffer);
@@ -52,14 +52,6 @@ private:
 		FrameGraphResourceHandle color;
 		FrameGraphResourceHandle depth;
 	} fgHandles;
-	std::shared_ptr<VulkanRenderPass> renderPass = nullptr;
-	std::shared_ptr<VulkanGraphicsPipeline> pipeline = nullptr;
-	std::shared_ptr<VulkanDescriptorSetLayout> descSetLayout = nullptr;
-	std::shared_ptr<VulkanDescriptorPool> descPool = nullptr;
-	struct FrameResource {
-		std::shared_ptr<VulkanDescriptorSet> descSet = nullptr;
-	};
-	std::vector<FrameResource> frameResources;
 	struct FrameBufferResource {
 		std::shared_ptr<VulkanImage> colorAttach;
 		std::shared_ptr<VulkanImageView> colorAttachView;
@@ -75,11 +67,17 @@ private:
 		glm::mat4 view;
 		glm::mat4 proj;
 		glm::mat4 normalTransform;	// we use mat4 instead of mat3 because of alignment requirements
+		glm::vec4 cameraWorldPos;
 	} uniformData;
 	std::shared_ptr<VulkanBuffer> uniformBuffer = nullptr;
 	float elapsedTime = 0.f;
-
-	std::shared_ptr<TextureVk> texture = nullptr;
+	struct {
+		std::shared_ptr<TextureVk> diffuse;
+		std::shared_ptr<TextureVk> normal;
+	} mtlResources;
+	std::shared_ptr<MaterialTemplateVk> mtlTemplate = nullptr;
+	std::shared_ptr<MaterialInstanceVk> mtlInstance = nullptr;
+	std::shared_ptr<LightManager> lightManager = nullptr;
 };
 
 }  // namespace xd

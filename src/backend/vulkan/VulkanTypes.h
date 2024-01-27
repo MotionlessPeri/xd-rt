@@ -31,9 +31,7 @@ class VulkanFrameBuffer;
 class VulkanFence;
 class VulkanSemaphore;
 class VulkanSampler;
-
-class MaterialTemplateVk;
-class MaterialInstanceVk;
+class VulkanPipelineLayout;
 
 class ModelFactoryVk;
 class TriangleMeshVk;
@@ -46,5 +44,11 @@ class SamplerCache;
 class FrameGraphBuilder;
 class FrameGraphPass;
 class FrameGraph;
+
+class MaterialTemplateVk;
+class MaterialInstanceVk;
+class MaterialFactoryVk;
+
+class LightManager;
 }  // namespace xd
 #endif	// XD_RT_VULKANTYPES_H

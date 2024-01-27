@@ -4,6 +4,8 @@
 
 #ifndef XD_RT_VULKANDESCRIPTORSETLAYOUT_H
 #define XD_RT_VULKANDESCRIPTORSETLAYOUT_H
+#include <string>
+#include <unordered_map>
 #include <vector>
 #include "VulkanDescs.h"
 #include "VulkanDeviceObject.h"
@@ -24,14 +26,19 @@ public:
 	~VulkanDescriptorSetLayout();
 	std::shared_ptr<VulkanDescriptorSet> createDescriptorSet(
 		std::shared_ptr<VulkanDescriptorPool> pool) const;
-	const VkDescriptorSetLayoutBinding& getBinding(uint32_t index) const;
+	const VkDescriptorSetLayoutBinding& getBinding(uint32_t binding) const;
+	const VkDescriptorSetLayoutBinding& getBinding(const std::string& name) const;
+	uint32_t queryBinding(const std::string& name) const;
 	const std::vector<VkDescriptorSetLayoutBinding>& getBindings() const { return desc.bindings; }
 
 private:
 	VulkanDescriptorSetLayout(std::shared_ptr<const VulkanDevice> device,
 							  const DescriptorSetLayoutDesc& desc,
-							  VkDescriptorSetLayout layout);
+							  VkDescriptorSetLayout layout,
+							  std::unordered_map<std::string, uint32_t> nameToBinding);
 	VkDescriptorSetLayout layout = VK_NULL_HANDLE;
+	std::unordered_map<uint32_t, uint32_t> bindingToIndex;
+	std::unordered_map<std::string, uint32_t> nameToBinding;
 };
 
 }  // namespace xd

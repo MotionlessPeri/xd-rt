@@ -12,10 +12,7 @@ namespace xd {
 
 class VulkanPipelineBase {
 public:
-	VulkanPipelineBase(VkPipeline pipeline, VkPipelineLayout layout)
-		: pipeline(pipeline), layout(layout)
-	{
-	}
+	VulkanPipelineBase(VkPipeline pipeline, std::shared_ptr<VulkanPipelineLayout> layout);
 
 	VulkanPipelineBase(const VulkanPipelineBase& other) = delete;
 	VulkanPipelineBase(VulkanPipelineBase&& other) noexcept = delete;
@@ -25,10 +22,13 @@ public:
 		std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
 		uint32_t firstSet,
 		const std::vector<std::shared_ptr<VulkanDescriptorSet>>& descSets) const;
+	std::shared_ptr<VulkanPipelineLayout> getLayout() const { return layout; }
 
 protected:
+	void bindPipelineInternal(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+							  VkPipelineBindPoint bindPoint) const;
 	VkPipeline pipeline = VK_NULL_HANDLE;
-	VkPipelineLayout layout = VK_NULL_HANDLE;
+	std::shared_ptr<VulkanPipelineLayout> layout = nullptr;
 };
 
 class VulkanGraphicsPipeline : public VulkanDeviceObject<GraphicsPipelineDesc>,
@@ -43,10 +43,11 @@ public:
 	VulkanGraphicsPipeline& operator=(VulkanGraphicsPipeline&& other) noexcept = delete;
 	~VulkanGraphicsPipeline();
 
-private:
 	VulkanGraphicsPipeline(std::shared_ptr<const VulkanDevice> device,
 						   const GraphicsPipelineDesc& desc,
-						   VkPipeline pipeline);
+						   VkPipeline pipeline,
+						   std::shared_ptr<VulkanPipelineLayout> layout);
+	void bindPipeline(std::shared_ptr<VulkanCommandBuffer> cmdBuffer) const;
 };
 
 }  // namespace xd

@@ -3,21 +3,23 @@
 //
 
 #include "MaterialTemplateVk.h"
-
 #include <algorithm>
 #include <ranges>
+#include <stdexcept>
 #include <unordered_map>
 #include "MaterialInstanceVk.h"
+#include "VulkanCommandBuffer.h"
 #include "VulkanDescriptorSetLayout.h"
+#include "VulkanGraphicsPipeline.h"
+#include "VulkanPipelineLayout.h"
 using namespace xd;
-MaterialTemplateVk::MaterialTemplateVk(
-	std::shared_ptr<VulkanDevice> device,
-	std::vector<std::shared_ptr<VulkanShader>> shaders,
-	std::vector<std::shared_ptr<VulkanDescriptorSetLayout>> set_layouts,
-	std::shared_ptr<VulkanGraphicsPipeline> pipeline)
+MaterialTemplateVk::MaterialTemplateVk(std::shared_ptr<VulkanDevice> device,
+									   std::vector<std::shared_ptr<VulkanShader>> shaders,
+									   std::unordered_map<std::string, uint32_t> set_name_to_index,
+									   std::shared_ptr<VulkanGraphicsPipeline> pipeline)
 	: device(std::move(device)),
 	  shaders(std::move(shaders)),
-	  setLayouts(std::move(set_layouts)),
+	  setNameToIndex(std::move(set_name_to_index)),
 	  pipeline(std::move(pipeline))
 {
 }
@@ -38,13 +40,26 @@ std::vector<VkDescriptorPoolSize> MaterialTemplateVk::getPoolSizes() const
 			poolSizes[type] = {type, count};
 		}
 	};
-	for (const auto& setLayout : setLayouts) {
+	for (const auto& setLayout : pipeline->getLayout()->getDesc().setLayouts) {
 		const auto& bindings = setLayout->getBindings();
 		for (const auto& binding : bindings) {
 			addPoolSize(binding.descriptorType, binding.descriptorCount);
 		}
 	}
 
-	const auto keysView = poolSizes | std::views::keys;
+	const auto keysView = poolSizes | std::views::values;
 	return {keysView.begin(), keysView.end()};
+}
+
+uint32_t MaterialTemplateVk::querySetIndex(const std::string& name) const
+{
+	if (const auto it = setNameToIndex.find(name); it != setNameToIndex.end()) {
+		return it->second;
+	}
+	throw std::invalid_argument{"invalid name.\n"};
+}
+
+void MaterialTemplateVk::bindPipeline(std::shared_ptr<VulkanCommandBuffer> cmdBuffer) const
+{
+	pipeline->bindPipeline(cmdBuffer);
 }

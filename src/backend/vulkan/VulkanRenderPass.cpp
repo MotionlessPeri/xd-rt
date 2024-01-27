@@ -9,11 +9,12 @@
 using namespace xd;
 
 std::shared_ptr<VulkanGraphicsPipeline> VulkanSubpass::createGraphicsPipeline(
-	GraphicsPipelineDesc&& desc) const
+	GraphicsPipelineDesc&& desc,
+	std::shared_ptr<VulkanPipelineLayout> layout) const
 {
 	desc.ci.renderPass = renderPass->pass;
 	desc.ci.subpass = index;
-	return device->createGraphicsPipeline(std::move(desc));
+	return device->createGraphicsPipeline(std::move(desc), layout);
 }
 
 VulkanSubpass::VulkanSubpass(std::shared_ptr<const VulkanDevice> device,

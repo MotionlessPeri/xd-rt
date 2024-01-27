@@ -22,7 +22,8 @@ public:
 	VulkanSubpass& operator=(const VulkanSubpass& other) = delete;
 	VulkanSubpass& operator=(VulkanSubpass&& other) noexcept = delete;
 	std::shared_ptr<VulkanGraphicsPipeline> createGraphicsPipeline(
-		GraphicsPipelineDesc&& desc) const;
+		GraphicsPipelineDesc&& desc,
+		std::shared_ptr<VulkanPipelineLayout> layout) const;
 
 private:
 	VulkanSubpass(std::shared_ptr<const VulkanDevice> device,

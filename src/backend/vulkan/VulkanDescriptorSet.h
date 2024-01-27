@@ -14,14 +14,16 @@ namespace xd {
 class VulkanDescriptorSet : public VulkanDeviceObject<VkDescriptorSetAllocateInfo> {
 public:
 	friend class VulkanDevice;
-	friend class VulkanPipelineBase;
+	friend class VulkanPipelineLayout;
 	VulkanDescriptorSet() = delete;
 	VulkanDescriptorSet(const VulkanDescriptorSet& other) = delete;
 	VulkanDescriptorSet(VulkanDescriptorSet&& other) noexcept = delete;
 	VulkanDescriptorSet& operator=(const VulkanDescriptorSet& other) = delete;
 	VulkanDescriptorSet& operator=(VulkanDescriptorSet&& other) noexcept = delete;
-	void bindResource(uint32_t index, const VkDescriptorBufferInfo& bufferInfo);
-	void bindResource(uint32_t index, const VkDescriptorImageInfo& imageInfo);
+	void bindResource(uint32_t binding, const VkDescriptorBufferInfo& bufferInfo);
+	void bindResource(uint32_t binding, const VkDescriptorImageInfo& imageInfo);
+	void bindResource(const std::string& name, const VkDescriptorBufferInfo& bufferInfo);
+	void bindResource(const std::string& name, const VkDescriptorImageInfo& imageInfo);
 	void updateDescriptors();
 
 private:
