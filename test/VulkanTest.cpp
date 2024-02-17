@@ -1,23 +1,11 @@
 //
 // Created by Frank on 2024/1/11.
 //
-#include "app/vulkan/GLFWGlobal.h"
-#include "app/vulkan/VulkanGLFWApp.h"
 #include "backend/vulkan/FrameGraph.h"
 #include "backend/vulkan/VulkanGlobal.h"
 #include "backend/vulkan/VulkanRenderPass.h"
 #include "gtest/gtest.h"
 using namespace xd;
-TEST(VulkanTestSuite, GLFWWindowTest)
-{
-	GLFWGlobal::init();
-	constexpr int WIDTH = 1000;
-	constexpr int HEIGHT = 800;
-	const char* TITLE = "glfw window test";
-	VulkanGLFWApp app{WIDTH, HEIGHT, TITLE};
-	app.run();
-}
-
 void addNewColorAttach(FrameGraphBuilder::FrameGraphNode& node,
 					   const std::string& name,
 					   std::unordered_map<std::string, FrameGraphResourceHandle>& resources)
@@ -75,35 +63,36 @@ void addColorAttachToInput(FrameGraphBuilder::FrameGraphNode& node,
 	colorToInputDep.viewOffset = 0;
 	resources[name] = node.addColorAttach(std::move(inputRef), from, std::move(colorToInputDep));
 }
+
 TEST(VulkanTestSuite, FrameGraphBuildTest)
 {
 	VulkanGlobal::init({}, {"VK_LAYER_KHRONOS_validation"}, false, nullptr, 0, 0, {}, {});
 	FrameGraphBuilder builder;
 	std::unordered_map<std::string, FrameGraphResourceHandle> resources;
 	{
-		auto& a = builder.addSubpass("a");
+		auto& a = builder.addPass("a");
 		addNewColorAttach(a, "attach_a0", resources);
 		addNewColorAttach(a, "attach_a1", resources);
 	}
 	{
-		auto& b = builder.addSubpass("b");
+		auto& b = builder.addPass("b");
 		addColorAttachToInput(b, resources["attach_a0"], "input_a0_b", resources);
 		addNewColorAttach(b, "attach_b0", resources);
 	}
 	{
-		auto& c = builder.addSubpass("c");
+		auto& c = builder.addPass("c");
 		addColorAttachToInput(c, resources["attach_a0"], "input_a0_c", resources);
 		addNewColorAttach(c, "attach_c0", resources);
 	}
 	{
-		auto& d = builder.addSubpass("d");
+		auto& d = builder.addPass("d");
 		addColorAttachToInput(d, resources["attach_a1"], "input_a1_d", resources);
 		addColorAttachToInput(d, resources["attach_b0"], "input_b0_d", resources);
 		addColorAttachToInput(d, resources["attach_c0"], "input_c0_d", resources);
 		addNewColorAttach(d, "attach_d0", resources);
 	}
 	{
-		auto& e = builder.addSubpass("e");
+		auto& e = builder.addPass("e");
 		addColorAttachToInput(e, resources["attach_a0"], "input_a0_e", resources);
 		addNewColorAttach(e, "attach_e0", resources);
 	}

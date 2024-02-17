@@ -40,32 +40,13 @@
 
 namespace xd {
 VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
-	: width(width), height(height)
+	: VulkanGLFWAppBase(width, height, title)
 {
-	uint32_t glfwExtensionCnt = 0u;
-	auto glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCnt);
+}
 
-	std::vector<const char*> instanceEnabledExtensions{};
-	for ([[maybe_unused]] const auto i : std::views::iota(0u, glfwExtensionCnt)) {
-		instanceEnabledExtensions.emplace_back(glfwExtensions[i]);
-	}
-
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
-	window = glfwCreateWindow(width, height, title, nullptr, nullptr);
-
-	VulkanGlobal::init(std::move(instanceEnabledExtensions), {"VK_LAYER_KHRONOS_validation"}, true,
-					   glfwGetWin32Window(window), width, height,
-					   VkPhysicalDeviceFeatures{.geometryShader = true, .samplerAnisotropy = true},
-					   {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
-	instance = VulkanGlobal::instance;
-	physicalDevice = VulkanGlobal::physicalDevice;
-	device = VulkanGlobal::device;
-	swapchain = VulkanGlobal::swapchain;
-	presentQueue = VulkanGlobal::presentQueue;
-	frameCount = swapchain->getSwapchainImageCount();
-
+void VulkanGLFWApp::initVulkan(const std::vector<const char*>& instanceEnabledExtensions)
+{
+	VulkanGLFWAppBase::initVulkan(instanceEnabledExtensions);
 	// allocate command buffers
 	VkCommandPoolCreateInfo poolCi;
 	poolCi.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -93,25 +74,6 @@ VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
 								 device->createSemaphore(semaphoreCi),
 								 device->createFence(fenceCi));
 	}
-	loadAssets();
-	createResources();
-	buildRenderPass();
-	buildMaterial();
-	buildFrameBuffers();
-}
-
-void VulkanGLFWApp::run()
-{
-	while (!glfwWindowShouldClose(window)) {
-		const auto timeStart = std::chrono::steady_clock::now();
-		glfwPollEvents();
-		draw();
-		const auto timeEnd = std::chrono::steady_clock::now();
-		elapsedTime = std::chrono::duration<float>{timeEnd - timeStart}.count();
-	}
-	device->waitIdle();
-	glfwDestroyWindow(window);
-	glfwTerminate();
 }
 
 void VulkanGLFWApp::handleInput(GLFWwindow* window) {}
@@ -169,12 +131,14 @@ void VulkanGLFWApp::createResources()
 
 	lightManager = std::make_shared<LightManager>(device);
 	lightManager->addPointLight({cameraPos, {1, 1, 1}});
+
+	buildMaterial();
 }
 
 void VulkanGLFWApp::buildRenderPass()
 {
 	FrameGraphBuilder builder;
-	auto& subpass = builder.addSubpass("main pass");
+	auto& subpass = builder.addPass("main pass");
 	VkAttachmentDescription2 colorAttachment{};
 	colorAttachment.sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
 	colorAttachment.pNext = nullptr;
@@ -404,3 +368,13 @@ void VulkanGLFWApp::draw()
 	currentFrame = (currentFrame + 1) % frameCount;
 }
 }  // namespace xd
+
+int main(int argc, char* argv[])
+{
+	constexpr int WIDTH = 1000;
+	constexpr int HEIGHT = 800;
+	const char* TITLE = "glfw basic graphic test";
+	xd::VulkanGLFWApp app{WIDTH, HEIGHT, TITLE};
+	app.init();
+	app.run();
+}

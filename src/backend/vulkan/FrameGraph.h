@@ -23,6 +23,38 @@ struct FrameGraphResourceHandle {
 	uint32_t colorIndex = INVALID_INDEX;
 	uint32_t depthIndex = INVALID_INDEX;
 };
+enum class FGPassType { Graphic = 0, Compute, RayTracing };
+class FGResource {};
+class FGImage;
+class FGBuffer;
+class FGImageBinding;
+class FGBufferBinding;
+
+class FGImage {
+public:
+	std::shared_ptr<VulkanImage> create() const;
+
+private:
+	std::vector<FGImageBinding*> bindings;
+};
+class FGBuffer {
+public:
+	std::shared_ptr<VulkanBuffer> create() const;
+
+private:
+	std::vector<FGBufferBinding*> bindings;
+};
+// Note: we can not deduce whether a resource is written or read(or both) in a binding: For example,
+// a storage buffer(UAV access) is allowed to be written and read simultaneously in a
+// pipeline(though its weird). Additional info is required to represent read or write
+class FGResourceBinding {};
+class FGColorAttachment : public FGResourceBinding {
+public:
+private:
+};
+class FGDepthAttachment : public FGResourceBinding {};
+class FGInputAttachment : public FGResourceBinding {};
+class FGResolveAttachment : public FGResourceBinding {};
 class FrameGraphBuilder {
 public:
 	struct ResourceTransitionEdge {
@@ -69,7 +101,7 @@ public:
 							std::vector<VkAttachmentReference2>& emplaceVec);
 		void recordEdges(const ResourceTransitionEdge& edge);
 	};
-	FrameGraphNode& addSubpass(const std::string& name);
+	FrameGraphNode& addPass(const std::string& name);
 
 	std::shared_ptr<FrameGraph> build(std::shared_ptr<VulkanDevice> device);
 

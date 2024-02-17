@@ -136,7 +136,7 @@ std::shared_ptr<VulkanSampler> TextureFactoryVk::buildSampler(
 			return VK_FILTER_LINEAR;
 		}
 	};
-	SamplerDesc samplerInfo{};
+	SamplerDesc samplerInfo;
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.pNext = nullptr;
 	samplerInfo.flags = 0;

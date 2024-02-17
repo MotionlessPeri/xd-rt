@@ -14,7 +14,7 @@ namespace xd {
 class TriangleMeshVk {
 public:
 	friend class ModelFactoryVk;
-	friend class VulkanGLFWApp;	 // TODO: remove it ASAP when FrameGraph is built
+	friend class VulkanGLFWAppBase;	 // TODO: remove it ASAP when FrameGraph is built
 	TriangleMeshVk() = delete;
 	TriangleMeshVk(const TriangleMeshVk& other) = delete;
 	TriangleMeshVk(TriangleMeshVk&& other) noexcept = delete;

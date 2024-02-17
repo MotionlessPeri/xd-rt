@@ -2,41 +2,36 @@
 // Created by Frank on 2024/1/10.
 //
 
-#ifndef XD_RT_VULKANGLFWWINDOW_H
-#define XD_RT_VULKANGLFWWINDOW_H
+#ifndef XD_RT_VULKANGLFWAPP_H
+#define XD_RT_VULKANGLFWAPP_H
 #include <memory>
 #include <vector>
-#include "GLFWInclude.h"
+#include "../appBase/VulkanGLFWAppBase.h"
 #include "backend/vulkan/FrameGraph.h"
 #include "backend/vulkan/LightManager.h"
 #include "backend/vulkan/VulkanTypes.h"
 #include "glm/glm.hpp"
 namespace xd {
 
-class VulkanGLFWApp {
+class VulkanGLFWApp : public VulkanGLFWAppBase {
 public:
 	VulkanGLFWApp(int width, int height, const char* title);
-	void run();
 
 private:
-	void handleInput(GLFWwindow* window);
-	void loadAssets();
-	void createResources();
-	void buildRenderPass();
+	void initVulkan(const std::vector<const char*>& instanceEnabledExtensions) override;
+
+	void handleInput(GLFWwindow* window) override;
+	void loadAssets() override;
+	void createResources() override;
+	void buildRenderPass() override;
 	void buildMaterial();
-	void bindResources();
-	void buildFrameBuffers();
-	void recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmdBuffer, uint32_t imageIndex);
-	void updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBuffer);
-	void draw();
-	int width, height;
-	GLFWwindow* window = nullptr;
-	std::shared_ptr<VulkanInstance> instance = nullptr;
-	std::shared_ptr<VulkanPhysicalDevice> physicalDevice = nullptr;
-	std::shared_ptr<VulkanDevice> device = nullptr;
-	std::shared_ptr<VulkanQueue> presentQueue = nullptr;
-	uint32_t currentFrame = 0u;
-	uint32_t frameCount;
+	void bindResources() override;
+	void buildFrameBuffers() override;
+	void recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+							 uint32_t imageIndex) override;
+	void updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBuffer) override;
+	void draw() override;
+
 	std::shared_ptr<VulkanCommandPool> graphicCmdPool = nullptr;
 	std::vector<std::shared_ptr<VulkanCommandBuffer>> graphicCmdBuffers{};
 	struct FrameSync {
@@ -45,7 +40,6 @@ private:
 		std::shared_ptr<VulkanFence> submitFence;
 	};
 	std::vector<FrameSync> syncObjects{};
-	std::shared_ptr<VulkanSwapchain> swapchain = nullptr;
 	std::vector<std::shared_ptr<VulkanShader>> shaders{};
 	std::shared_ptr<FrameGraph> frameGraph = nullptr;
 	struct FrameGraphHandles {
@@ -70,7 +64,6 @@ private:
 		glm::vec4 cameraWorldPos;
 	} uniformData;
 	std::shared_ptr<VulkanBuffer> uniformBuffer = nullptr;
-	float elapsedTime = 0.f;
 	struct {
 		std::shared_ptr<TextureVk> diffuse;
 		std::shared_ptr<TextureVk> normal;

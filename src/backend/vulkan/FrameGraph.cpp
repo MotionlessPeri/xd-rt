@@ -180,7 +180,7 @@ void FrameGraphBuilder::FrameGraphNode::recordEdges(const ResourceTransitionEdge
 	owner->nodes[edge.from.passIndex].outs.emplace_back(edge);
 }
 
-FrameGraphBuilder::FrameGraphNode& FrameGraphBuilder::addSubpass(const std::string& name)
+FrameGraphBuilder::FrameGraphNode& FrameGraphBuilder::addPass(const std::string& name)
 {
 	nodes.emplace_back();
 	auto& ret = nodes.back();

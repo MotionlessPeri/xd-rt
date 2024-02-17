@@ -6,7 +6,7 @@ set(PLATFORM_WINDOWS TRUE)
 set(CMAKE_CXX_STANDARD 20)
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
 set(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
-
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/cmake")
 # list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/external")
 include_directories(src)
@@ -283,6 +283,15 @@ set(VULKAN_FILES
         src/backend/vulkan/LightManager.h
 )
 
+set(VULKAN_SHADER_FILES
+        src/backend/vulkan/shader/LambertianFragmentShader.cpp
+        src/backend/vulkan/shader/LambertianFragmentShader.h
+        src/backend/vulkan/shader/ShaderTraits.h
+        src/backend/vulkan/shader/ShaderBase.h
+        src/backend/vulkan/shader/ShaderBase.cpp
+        src/backend/vulkan/shader/MainVertexShader.cpp
+        src/backend/vulkan/shader/MainVertexShader.h)
+
 set(SRC_FILES
         ${3RDPARTY_FILES}
         ${BXDF_FILES}
@@ -303,6 +312,7 @@ set(SRC_FILES
         ${MISC_FILES}
         ${NON_BUILD_FILES}
         ${VULKAN_FILES}
+        ${VULKAN_SHADER_FILES}
 )
 
 # for visual studio filters
@@ -325,8 +335,7 @@ source_group(texture FILES ${TEXTURE_FILES})
 source_group(misc FILES ${MISC_FILES})
 source_group(non-build FILES ${NON_BUILD_FILES})
 source_group(backend/vulkan FILES ${VULKAN_FILES})
-
-add_executable(xd_rt_playground main.cpp)
+source_group(backend/vulkan/shader FILES ${VULKAN_SHADER_FILES})
 #add_library(xd_rt SHARED ${SRC_FILES})
 add_library(xd_rt STATIC ${SRC_FILES})
 
@@ -350,16 +359,9 @@ target_link_libraries(xd_rt ${Vulkan_LIBRARIES})
 target_link_libraries(xd_rt ${GLFW_LIBRARIES})
 #target_link_directories("${TBB_ROOT}/lib")
 
-add_subdirectory(src/app)
+add_subdirectory(tutorial)
 add_subdirectory(test)
 
-target_link_libraries(xd_rt_playground ${EMBREE_LIBRARIES})
-target_link_libraries(xd_rt_playground ${Vulkan_LIBRARIES})
-target_link_libraries(xd_rt_playground ${GLFW_LIBRARIES})
-target_link_libraries(xd_rt_playground xd_rt)
-target_link_libraries(xd_rt_playground xd_rt_app)
-target_link_libraries(xd_rt_playground TBB)
-
 add_custom_command(TARGET xd_rt
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -371,24 +373,6 @@ add_custom_command(TARGET xd_rt
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${EMBREE_ROOT_DIR}/bin"
         $<TARGET_FILE_DIR:xd_rt>
-)
-add_custom_command(TARGET xd_rt_playground
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${TBB_ROOT}/bin"
-        $<TARGET_FILE_DIR:xd_rt_playground>
-)
-add_custom_command(TARGET xd_rt_playground
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${EMBREE_ROOT_DIR}/bin"
-        $<TARGET_FILE_DIR:xd_rt_playground>
-)
-add_custom_command(TARGET xd_rt_playground
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        "${GLFW_LIB_DIR}/glfw3.dll"
-        $<TARGET_FILE_DIR:xd_rt_playground>
 )
 
 file(GLOB files "src/backend/vulkan/shader/*.vert" "src/backend/vulkan/shader/*.frag")

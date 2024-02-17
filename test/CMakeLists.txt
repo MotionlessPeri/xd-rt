@@ -72,7 +72,6 @@ add_executable(xd_rt_test
 )
 
 target_link_libraries(xd_rt_test xd_rt)
-target_link_libraries(xd_rt_test xd_rt_app)
 target_link_libraries(xd_rt_test gtest gtest_main)
 target_link_libraries(xd_rt_test TBB)
 target_link_libraries(xd_rt_test ${EMBREE_LIBRARIES})

@@ -92,6 +92,12 @@ void VulkanGlobal::init(std::vector<const char*> instanceEnabledExtensions,
 			[](VkPhysicalDevice device, const VkQueueFamilyProperties& properties,
 			   int index) -> bool { return properties.queueFlags & (VK_QUEUE_TRANSFER_BIT); });
 		queueFamilyIndexesDup.insert(transferQueueIndex);
+
+		const auto computeQueueIndex = physicalDevice->getSuitableQueueFamilyIndex(
+			[](VkPhysicalDevice device, const VkQueueFamilyProperties& properties,
+			   int index) -> bool { return properties.queueFlags & (VK_QUEUE_COMPUTE_BIT); });
+		queueFamilyIndexesDup.insert(computeQueueIndex);
+
 		DeviceDesc deviceDesc;
 		deviceDesc.enabledExtensionNames = std::move(deviceExtensions);
 		std::vector<VkDeviceQueueCreateInfo> queueCis;
@@ -120,6 +126,7 @@ void VulkanGlobal::init(std::vector<const char*> instanceEnabledExtensions,
 		device = physicalDevice->createLogicalDevice(deviceDesc);
 
 		graphicQueue = device->getQueue(graphicFamilyIndex, 0);
+		computeQueue = device->getQueue(computeQueueIndex, 0);
 		transferQueue = device->getQueue(transferQueueIndex, 0);
 		if (needPresent) {
 			presentQueue = device->getQueue(presentFamilyIndex, 0);

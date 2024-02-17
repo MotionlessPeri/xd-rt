@@ -29,6 +29,7 @@ public:
 	inline static std::shared_ptr<VulkanSwapchain> swapchain = nullptr;
 	inline static std::shared_ptr<VulkanQueue> graphicQueue = nullptr;
 	inline static std::shared_ptr<VulkanQueue> presentQueue = nullptr;
+	inline static std::shared_ptr<VulkanQueue> computeQueue = nullptr;
 	inline static std::shared_ptr<VulkanQueue> transferQueue = nullptr;
 };
 

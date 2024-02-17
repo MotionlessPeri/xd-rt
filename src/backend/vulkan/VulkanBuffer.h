@@ -12,7 +12,7 @@ class VulkanBuffer : public VulkanDeviceObject<VkBufferCreateInfo> {
 public:
 	friend class VulkanDevice;
 	friend class TriangleMeshVk;
-	friend class VulkanGLFWApp;	 // TODO: only for debug purpose, delete it asap
+	friend class VulkanGLFWAppBase;	 // TODO: only for debug purpose, delete it asap
 	VulkanBuffer() = delete;
 	VulkanBuffer(const VulkanBuffer& other) = delete;
 	VulkanBuffer(VulkanBuffer&& other) noexcept = delete;
