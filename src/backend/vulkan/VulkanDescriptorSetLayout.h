@@ -17,7 +17,7 @@ class VulkanDescriptorSetLayout : public VulkanDeviceObject<DescriptorSetLayoutD
 public:
 	friend class VulkanDevice;
 	friend class VulkanDescriptorPool;
-	friend class VulkanGLFWApp;	 // TODO: remove it ASAP when FrameGraph is built
+	friend class BasicGraphicApp;  // TODO: remove it ASAP when FrameGraph is built
 	VulkanDescriptorSetLayout() = delete;
 	VulkanDescriptorSetLayout(const VulkanDescriptorSetLayout& other) = delete;
 	VulkanDescriptorSetLayout(VulkanDescriptorSetLayout&& other) noexcept = delete;

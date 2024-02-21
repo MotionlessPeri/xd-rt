@@ -16,11 +16,11 @@ using namespace xd;
 MaterialTemplateVk::MaterialTemplateVk(std::shared_ptr<VulkanDevice> device,
 									   std::vector<std::shared_ptr<VulkanShader>> shaders,
 									   std::unordered_map<std::string, uint32_t> set_name_to_index,
-									   std::shared_ptr<VulkanGraphicsPipeline> pipeline)
+									   const std::shared_ptr<VulkanPipelineBase>& pipeline)
 	: device(std::move(device)),
 	  shaders(std::move(shaders)),
 	  setNameToIndex(std::move(set_name_to_index)),
-	  pipeline(std::move(pipeline))
+	  pipeline(pipeline)
 {
 }
 

@@ -15,12 +15,13 @@ VulkanPipelineLayout::~VulkanPipelineLayout()
 
 void VulkanPipelineLayout::bindDescriptorSets(
 	std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+	VkPipelineBindPoint bindPoint,
 	uint32_t firstSet,
 	const std::vector<std::shared_ptr<VulkanDescriptorSet>>& descSets) const
 {
 	const auto descSetHandlesView =
 		descSets | std::views::transform([](const auto& descSet) { return descSet->set; });
-	cmdBuffer->bindDescriptorSets(handle, firstSet,
+	cmdBuffer->bindDescriptorSets(bindPoint, handle, firstSet,
 								  {descSetHandlesView.begin(), descSetHandlesView.end()});
 }
 

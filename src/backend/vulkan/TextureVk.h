@@ -19,7 +19,7 @@ public:
 		VkDescriptorImageInfo ret;
 		ret.imageView = imageView->imageView;
 		ret.imageLayout = layout;
-		ret.sampler = sampler->sampler;
+		ret.sampler = sampler ? sampler->sampler : VK_NULL_HANDLE;
 		return ret;
 	}
 	std::shared_ptr<VulkanImage> image;

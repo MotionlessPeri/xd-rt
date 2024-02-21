@@ -110,6 +110,9 @@ public:
 	std::shared_ptr<VulkanGraphicsPipeline> createGraphicsPipeline(
 		GraphicsPipelineDesc&& desc,
 		std::shared_ptr<VulkanPipelineLayout> layout) const;
+	std::shared_ptr<VulkanComputePipeline> createComputePipeline(
+		VkComputePipelineCreateInfo&& ci,
+		std::shared_ptr<VulkanPipelineLayout> layout) const;
 	void destroyPipeline(VkPipeline pipeline) const;
 
 	std::shared_ptr<VulkanFence> createFence(const VkFenceCreateInfo& ci) const;

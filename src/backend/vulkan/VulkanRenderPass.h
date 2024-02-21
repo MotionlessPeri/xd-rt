@@ -39,7 +39,7 @@ class VulkanRenderPass : public VulkanDeviceObject<RenderPassDesc>,
 public:
 	friend class VulkanDevice;
 	friend class VulkanSubpass;
-	friend class VulkanGLFWApp;	 // TODO: remove it ASAP when FrameGraph is built
+	friend class BasicGraphicApp;  // TODO: remove it ASAP when FrameGraph is built
 	friend class FrameGraph;
 	VulkanRenderPass() = delete;
 	VulkanRenderPass(const VulkanRenderPass& other) = delete;

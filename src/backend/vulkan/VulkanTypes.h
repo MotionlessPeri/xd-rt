@@ -22,6 +22,7 @@ class VulkanCommandPool;
 class VulkanCommandBuffer;
 class VulkanPipelineLayout;
 class VulkanGraphicsPipeline;
+class VulkanComputePipeline;
 class VulkanDescriptorSetLayout;
 class VulkanDescriptorPool;
 class VulkanDescriptorSet;

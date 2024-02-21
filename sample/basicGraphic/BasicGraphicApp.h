@@ -2,7 +2,7 @@
 // Created by Frank on 2024/1/10.
 //
 
-#ifndef XD_RT_VULKANGLFWAPP_H
+#ifndef XD_RT_BASICCOMPUTEAPP_H
 #define XD_RT_VULKANGLFWAPP_H
 #include <memory>
 #include <vector>
@@ -13,9 +13,9 @@
 #include "glm/glm.hpp"
 namespace xd {
 
-class VulkanGLFWApp : public VulkanGLFWAppBase {
+class BasicGraphicApp : public VulkanGLFWAppBase {
 public:
-	VulkanGLFWApp(int width, int height, const char* title);
+	BasicGraphicApp(int width, int height, const char* title);
 
 private:
 	void initVulkan(const std::vector<const char*>& instanceEnabledExtensions) override;
@@ -23,9 +23,9 @@ private:
 	void handleInput(GLFWwindow* window) override;
 	void loadAssets() override;
 	void createResources() override;
-	void buildRenderPass() override;
+	void buildPipeline() override;
 	void buildMaterial();
-	void bindResources() override;
+	void bindResources();
 	void buildFrameBuffers() override;
 	void recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
 							 uint32_t imageIndex) override;

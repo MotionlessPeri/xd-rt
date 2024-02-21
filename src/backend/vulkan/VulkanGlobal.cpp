@@ -20,7 +20,9 @@ void VulkanGlobal::init(std::vector<const char*> instanceEnabledExtensions,
 						int width,
 						int height,
 						VkPhysicalDeviceFeatures enabledFeatures,
-						std::vector<const char*> deviceExtensions)
+						std::vector<const char*> deviceExtensions,
+						const VkSurfaceFormatKHR& desiredFormat,
+						VkImageUsageFlags imageUsages)
 {
 	std::call_once(initFlag, [&]() {
 		instance = std::make_shared<VulkanInstance>(std::move(instanceEnabledExtensions),
@@ -131,7 +133,7 @@ void VulkanGlobal::init(std::vector<const char*> instanceEnabledExtensions,
 		if (needPresent) {
 			presentQueue = device->getQueue(presentFamilyIndex, 0);
 			surface = device->createSurface(surfaceCi, surfaceHandle);
-			swapchain = surface->createSwapchain(width, height);
+			swapchain = surface->createSwapchain(width, height, imageUsages, desiredFormat);
 		}
 
 		ModelFactoryVk::init(device);

@@ -11,7 +11,7 @@ namespace xd {
 class VulkanFrameBuffer : public VulkanDeviceObject<VkFramebufferCreateInfo> {
 public:
 	friend class VulkanDevice;
-	friend class VulkanGLFWApp;	 // TODO: remove it ASAP when FrameGraph is built
+	friend class BasicGraphicApp;  // TODO: remove it ASAP when FrameGraph is built
 	VulkanFrameBuffer() = delete;
 	VulkanFrameBuffer(const VulkanFrameBuffer& other) = delete;
 	VulkanFrameBuffer(VulkanFrameBuffer&& other) noexcept = delete;

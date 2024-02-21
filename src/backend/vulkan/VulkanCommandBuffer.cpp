@@ -96,12 +96,13 @@ void VulkanCommandBuffer::setScissor(const VkRect2D& scissor) const
 }
 
 void VulkanCommandBuffer::bindDescriptorSets(
+	VkPipelineBindPoint bindPoint,
 	VkPipelineLayout layout,
 	uint32_t firstSet,
 	const std::vector<VkDescriptorSet>& descriptorSets) const
 {
-	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, firstSet,
-							descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+	vkCmdBindDescriptorSets(cmdBuffer, bindPoint, layout, firstSet, descriptorSets.size(),
+							descriptorSets.data(), 0, nullptr);
 }
 
 void VulkanCommandBuffer::bindVertexBuffer(uint32_t bindingPoint, VkBuffer buffer) const
@@ -137,6 +138,13 @@ void VulkanCommandBuffer::drawIndexed(uint32_t indexCount,
 									  uint32_t firstInstance) const
 {
 	vkCmdDrawIndexed(cmdBuffer, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+}
+
+void VulkanCommandBuffer::dispatch(uint32_t groupCountX,
+								   uint32_t groupCountY,
+								   uint32_t groupCountZ) const
+{
+	vkCmdDispatch(cmdBuffer, groupCountX, groupCountY, groupCountZ);
 }
 
 void VulkanCommandBuffer::submitAndWait() const

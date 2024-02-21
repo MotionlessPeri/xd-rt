@@ -102,7 +102,6 @@ void VulkanImage::transitState(VkPipelineStageFlags srcStageMask,
 							   VkPipelineStageFlags dstStageMask,
 							   VkImageMemoryBarrier&& imageBarrier) const
 {
-	imageBarrier.image = image;
 	const auto transferQueue = VulkanGlobal::transferQueue;
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -115,9 +114,19 @@ void VulkanImage::transitState(VkPipelineStageFlags srcStageMask,
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = 1;
 	const auto cmdBuffer = cmdPool->allocateCommandBuffers(std::move(allocInfo)).front();
+
 	cmdBuffer->beginCommandBuffer({VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr,
 								   VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr});
-	cmdBuffer->pipelineBarrier(srcStageMask, dstStageMask, 0, {}, {}, {imageBarrier});
+	transitState(cmdBuffer, srcStageMask, dstStageMask, std::move(imageBarrier));
 	cmdBuffer->endCommandBuffer();
 	cmdBuffer->submitAndWait();
+}
+
+void VulkanImage::transitState(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+							   VkPipelineStageFlags srcStageMask,
+							   VkPipelineStageFlags dstStageMask,
+							   VkImageMemoryBarrier&& imageBarrier) const
+{
+	imageBarrier.image = image;
+	cmdBuffer->pipelineBarrier(srcStageMask, dstStageMask, 0, {}, {}, {imageBarrier});
 }

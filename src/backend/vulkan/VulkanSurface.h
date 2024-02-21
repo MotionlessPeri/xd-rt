@@ -19,7 +19,7 @@ public:
 	VulkanSurface& operator=(const VulkanSurface& other) = delete;
 	VulkanSurface& operator=(VulkanSurface&& other) noexcept = delete;
 	~VulkanSurface();
-	std::shared_ptr<VulkanSwapchain> createSwapchain(int width, int height) const;
+	std::shared_ptr<VulkanSwapchain> createSwapchain(int width, int height, VkImageUsageFlags imageUsages, const VkSurfaceFormatKHR& desiredFormat) const;
 
 	VulkanSurface(std::shared_ptr<const VulkanDevice> device,
 				  VkWin32SurfaceCreateInfoKHR desc,

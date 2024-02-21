@@ -20,8 +20,8 @@ public:
 	~VulkanPipelineLayout();
 	void bindDescriptorSets(
 		std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
-		uint32_t firstSet,
-		const std::vector<std::shared_ptr<VulkanDescriptorSet>>& descSets) const;
+		VkPipelineBindPoint bindPoint,
+		uint32_t firstSet, const std::vector<std::shared_ptr<VulkanDescriptorSet>>& descSets) const;
 
 private:
 	VulkanPipelineLayout(std::shared_ptr<const VulkanDevice> device,

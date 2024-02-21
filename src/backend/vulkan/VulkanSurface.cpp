@@ -27,7 +27,11 @@ VulkanSurface::~VulkanSurface()
 	device->destroySurface(surface);
 }
 
-std::shared_ptr<VulkanSwapchain> VulkanSurface::createSwapchain(int width, int height) const
+std::shared_ptr<VulkanSwapchain> VulkanSurface::createSwapchain(
+	int width,
+	int height,
+	VkImageUsageFlags imageUsages,
+	const VkSurfaceFormatKHR& desiredFormat) const
 {
 	if (!device)
 		throw std::runtime_error{""};
@@ -37,7 +41,7 @@ std::shared_ptr<VulkanSwapchain> VulkanSurface::createSwapchain(int width, int h
 	if (formats.empty())
 		throw std::runtime_error{""};
 	VkSurfaceFormatKHR chosenFormat = formats.front();
-	VkSurfaceFormatKHR desiredFormat{VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
+	// VkSurfaceFormatKHR desiredFormat{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
 	for (const auto& formatCand : formats) {
 		if (formatCand.format == desiredFormat.format &&
 			formatCand.colorSpace == desiredFormat.colorSpace) {
@@ -74,7 +78,7 @@ std::shared_ptr<VulkanSwapchain> VulkanSurface::createSwapchain(int width, int h
 	createInfo.imageColorSpace = chosenFormat.colorSpace;
 	createInfo.imageExtent = extent;
 	createInfo.imageArrayLayers = 1;
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	createInfo.imageUsage = imageUsages;
 	createInfo.preTransform = capabilities.currentTransform;
 	createInfo.compositeAlpha = static_cast<VkCompositeAlphaFlagBitsKHR>(
 		1 << std::countr_zero(capabilities.supportedCompositeAlpha));

@@ -22,12 +22,11 @@ protected:
 									 int height,
 									 const char* title,
 									 std::vector<const char*>& instanceEnableExts);
-	virtual void initVulkan(const std::vector<const char*>& instanceEnabledExtensions);
+	virtual void initVulkan(const std::vector<const char*>& instanceEnabledExtensions) = 0;
 	virtual void handleInput(GLFWwindow* window);
 	virtual void loadAssets() = 0;
 	virtual void createResources() = 0;
-	virtual void buildRenderPass() = 0;
-	virtual void bindResources() = 0;
+	virtual void buildPipeline() = 0;
 	virtual void buildFrameBuffers() = 0;
 	virtual void recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
 									 uint32_t imageIndex) = 0;

@@ -8,3 +8,8 @@ cmake-build-minsizerel
 eigen.natvis
 Folder.DotSettings.user
 src/app/vulkan/shader/*.spv
+sample/basicCompute/shader/test.comp.spv
+src/backend/vulkan/shader/lambertian.frag.spv
+src/backend/vulkan/shader/main.vert.spv
+sample/basicGraphic/shader/test.frag.spv
+sample/basicGraphic/shader/test.vert.spv

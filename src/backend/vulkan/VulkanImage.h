@@ -29,6 +29,10 @@ public:
 	void transitState(VkPipelineStageFlags srcStageMask,
 					  VkPipelineStageFlags dstStageMask,
 					  VkImageMemoryBarrier&& imageBarrier) const;
+	void transitState(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+					  VkPipelineStageFlags srcStageMask,
+					  VkPipelineStageFlags dstStageMask,
+					  VkImageMemoryBarrier&& imageBarrier) const;
 
 private:
 	VulkanImage(std::shared_ptr<const VulkanDevice> device, VkImage image);

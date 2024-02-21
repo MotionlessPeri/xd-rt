@@ -27,7 +27,7 @@ void VulkanGLFWAppBase::init()
 	initVulkan(instanceEnabledExtensions);
 	loadAssets();
 
-	buildRenderPass();
+	buildPipeline();
 	buildFrameBuffers();
 	createResources();
 }
@@ -62,22 +62,6 @@ GLFWwindow* VulkanGLFWAppBase::createWindow(int width,
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	return glfwCreateWindow(width, height, title, nullptr, nullptr);
-}
-
-void VulkanGLFWAppBase::initVulkan(const std::vector<const char*>& instanceEnabledExtensions)
-{
-	VulkanGlobal::init(std::move(instanceEnabledExtensions), {"VK_LAYER_KHRONOS_validation"}, true,
-					   glfwGetWin32Window(window), width, height,
-					   VkPhysicalDeviceFeatures{.geometryShader = true, .samplerAnisotropy = true},
-					   {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
-	instance = VulkanGlobal::instance;
-	physicalDevice = VulkanGlobal::physicalDevice;
-	device = VulkanGlobal::device;
-	swapchain = VulkanGlobal::swapchain;
-	presentQueue = VulkanGlobal::presentQueue;
-	graphicQueue = VulkanGlobal::graphicQueue;
-	computeQueue = VulkanGlobal::computeQueue;
-	frameCount = swapchain->getSwapchainImageCount();
 }
 
 void VulkanGLFWAppBase::handleInput(GLFWwindow* window) {}

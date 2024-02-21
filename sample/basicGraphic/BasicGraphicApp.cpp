@@ -2,7 +2,7 @@
 // Created by Frank on 2024/1/10.
 //
 
-#include "VulkanGLFWApp.h"
+#include "BasicGraphicApp.h"
 #include <fstream>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -39,14 +39,27 @@
 #include "model/Sphere.h"
 
 namespace xd {
-VulkanGLFWApp::VulkanGLFWApp(int width, int height, const char* title)
+BasicGraphicApp::BasicGraphicApp(int width, int height, const char* title)
 	: VulkanGLFWAppBase(width, height, title)
 {
 }
 
-void VulkanGLFWApp::initVulkan(const std::vector<const char*>& instanceEnabledExtensions)
+void BasicGraphicApp::initVulkan(const std::vector<const char*>& instanceEnabledExtensions)
 {
-	VulkanGLFWAppBase::initVulkan(instanceEnabledExtensions);
+	VulkanGlobal::init(std::move(instanceEnabledExtensions), {"VK_LAYER_KHRONOS_validation"}, true,
+					   glfwGetWin32Window(window), width, height,
+					   VkPhysicalDeviceFeatures{.geometryShader = true, .samplerAnisotropy = true},
+					   {VK_KHR_SWAPCHAIN_EXTENSION_NAME},
+					   {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+					   VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	instance = VulkanGlobal::instance;
+	physicalDevice = VulkanGlobal::physicalDevice;
+	device = VulkanGlobal::device;
+	swapchain = VulkanGlobal::swapchain;
+	presentQueue = VulkanGlobal::presentQueue;
+	graphicQueue = VulkanGlobal::graphicQueue;
+	computeQueue = VulkanGlobal::computeQueue;
+	frameCount = swapchain->getSwapchainImageCount();
 	// allocate command buffers
 	VkCommandPoolCreateInfo poolCi;
 	poolCi.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -76,9 +89,9 @@ void VulkanGLFWApp::initVulkan(const std::vector<const char*>& instanceEnabledEx
 	}
 }
 
-void VulkanGLFWApp::handleInput(GLFWwindow* window) {}
+void BasicGraphicApp::handleInput(GLFWwindow* window) {}
 
-void VulkanGLFWApp::loadAssets()
+void BasicGraphicApp::loadAssets()
 {
 	// ObjMeshLoader loader;
 	// auto mesh = loader.load(R"(D:\qem-test.obj)");
@@ -111,7 +124,7 @@ void VulkanGLFWApp::loadAssets()
 	mtlResources.normal = loadImage(R"(D:\normal_map.png)");
 }
 
-void VulkanGLFWApp::createResources()
+void BasicGraphicApp::createResources()
 {
 	uniformData.model = glm::mat4{1.f};
 	const auto cameraPos = glm::vec3{1.5, 0, 0};
@@ -135,7 +148,7 @@ void VulkanGLFWApp::createResources()
 	buildMaterial();
 }
 
-void VulkanGLFWApp::buildRenderPass()
+void BasicGraphicApp::buildPipeline()
 {
 	FrameGraphBuilder builder;
 	auto& subpass = builder.addPass("main pass");
@@ -198,13 +211,13 @@ void VulkanGLFWApp::buildRenderPass()
 	frameGraph = builder.build(device);
 }
 
-void VulkanGLFWApp::buildMaterial()
+void BasicGraphicApp::buildMaterial()
 {
 	mtlTemplate = MaterialFactoryVk::get().createLambertian(frameGraph->subpasses.front().subpass);
 	mtlInstance = mtlTemplate->createInstance();
 }
 
-void VulkanGLFWApp::bindResources()
+void BasicGraphicApp::bindResources()
 {
 	{
 		const auto& set = mtlInstance->queryDescriptorSet("Scene");
@@ -223,7 +236,7 @@ void VulkanGLFWApp::bindResources()
 	mtlInstance->updateDescriptorSets();
 }
 
-void VulkanGLFWApp::buildFrameBuffers()
+void BasicGraphicApp::buildFrameBuffers()
 {
 	frameBuffers.resize(frameCount);
 	frameBufferResources.resize(frameCount);
@@ -277,8 +290,8 @@ void VulkanGLFWApp::buildFrameBuffers()
 	}
 }
 
-void VulkanGLFWApp::recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
-										uint32_t imageIndex)
+void BasicGraphicApp::recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
+										  uint32_t imageIndex)
 {
 	const auto swapchainExtent = swapchain->getExtent();
 	{
@@ -319,7 +332,7 @@ void VulkanGLFWApp::recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmd
 	cmdBuffer->endRenderPass();
 }
 
-void VulkanGLFWApp::updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBuffer)
+void BasicGraphicApp::updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBuffer)
 {
 	// VkBufferMemoryBarrier barrier;
 	// barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
@@ -336,7 +349,7 @@ void VulkanGLFWApp::updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBuff
 	uniformBuffer->setData(0, &uniformData, sizeof(uniformData));
 }
 
-void VulkanGLFWApp::draw()
+void BasicGraphicApp::draw()
 {
 	// waiting for fence before using it
 	syncObjects[currentFrame].submitFence->wait();
@@ -374,7 +387,7 @@ int main(int argc, char* argv[])
 	constexpr int WIDTH = 1000;
 	constexpr int HEIGHT = 800;
 	const char* TITLE = "glfw basic graphic test";
-	xd::VulkanGLFWApp app{WIDTH, HEIGHT, TITLE};
+	xd::BasicGraphicApp app{WIDTH, HEIGHT, TITLE};
 	app.init();
 	app.run();
 }

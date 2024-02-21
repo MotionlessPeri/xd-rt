@@ -22,7 +22,7 @@ public:
 	MaterialTemplateVk(std::shared_ptr<VulkanDevice> device,
 					   std::vector<std::shared_ptr<VulkanShader>> shaders,
 					   std::unordered_map<std::string, uint32_t> set_name_to_index,
-					   std::shared_ptr<VulkanGraphicsPipeline> pipeline);
+					   const std::shared_ptr<VulkanPipelineBase>& pipeline);
 
 	std::shared_ptr<MaterialInstanceVk> createInstance() const;
 	std::vector<VkDescriptorPoolSize> getPoolSizes() const;
@@ -40,7 +40,7 @@ private:
 	// Note: a material template may be mapped to several pipelines. The variant of materials can be
 	// explained to variant to pipeline mapping. But for convenience we use a single pipeline
 	// instance for now
-	std::shared_ptr<VulkanGraphicsPipeline> pipeline = nullptr;
+	std::shared_ptr<VulkanPipelineBase> pipeline = nullptr;
 };
 
 }  // namespace xd

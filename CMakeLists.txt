@@ -281,6 +281,10 @@ set(VULKAN_FILES
         src/backend/vulkan/VulkanPipelineLayout.h
         src/backend/vulkan/LightManager.cpp
         src/backend/vulkan/LightManager.h
+        src/backend/vulkan/VulkanComputePipeline.cpp
+        src/backend/vulkan/VulkanComputePipeline.h
+        src/backend/vulkan/VulkanPipelineBase.cpp
+        src/backend/vulkan/VulkanPipelineBase.h
 )
 
 set(VULKAN_SHADER_FILES
@@ -359,7 +363,7 @@ target_link_libraries(xd_rt ${Vulkan_LIBRARIES})
 target_link_libraries(xd_rt ${GLFW_LIBRARIES})
 #target_link_directories("${TBB_ROOT}/lib")
 
-add_subdirectory(tutorial)
+add_subdirectory(sample)
 add_subdirectory(test)
 
 add_custom_command(TARGET xd_rt

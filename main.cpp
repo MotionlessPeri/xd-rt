@@ -1,4 +1,4 @@
-#include "tutorial/basicGraphic/VulkanGLFWApp.h"
+#include "tutorial/basicGraphic/BasicGraphicApp.h"
 using namespace xd;
 int main()
 {

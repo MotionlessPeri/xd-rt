@@ -20,7 +20,9 @@ public:
 					 int width,
 					 int height,
 					 VkPhysicalDeviceFeatures enabledFeatures,
-					 std::vector<const char*> deviceExtensions);
+					 std::vector<const char*> deviceExtensions,
+					 const VkSurfaceFormatKHR& desiredFormat,
+					 VkImageUsageFlags imageUsages);
 	static void terminate();
 	inline static std::shared_ptr<VulkanInstance> instance = nullptr;
 	inline static std::shared_ptr<VulkanPhysicalDevice> physicalDevice = nullptr;

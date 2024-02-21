@@ -7,6 +7,7 @@
 #include "VulkanBuffer.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanCommandPool.h"
+#include "VulkanComputePipeline.h"
 #include "VulkanDescriptorPool.h"
 #include "VulkanDescriptorSet.h"
 #include "VulkanDescriptorSetLayout.h"
@@ -369,9 +370,9 @@ std::shared_ptr<VulkanPipelineLayout> VulkanDevice::createPipelineLayout(
 							 });
 	const std::vector<VkDescriptorSetLayout> layouts{layoutsView.begin(), layoutsView.end()};
 	desc.ci.setLayoutCount = layouts.size();
-	desc.ci.pSetLayouts = layouts.data();
+	desc.ci.pSetLayouts = layouts.empty() ? nullptr : layouts.data();
 	desc.ci.pushConstantRangeCount = desc.pushConstants.size();
-	desc.ci.pPushConstantRanges = desc.pushConstants.data();
+	desc.ci.pPushConstantRanges = desc.pushConstants.empty() ? nullptr : desc.pushConstants.data();
 	VkPipelineLayout handle;
 	vkCreatePipelineLayout(device, &desc.ci, nullptr, &handle);
 	return std::shared_ptr<VulkanPipelineLayout>{
@@ -392,6 +393,17 @@ std::shared_ptr<VulkanGraphicsPipeline> VulkanDevice::createGraphicsPipeline(
 	vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &desc.ci, nullptr, &handle);
 	return std::shared_ptr<VulkanGraphicsPipeline>{
 		new VulkanGraphicsPipeline{shared_from_this(), desc, handle, layout}};
+}
+
+std::shared_ptr<VulkanComputePipeline> VulkanDevice::createComputePipeline(
+	VkComputePipelineCreateInfo&& ci,
+	std::shared_ptr<VulkanPipelineLayout> layout) const
+{
+	ci.layout = layout->handle;
+	VkPipeline handle;
+	vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &ci, nullptr, &handle);
+	return std::shared_ptr<VulkanComputePipeline>{
+		new VulkanComputePipeline{shared_from_this(), ci, handle, layout}};
 }
 
 void VulkanDevice::destroyPipeline(VkPipeline pipeline) const

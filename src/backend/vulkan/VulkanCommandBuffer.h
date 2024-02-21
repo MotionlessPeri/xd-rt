@@ -44,9 +44,9 @@ public:
 	void bindPipeline(VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline) const;
 	void setViewport(const VkViewport& viewport) const;
 	void setScissor(const VkRect2D& scissor) const;
-	void bindDescriptorSets(VkPipelineLayout layout,
-							uint32_t firstSet,
-							const std::vector<VkDescriptorSet>& descriptorSets) const;
+	void bindDescriptorSets(VkPipelineBindPoint bindPoint,
+	                        VkPipelineLayout layout,
+	                        uint32_t firstSet, const std::vector<VkDescriptorSet>& descriptorSets) const;
 
 	void bindVertexBuffer(uint32_t bindingPoint, VkBuffer buffer) const;
 
@@ -65,7 +65,7 @@ public:
 					 uint32_t firstIndex,
 					 int32_t vertexOffset,
 					 uint32_t firstInstance) const;
-
+	void dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) const;
 	void submitAndWait() const;
 	void submit(const SubmitInfoContainer& container) const;
 	void reset() const;

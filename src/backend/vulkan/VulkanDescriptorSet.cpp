@@ -39,6 +39,7 @@ void VulkanDescriptorSet::bindResource(const std::string& name,
 
 void VulkanDescriptorSet::updateDescriptors()
 {
+	// TODO: update descriptors via frequency
 	std::vector<VkWriteDescriptorSet> writes;
 	addWriteDescriptorSet(writes, boundBuffers);
 	addWriteDescriptorSet(writes, boundImages);
