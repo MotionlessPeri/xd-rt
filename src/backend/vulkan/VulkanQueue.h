@@ -13,6 +13,7 @@ namespace xd {
 class VulkanQueue : public VulkanDeviceObject<QueueDesc> {
 public:
 	friend class VulkanDevice;
+	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
 	VulkanQueue() = delete;
 	VulkanQueue(const VulkanQueue& other) = delete;
 	VulkanQueue(VulkanQueue&& other) noexcept = delete;

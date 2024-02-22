@@ -15,6 +15,7 @@ class VulkanCommandPool : public VulkanDeviceObject<VkCommandPoolCreateInfo>,
 public:
 	friend class VulkanDevice;
 	friend class VulkanCommandBuffer;
+	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
 	VulkanCommandPool() = delete;
 	VulkanCommandPool(const VulkanCommandPool& other) = delete;
 	VulkanCommandPool(VulkanCommandPool&& other) noexcept = delete;

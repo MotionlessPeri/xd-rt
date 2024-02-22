@@ -213,7 +213,8 @@ void BasicGraphicApp::buildPipeline()
 
 void BasicGraphicApp::buildMaterial()
 {
-	mtlTemplate = MaterialFactoryVk::get().createLambertian(frameGraph->subpasses.front().subpass);
+	mtlTemplate =
+		MaterialFactoryVk::get().createLambertianMaterial(frameGraph->subpasses.front().subpass);
 	mtlInstance = mtlTemplate->createInstance();
 }
 
@@ -349,7 +350,7 @@ void BasicGraphicApp::updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBu
 	uniformBuffer->setData(0, &uniformData, sizeof(uniformData));
 }
 
-void BasicGraphicApp::draw()
+void BasicGraphicApp::render()
 {
 	// waiting for fence before using it
 	syncObjects[currentFrame].submitFence->wait();

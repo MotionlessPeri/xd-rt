@@ -379,7 +379,7 @@ add_custom_command(TARGET xd_rt
         $<TARGET_FILE_DIR:xd_rt>
 )
 
-file(GLOB files "src/backend/vulkan/shader/*.vert" "src/backend/vulkan/shader/*.frag")
+file(GLOB files "src/backend/vulkan/shader/*.vert" "src/backend/vulkan/shader/*.frag" "src/backend/vulkan/shader/*.comp")
 set(generated_spvs)
 foreach (file ${files})
     add_custom_command(

@@ -268,7 +268,7 @@ void BasicComputeApp::updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBu
 	imageInfo.height = height;
 	imageInfoBuffer->setData(0, &imageInfo, sizeof imageInfo);
 }
-void BasicComputeApp::draw()
+void BasicComputeApp::render()
 {
 	syncObjects[currentFrame].submitFence->wait();
 	syncObjects[currentFrame].submitFence->reset();

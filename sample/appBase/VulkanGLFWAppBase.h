@@ -14,8 +14,8 @@ namespace xd {
 class VulkanGLFWAppBase {
 public:
 	VulkanGLFWAppBase(int width, int height, const char* title);
-	void init();
-	void run();
+	virtual void init();
+	virtual void run();
 
 protected:
 	virtual GLFWwindow* createWindow(int width,
@@ -31,7 +31,7 @@ protected:
 	virtual void recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
 									 uint32_t imageIndex) = 0;
 	virtual void updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBuffer) = 0;
-	virtual void draw() = 0;
+	virtual void render() = 0;
 	int width, height;
 	const char* title;
 	GLFWwindow* window = nullptr;
@@ -41,10 +41,12 @@ protected:
 	std::shared_ptr<VulkanQueue> presentQueue = nullptr;
 	std::shared_ptr<VulkanQueue> graphicQueue = nullptr;
 	std::shared_ptr<VulkanQueue> computeQueue = nullptr;
+	std::shared_ptr<VulkanRenderPass> imguiRenderPass = nullptr;
 	uint32_t currentFrame = 0u;
 	uint32_t frameCount;
 	std::shared_ptr<VulkanSwapchain> swapchain = nullptr;
 	float elapsedTime = 0.f;
+	uint32_t currentImageIndex = 0u;
 };
 
 }  // namespace xd

@@ -37,7 +37,7 @@ void VulkanGLFWAppBase::run()
 	while (!glfwWindowShouldClose(window)) {
 		const auto timeStart = std::chrono::steady_clock::now();
 		glfwPollEvents();
-		draw();
+		render();
 		const auto timeEnd = std::chrono::steady_clock::now();
 		elapsedTime = std::chrono::duration<float>{timeEnd - timeStart}.count();
 	}

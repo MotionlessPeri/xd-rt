@@ -16,7 +16,8 @@ namespace xd {
 class VulkanImageView : public VulkanDeviceObject<VkImageViewCreateInfo> {
 public:
 	friend class VulkanDevice;
-	friend class BasicGraphicApp;  // TODO: I don't know if this works. Delete it ASAP
+	friend class BasicGraphicApp;  // TODO: I don't know if this works. Delete it ASAP.
+	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
 	friend class FrameGraph;
 	friend class TextureVk;
 	VulkanImageView() = delete;

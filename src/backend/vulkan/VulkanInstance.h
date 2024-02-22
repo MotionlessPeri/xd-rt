@@ -19,6 +19,7 @@ public:
 	friend class VulkanPhysicalDevice;
 	friend class VulkanDevice;
 	friend class VulkanGlobal;
+	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
 	VulkanInstance() = delete;
 	VulkanInstance(const VulkanInstance& other) = delete;
 	VulkanInstance(VulkanInstance&& other) noexcept = delete;

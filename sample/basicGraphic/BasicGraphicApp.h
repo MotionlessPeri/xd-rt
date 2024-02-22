@@ -30,7 +30,7 @@ private:
 	void recordCommandBuffer(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
 							 uint32_t imageIndex) override;
 	void updateResources(std::shared_ptr<VulkanCommandBuffer> cmdBuffer) override;
-	void draw() override;
+	void render() override;
 
 	std::shared_ptr<VulkanCommandPool> graphicCmdPool = nullptr;
 	std::vector<std::shared_ptr<VulkanCommandBuffer>> graphicCmdBuffers{};

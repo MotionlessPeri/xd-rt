@@ -17,6 +17,7 @@ namespace xd {
 class VulkanPhysicalDevice : public std::enable_shared_from_this<VulkanPhysicalDevice> {
 public:
 	friend class VulkanInstance;
+	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
 	VulkanPhysicalDevice() = delete;
 	VulkanPhysicalDevice(const VulkanPhysicalDevice& other) = delete;
 	VulkanPhysicalDevice(VulkanPhysicalDevice&& other) noexcept = delete;

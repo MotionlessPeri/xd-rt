@@ -8,11 +8,13 @@
 #include <string>
 #include "MaterialTemplateVk.h"
 #include "ModelFactoryVk.h"
+#include "VulkanComputePipeline.h"
 #include "VulkanDevice.h"
 #include "VulkanRenderPass.h"
 #include "VulkanShader.h"
 using namespace xd;
 MaterialFactoryVk* MaterialFactoryVk::singleton = nullptr;
+
 void MaterialFactoryVk::init(std::shared_ptr<VulkanDevice> device)
 {
 	singleton = new MaterialFactoryVk{std::move(device)};
@@ -23,24 +25,9 @@ void MaterialFactoryVk::terminate()
 	delete singleton;
 }
 
-std::shared_ptr<MaterialTemplateVk> MaterialFactoryVk::createLambertian(
+std::shared_ptr<MaterialTemplateVk> MaterialFactoryVk::createLambertianMaterial(
 	std::shared_ptr<VulkanSubpass> subpass) const
 {
-	const auto createShader = [&](const std::string& path,
-								  VkShaderStageFlagBits stage) -> std::shared_ptr<VulkanShader> {
-		std::ifstream fstream{path, std::ios::ate | std::ios::binary};
-		const std::size_t fileSize = fstream.tellg();
-		fstream.seekg(0);
-		std::vector<char> code(fileSize);
-		fstream.read(code.data(), fileSize);
-		VkShaderModuleCreateInfo ci;
-		ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		ci.pNext = nullptr;
-		ci.flags = 0;
-		ci.codeSize = code.size();
-		ci.pCode = reinterpret_cast<const uint32_t*>(code.data());
-		return device->createShader(ci, stage);
-	};
 	// create shaders
 	std::vector<std::shared_ptr<VulkanShader>> shaders;
 	using namespace std::string_literals;
@@ -218,7 +205,87 @@ std::shared_ptr<MaterialTemplateVk> MaterialFactoryVk::createLambertian(
 												std::move(layoutNameToIndex), pipeline);
 }
 
+std::shared_ptr<MaterialTemplateVk> MaterialFactoryVk::createTonemappingMaterial() const
+{
+	using namespace std::string_literals;
+	const auto computeShader =
+		createShader(PROJECT_ROOT + "/src/backend/vulkan/shader/tonemapping.comp.spv"s,
+					 VK_SHADER_STAGE_COMPUTE_BIT);
+
+	std::vector<std::shared_ptr<VulkanDescriptorSetLayout>> layouts;
+	std::unordered_map<std::string, uint32_t> layoutNameToIndex;
+	{
+		// declare imageInfo(set 0)
+		DescriptorSetLayoutDesc layoutDesc;
+		layoutDesc.bindings = std::vector<VkDescriptorSetLayoutBinding>{
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}};
+		layoutDesc.ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutDesc.ci.pNext = nullptr;
+		layoutDesc.ci.flags = 0;
+		layoutDesc.ci.bindingCount = layoutDesc.bindings.size();
+		layoutDesc.ci.pBindings = layoutDesc.bindings.data();
+		std::unordered_map<std::string, uint32_t> nameToBinding{{"imageInfo", 0}};
+		layoutNameToIndex.insert({"Uniform", 0});
+		layouts.emplace_back(
+			device->createDescriptorSetLayout(layoutDesc, std::move(nameToBinding)));
+	}
+	{
+		// declare input and output(set 1)
+		DescriptorSetLayoutDesc layoutDesc;
+		layoutDesc.bindings = std::vector<VkDescriptorSetLayoutBinding>{
+			{0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr},
+			{1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}};
+		layoutDesc.ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutDesc.ci.pNext = nullptr;
+		layoutDesc.ci.flags = 0;
+		layoutDesc.ci.bindingCount = layoutDesc.bindings.size();
+		layoutDesc.ci.pBindings = layoutDesc.bindings.data();
+		std::unordered_map<std::string, uint32_t> nameToBinding{{"InputImage", 0},
+																{"OutputImage", 1}};
+		layoutNameToIndex.insert({"Images", 1});
+		layouts.emplace_back(
+			device->createDescriptorSetLayout(layoutDesc, std::move(nameToBinding)));
+	}
+	// build pipeline layout
+	PipelineLayoutDesc layoutDesc;
+	layoutDesc.setLayouts = std::move(layouts);
+	layoutDesc.ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	layoutDesc.ci.pNext = nullptr;
+	layoutDesc.ci.flags = 0;
+	layoutDesc.ci.pushConstantRangeCount = 0;
+	layoutDesc.ci.pPushConstantRanges = nullptr;
+	const auto pipelineLayout = device->createPipelineLayout(std::move(layoutDesc));
+
+	VkComputePipelineCreateInfo ci;
+	ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	ci.pNext = nullptr;
+	ci.flags = 0;
+	ci.stage = computeShader->getShaderStageCi();
+	ci.basePipelineHandle = VK_NULL_HANDLE;
+	ci.basePipelineIndex = 0;
+	auto pipeline = device->createComputePipeline(std::move(ci), pipelineLayout);
+	return std::make_shared<MaterialTemplateVk>(device, std::vector{computeShader},
+												std::move(layoutNameToIndex), pipeline);
+}
+
 MaterialFactoryVk::MaterialFactoryVk(std::shared_ptr<VulkanDevice> device)
 	: device(std::move(device))
 {
+}
+
+std::shared_ptr<VulkanShader> MaterialFactoryVk::createShader(const std::string& path,
+															  VkShaderStageFlagBits stage) const
+{
+	std::ifstream fstream{path, std::ios::ate | std::ios::binary};
+	const std::size_t fileSize = fstream.tellg();
+	fstream.seekg(0);
+	std::vector<char> code(fileSize);
+	fstream.read(code.data(), fileSize);
+	VkShaderModuleCreateInfo ci;
+	ci.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	ci.pNext = nullptr;
+	ci.flags = 0;
+	ci.codeSize = code.size();
+	ci.pCode = reinterpret_cast<const uint32_t*>(code.data());
+	return device->createShader(ci, stage);
 }

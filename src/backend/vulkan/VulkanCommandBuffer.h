@@ -15,6 +15,7 @@ class VulkanCommandBuffer : public VulkanDeviceObject<VkCommandBufferAllocateInf
 public:
 	friend class VulkanDevice;
 	friend class VulkanCommandPool;
+	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
 	VulkanCommandBuffer() = delete;
 	VulkanCommandBuffer(const VulkanCommandBuffer& other) = delete;
 	VulkanCommandBuffer(VulkanCommandBuffer&& other) noexcept = delete;
@@ -45,8 +46,9 @@ public:
 	void setViewport(const VkViewport& viewport) const;
 	void setScissor(const VkRect2D& scissor) const;
 	void bindDescriptorSets(VkPipelineBindPoint bindPoint,
-	                        VkPipelineLayout layout,
-	                        uint32_t firstSet, const std::vector<VkDescriptorSet>& descriptorSets) const;
+							VkPipelineLayout layout,
+							uint32_t firstSet,
+							const std::vector<VkDescriptorSet>& descriptorSets) const;
 
 	void bindVertexBuffer(uint32_t bindingPoint, VkBuffer buffer) const;
 

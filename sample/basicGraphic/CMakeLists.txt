@@ -44,7 +44,7 @@ add_custom_target(compile_shaders_basicGraphic ALL DEPENDS ${generated_spvs})
 add_dependencies(xd_rt_basicGraphic compile_shaders_basicGraphic)
 unset(generated_spvs)
 set_target_properties(compile_shaders_basicGraphic PROPERTIES
-        FOLDER "tutorials/basicGraphic"
+        FOLDER "samples/basicGraphic"
 )
-add_tutorial_app(xd_rt_basicGraphic "tutorials/basicGraphic")
+add_tutorial_app(xd_rt_basicGraphic "samples/basicGraphic")
 unset(compile_app_shaders)
