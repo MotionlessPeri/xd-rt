@@ -32,6 +32,8 @@ protected:
 	std::shared_ptr<VulkanCommandPool> computeCmdPool = nullptr;
 	std::vector<std::shared_ptr<VulkanCommandBuffer>> computeCmdBuffers{};
 	std::shared_ptr<VulkanDescriptorPool> descPool = nullptr;
+	std::shared_ptr<VulkanCommandPool> imguiCmdPool = nullptr;
+	std::vector<std::shared_ptr<VulkanCommandBuffer>> imguiCmdBuffers{};
 	std::vector<std::shared_ptr<VulkanFrameBuffer>> imguiFrameBuffers{};
 };
 }  // namespace xd

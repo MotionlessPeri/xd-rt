@@ -28,8 +28,8 @@ void VulkanGLFWAppBase::init()
 	loadAssets();
 
 	buildPipeline();
-	buildFrameBuffers();
 	createResources();
+	buildFrameBuffers();
 }
 
 void VulkanGLFWAppBase::run()

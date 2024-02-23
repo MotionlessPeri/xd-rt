@@ -137,6 +137,21 @@ void ImguiAppBase::initImgui()
 		cmdBufferInfo.commandBufferCount = frameCount;
 		computeCmdBuffers = computeCmdPool->allocateCommandBuffers(std::move(cmdBufferInfo));
 	}
+
+	{
+		VkCommandPoolCreateInfo poolCi;
+		poolCi.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		poolCi.pNext = nullptr;
+		poolCi.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		poolCi.queueFamilyIndex = graphicQueue->getQueueFamilyIndex();
+		imguiCmdPool = device->createCommandPool(std::move(poolCi));
+		VkCommandBufferAllocateInfo cmdBufferInfo;
+		cmdBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		cmdBufferInfo.pNext = nullptr;
+		cmdBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		cmdBufferInfo.commandBufferCount = frameCount;
+		imguiCmdBuffers = imguiCmdPool->allocateCommandBuffers(std::move(cmdBufferInfo));
+	}
 	// create sync objects
 	for ([[maybe_unused]] const auto i : std::views::iota(0u, frameCount)) {
 		VkSemaphoreCreateInfo semaphoreCi;
