@@ -25,6 +25,7 @@ private:
 											   VkShaderStageFlagBits stage) const;
 	static MaterialFactoryVk* singleton;
 	std::shared_ptr<VulkanDevice> device;
+	std::shared_ptr<VulkanRenderPass> singleColorDepthPass;
 };
 
 }  // namespace xd

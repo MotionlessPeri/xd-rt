@@ -41,7 +41,9 @@ public:
 	friend class VulkanSubpass;
 	friend class BasicGraphicApp;
 	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
+	friend class BasicMultipassApp;
 	friend class BasicFramegraphApp;
+	friend class FGPass;
 	friend class FrameGraph;
 	VulkanRenderPass() = delete;
 	VulkanRenderPass(const VulkanRenderPass& other) = delete;

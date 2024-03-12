@@ -200,6 +200,9 @@ std::shared_ptr<MaterialTemplateVk> MaterialFactoryVk::createLambertianMaterial(
 	pipelineDesc.ci.pDepthStencilState = &depthStencil;
 	pipelineDesc.ci.pColorBlendState = &colorBlending;
 	pipelineDesc.ci.pDynamicState = &dynamicState;
+	// TODO: we might need to use render pass compability here. Getting render pass from some static
+	// places but not pass it in.
+	// TODO: We might need a RenderPassTraits class for registering render pass compability
 	const auto pipeline = subpass->createGraphicsPipeline(std::move(pipelineDesc), pipelineLayout);
 	return std::make_shared<MaterialTemplateVk>(device, std::move(shaders),
 												std::move(layoutNameToIndex), pipeline);

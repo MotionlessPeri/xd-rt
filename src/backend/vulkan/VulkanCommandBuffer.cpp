@@ -74,6 +74,11 @@ void VulkanCommandBuffer::beginRenderPass(const VkRenderPassBeginInfo& info,
 	vkCmdBeginRenderPass(cmdBuffer, &info, subpass);
 }
 
+void VulkanCommandBuffer::nextSubpass(VkSubpassContents subpass) const
+{
+	vkCmdNextSubpass(cmdBuffer, subpass);
+}
+
 void VulkanCommandBuffer::endRenderPass() const
 {
 	vkCmdEndRenderPass(cmdBuffer);

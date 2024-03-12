@@ -21,6 +21,7 @@ class VulkanMemory;
 class VulkanCommandPool;
 class VulkanCommandBuffer;
 class VulkanPipelineLayout;
+class VulkanPipelineBase;
 class VulkanGraphicsPipeline;
 class VulkanComputePipeline;
 class VulkanDescriptorSetLayout;
@@ -42,8 +43,8 @@ class TextureVk;
 
 class SamplerCache;
 
-class FrameGraphBuilder;
-class FrameGraphPass;
+class FGBuilder;
+class FGPass;
 class FrameGraph;
 
 class MaterialTemplateVk;

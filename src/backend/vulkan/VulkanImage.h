@@ -18,6 +18,7 @@ class VulkanImage : public VulkanDeviceObject<VkImageCreateInfo>,
 public:
 	friend class VulkanDevice;
 	friend class TextureVk;
+	friend class FGSubpass;
 	VulkanImage() = delete;
 	VulkanImage(const VulkanImage& other) = delete;
 	VulkanImage(VulkanImage&& other) noexcept = delete;

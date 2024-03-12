@@ -16,6 +16,7 @@ public:
 	friend class VulkanDevice;
 	friend class VulkanCommandPool;
 	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
+	friend class BasicFramegraphApp;
 	VulkanCommandBuffer() = delete;
 	VulkanCommandBuffer(const VulkanCommandBuffer& other) = delete;
 	VulkanCommandBuffer(VulkanCommandBuffer&& other) noexcept = delete;
@@ -40,6 +41,7 @@ public:
 						   VkImageLayout dstImageLayout,
 						   const VkBufferImageCopy& region) const;
 	void beginRenderPass(const VkRenderPassBeginInfo& info, VkSubpassContents subpass) const;
+	void nextSubpass(VkSubpassContents subpass) const;
 	void endRenderPass() const;
 
 	void bindPipeline(VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline) const;

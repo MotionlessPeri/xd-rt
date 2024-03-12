@@ -13,7 +13,8 @@ public:
 	friend class VulkanDevice;
 	friend class BasicGraphicApp;  // TODO: remove it ASAP when FrameGraph is built
 	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
-	friend class BasicFramegraphApp;
+	friend class BasicMultipassApp;
+	friend class FGPass;
 	VulkanFrameBuffer() = delete;
 	VulkanFrameBuffer(const VulkanFrameBuffer& other) = delete;
 	VulkanFrameBuffer(VulkanFrameBuffer&& other) noexcept = delete;

@@ -150,7 +150,7 @@ void BasicGraphicApp::createResources()
 
 void BasicGraphicApp::buildPipeline()
 {
-	FrameGraphBuilder builder;
+	FGBuilder builder;
 	auto& subpass = builder.addPass("main pass");
 	VkAttachmentDescription2 colorAttachment{};
 	colorAttachment.sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;

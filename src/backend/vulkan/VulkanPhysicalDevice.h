@@ -18,6 +18,7 @@ class VulkanPhysicalDevice : public std::enable_shared_from_this<VulkanPhysicalD
 public:
 	friend class VulkanInstance;
 	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
+	friend class BasicFramegraphApp;
 	VulkanPhysicalDevice() = delete;
 	VulkanPhysicalDevice(const VulkanPhysicalDevice& other) = delete;
 	VulkanPhysicalDevice(VulkanPhysicalDevice&& other) noexcept = delete;

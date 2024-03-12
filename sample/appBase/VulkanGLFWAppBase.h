@@ -41,7 +41,6 @@ protected:
 	std::shared_ptr<VulkanQueue> presentQueue = nullptr;
 	std::shared_ptr<VulkanQueue> graphicQueue = nullptr;
 	std::shared_ptr<VulkanQueue> computeQueue = nullptr;
-	std::shared_ptr<VulkanRenderPass> imguiRenderPass = nullptr;
 	uint32_t currentFrame = 0u;
 	uint32_t frameCount;
 	std::shared_ptr<VulkanSwapchain> swapchain = nullptr;

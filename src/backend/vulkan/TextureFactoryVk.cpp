@@ -122,7 +122,7 @@ std::shared_ptr<VulkanSampler> TextureFactoryVk::buildSampler(
 	std::shared_ptr<ImageFilter2D> filter,
 	const BuildingTextureOptions& options) const
 {
-	const auto determinFilterType = [](std::shared_ptr<ImageFilter2D> filter) -> VkFilter {
+	const auto determineFilterType = [](std::shared_ptr<ImageFilter2D> filter) -> VkFilter {
 		const auto& filterType = typeid(*filter);
 		if (filterType == typeid(TentFilter)) {
 			return VK_FILTER_LINEAR;
@@ -140,8 +140,8 @@ std::shared_ptr<VulkanSampler> TextureFactoryVk::buildSampler(
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.pNext = nullptr;
 	samplerInfo.flags = 0;
-	samplerInfo.magFilter = determinFilterType(filter);
-	samplerInfo.minFilter = determinFilterType(filter);
+	samplerInfo.magFilter = determineFilterType(filter);
+	samplerInfo.minFilter = determineFilterType(filter);
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.addressModeU = wrapModeToSamplerAddressMode(filter->getWrapS());
 	samplerInfo.addressModeV = wrapModeToSamplerAddressMode(filter->getWrapT());

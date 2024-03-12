@@ -13,3 +13,4 @@ src/backend/vulkan/shader/lambertian.frag.spv
 src/backend/vulkan/shader/main.vert.spv
 sample/basicGraphic/shader/test.frag.spv
 sample/basicGraphic/shader/test.vert.spv
+src/backend/vulkan/shader/tonemapping.comp.spv

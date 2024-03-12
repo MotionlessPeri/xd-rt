@@ -13,6 +13,7 @@ public:
 	friend class VulkanDevice;
 	friend class TriangleMeshVk;
 	friend class VulkanGLFWAppBase;	 // TODO: only for debug purpose, delete it asap
+	friend class FGSubpass;
 	VulkanBuffer() = delete;
 	VulkanBuffer(const VulkanBuffer& other) = delete;
 	VulkanBuffer(VulkanBuffer&& other) noexcept = delete;
@@ -25,8 +26,8 @@ public:
 	{
 		VkDescriptorBufferInfo ret;
 		ret.buffer = buffer;
-		ret.offset = 0;
-		ret.range = VK_WHOLE_SIZE;
+		ret.offset = offset;
+		ret.range = range;
 		return ret;
 	}
 	void copyToImage(std::shared_ptr<VulkanCommandBuffer> cmdBuffer,

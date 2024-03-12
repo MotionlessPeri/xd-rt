@@ -15,6 +15,7 @@ public:
 	friend class VulkanDevice;
 	friend class VulkanDescriptorSetLayout;
 	friend class ImguiAppBase;	// TODO: find a better way to encapsulate imgui, maybe in the lib?
+	friend class BasicFramegraphApp;
 	VulkanDescriptorPool() = delete;
 	VulkanDescriptorPool(const VulkanDescriptorPool& other) = delete;
 	VulkanDescriptorPool(VulkanDescriptorPool&& other) noexcept = delete;

@@ -26,7 +26,6 @@ void VulkanGLFWAppBase::init()
 	window = createWindow(width, height, title, instanceEnabledExtensions);
 	initVulkan(instanceEnabledExtensions);
 	loadAssets();
-
 	buildPipeline();
 	createResources();
 	buildFrameBuffers();
