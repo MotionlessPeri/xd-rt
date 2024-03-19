@@ -21,5 +21,5 @@ set(SRC_FILES
 include_directories(../../3rdparty/imgui/)
 add_executable(xd_rt_tonemapping ${SRC_FILES})
 target_link_libraries(xd_rt_tonemapping xd_rt_imguiAppBase)
-
+include_directories(${XD_REALTIME_INCLUDE})
 add_tutorial_app(xd_rt_tonemapping "samples/tonemapping")

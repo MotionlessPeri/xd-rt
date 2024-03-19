@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
-project(xd_rt)
-add_compile_definitions(PROJECT_ROOT=R\"\(${PROJECT_SOURCE_DIR}\)\")
-set(USE_VULKAN TRUE)
-set(PLATFORM_WINDOWS TRUE)
+project(xd_raytracing)
+
 set(CMAKE_CXX_STANDARD 20)
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}")
 set(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
@@ -196,105 +194,12 @@ set(TEXTURE_FILES
 )
 set(MISC_FILES
         src/MathUtil.h
-        src/ConcurrentUtil.h
+        src/ConcurrencyUtil.h
 )
 set(NON_BUILD_FILES
         ./.clang-format
         ./eigen.natvis
 )
-
-set(VULKAN_FILES
-        src/backend/vulkan/VulkanDevice.cpp
-        src/backend/vulkan/VulkanDevice.h
-        src/backend/vulkan/VulkanDeviceObject.h
-        src/backend/vulkan/VulkanImage.cpp
-        src/backend/vulkan/VulkanImage.h
-        src/backend/vulkan/VulkanImageView.cpp
-        src/backend/vulkan/VulkanImageView.h
-        src/backend/vulkan/VulkanInstance.cpp
-        src/backend/vulkan/VulkanInstance.h
-        src/backend/vulkan/VulkanMacros.h
-        src/backend/vulkan/VulkanPhysicalDevice.cpp
-        src/backend/vulkan/VulkanPhysicalDevice.h
-        src/backend/vulkan/VulkanPlatformSpecific.h
-        src/backend/vulkan/VulkanQueue.cpp
-        src/backend/vulkan/VulkanQueue.h
-        src/backend/vulkan/VulkanShader.cpp
-        src/backend/vulkan/VulkanShader.h
-        src/backend/vulkan/VulkanSurface.cpp
-        src/backend/vulkan/VulkanSurface.h
-        src/backend/vulkan/VulkanSwapchain.cpp
-        src/backend/vulkan/VulkanSwapchain.h
-        src/backend/vulkan/VulkanTypes.h
-        src/backend/vulkan/VulkanGraphicsPipeline.cpp
-        src/backend/vulkan/VulkanGraphicsPipeline.h
-        src/backend/vulkan/ModelFactoryVk.cpp
-        src/backend/vulkan/ModelFactoryVk.h
-        src/backend/vulkan/TriangleMeshVk.cpp
-        src/backend/vulkan/TriangleMeshVk.h
-        src/backend/vulkan/VulkanBuffer.cpp
-        src/backend/vulkan/VulkanBuffer.h
-        src/backend/vulkan/VulkanMemory.cpp
-        src/backend/vulkan/VulkanMemory.h
-        src/backend/vulkan/VulkanCommandQueue.cpp
-        src/backend/vulkan/VulkanCommandQueue.h
-        src/backend/vulkan/VulkanCommandBuffer.cpp
-        src/backend/vulkan/VulkanCommandBuffer.h
-        src/backend/vulkan/VulkanCommandPool.cpp
-        src/backend/vulkan/VulkanCommandPool.h
-        src/backend/vulkan/VulkanGlobal.cpp
-        src/backend/vulkan/VulkanGlobal.h
-        src/backend/vulkan/MaterialTemplateVk.cpp
-        src/backend/vulkan/MaterialTemplateVk.h
-        src/backend/vulkan/MaterialInstanceVk.cpp
-        src/backend/vulkan/MaterialInstanceVk.h
-        src/backend/vulkan/VulkanDescriptorSetLayout.cpp
-        src/backend/vulkan/VulkanDescriptorSetLayout.h
-        src/backend/vulkan/VulkanDescriptorSet.cpp
-        src/backend/vulkan/VulkanDescriptorSet.h
-        src/backend/vulkan/VulkanDescriptorPool.cpp
-        src/backend/vulkan/VulkanDescriptorPool.h
-        src/backend/vulkan/VulkanSubpass.cpp
-        src/backend/vulkan/VulkanSubpass.h
-        src/backend/vulkan/VulkanRenderPass.cpp
-        src/backend/vulkan/VulkanRenderPass.h
-        src/backend/vulkan/VulkanFrameBuffer.cpp
-        src/backend/vulkan/VulkanFrameBuffer.h
-        src/backend/vulkan/FrameGraph.cpp
-        src/backend/vulkan/FrameGraph.h
-        src/backend/vulkan/VulkanDescs.h
-        src/backend/vulkan/VulkanFence.cpp
-        src/backend/vulkan/VulkanFence.h
-        src/backend/vulkan/VulkanSemaphore.cpp
-        src/backend/vulkan/VulkanSemaphore.h
-        src/backend/vulkan/TextureFactoryVk.cpp
-        src/backend/vulkan/TextureFactoryVk.h
-        src/backend/vulkan/TextureVk.cpp
-        src/backend/vulkan/TextureVk.h
-        src/backend/vulkan/VulkanSampler.cpp
-        src/backend/vulkan/VulkanSampler.h
-        src/backend/vulkan/SamplerCache.cpp
-        src/backend/vulkan/SamplerCache.h
-        src/backend/vulkan/MaterialFactoryVk.cpp
-        src/backend/vulkan/MaterialFactoryVk.h
-        src/backend/vulkan/VulkanPipelineLayout.cpp
-        src/backend/vulkan/VulkanPipelineLayout.h
-        src/backend/vulkan/LightManager.cpp
-        src/backend/vulkan/LightManager.h
-        src/backend/vulkan/VulkanComputePipeline.cpp
-        src/backend/vulkan/VulkanComputePipeline.h
-        src/backend/vulkan/VulkanPipelineBase.cpp
-        src/backend/vulkan/VulkanPipelineBase.h
-)
-
-set(VULKAN_SHADER_FILES
-        src/backend/vulkan/shader/LambertianFragmentShader.cpp
-        src/backend/vulkan/shader/LambertianFragmentShader.h
-        src/backend/vulkan/shader/ShaderTraits.h
-        src/backend/vulkan/shader/ShaderBase.h
-        src/backend/vulkan/shader/ShaderBase.cpp
-        src/backend/vulkan/shader/MainVertexShader.cpp
-        src/backend/vulkan/shader/MainVertexShader.h)
 
 set(SRC_FILES
         ${3RDPARTY_FILES}
@@ -315,8 +220,6 @@ set(SRC_FILES
         ${TEXTURE_FILES}
         ${MISC_FILES}
         ${NON_BUILD_FILES}
-        ${VULKAN_FILES}
-        ${VULKAN_SHADER_FILES}
 )
 
 # for visual studio filters
@@ -338,10 +241,8 @@ source_group(sampler FILES ${SAMPLER_FILES})
 source_group(texture FILES ${TEXTURE_FILES})
 source_group(misc FILES ${MISC_FILES})
 source_group(non-build FILES ${NON_BUILD_FILES})
-source_group(backend/vulkan FILES ${VULKAN_FILES})
-source_group(backend/vulkan/shader FILES ${VULKAN_SHADER_FILES})
-#add_library(xd_rt SHARED ${SRC_FILES})
-add_library(xd_rt STATIC ${SRC_FILES})
+
+add_library(xd_raytracing STATIC ${SRC_FILES})
 
 set(TBB_ROOT "${CMAKE_SOURCE_DIR}/external/TBB")
 set(EMBREE_ROOT_DIR "${CMAKE_SOURCE_DIR}/external/embree")
@@ -350,47 +251,27 @@ find_package(TBB REQUIRED)
 include_directories(${TBB_INCLUDE_DIRS})
 find_package(embree 4 REQUIRED)
 include_directories(${EMBREE_INCLUDE_DIRS})
-find_package(Vulkan REQUIRED)
-message("Vulkan Version ${Vulkan_VERSION} ${Vulkan_INCLUDE_DIRS} ${Vulkan_LIBRARIES} ${Vulkan_glslc_FOUND}")
-include_directories(${Vulkan_INCLUDE_DIRS})
-set(GLFW_ROOT_DIR external/glfw3)
-find_package(GLFW REQUIRED)
-include_directories(${GLFW_INCLUDE_DIRS})
 
-target_link_libraries(xd_rt ${EMBREE_LIBRARIES})
-target_link_libraries(xd_rt TBB)
-target_link_libraries(xd_rt ${Vulkan_LIBRARIES})
-target_link_libraries(xd_rt ${GLFW_LIBRARIES})
+
+target_link_libraries(xd_raytracing ${EMBREE_LIBRARIES})
+target_link_libraries(xd_raytracing TBB)
+
 #target_link_directories("${TBB_ROOT}/lib")
-
+add_subdirectory(src/realtime)
 add_subdirectory(sample)
 add_subdirectory(test)
 
-add_custom_command(TARGET xd_rt
+
+add_custom_command(TARGET xd_raytracing
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${TBB_ROOT}/bin"
-        $<TARGET_FILE_DIR:xd_rt>
+        $<TARGET_FILE_DIR:xd_raytracing>
 )
-add_custom_command(TARGET xd_rt
+add_custom_command(TARGET xd_raytracing
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${EMBREE_ROOT_DIR}/bin"
-        $<TARGET_FILE_DIR:xd_rt>
+        $<TARGET_FILE_DIR:xd_raytracing>
 )
 
-file(GLOB files "src/backend/vulkan/shader/*.vert" "src/backend/vulkan/shader/*.frag" "src/backend/vulkan/shader/*.comp")
-set(generated_spvs)
-foreach (file ${files})
-    add_custom_command(
-            OUTPUT ${file}.spv
-            COMMAND Vulkan::glslc ${file} -o ${file}.spv
-            COMMAND ${CMAKE_COMMAND} -E echo "Compiling ${file} to ${file}.spv"
-            MAIN_DEPENDENCY ${file}
-            VERBATIM
-    )
-    list(APPEND generated_spvs ${file}.spv)
-endforeach ()
-add_custom_target(compile_shaders ALL DEPENDS ${generated_spvs})
-add_dependencies(xd_rt compile_shaders)
-unset(generated_spvs)

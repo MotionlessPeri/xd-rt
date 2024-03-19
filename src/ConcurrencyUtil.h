@@ -2,8 +2,8 @@
 // Created by Frank on 2024/1/26.
 //
 
-#ifndef XD_RT_CONCURRENTUTIL_H
-#define XD_RT_CONCURRENTUTIL_H
+#ifndef XD_RT_CONCURRENCYUTIL_H
+#define XD_RT_CONCURRENCYUTIL_H
 namespace xd {
 template <typename SharedLockType>
 	requires requires(SharedLockType lock) {
@@ -25,4 +25,4 @@ private:
 	SharedLockType& lock;
 };
 }  // namespace xd
-#endif	// XD_RT_CONCURRENTUTIL_H
+#endif	// XD_RT_CONCURRENCYUTIL_H

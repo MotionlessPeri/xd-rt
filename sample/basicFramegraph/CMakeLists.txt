@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
 project(xd_rt_basicFramegraph)
-add_compile_definitions(PROJECT_ROOT=R\"\(${PROJECT_SOURCE_DIR}\)\")
 file(GLOB IMGUI_HEADERS ../../3rdparty/imgui/*.h)
 file(GLOB IMGUI_SOURCES ../../3rdparty/imgui/*.cpp)
 include_directories(../../3rdparty/imgui/)
@@ -29,5 +28,5 @@ set(SRC_FILES
 include_directories(../../3rdparty/imgui/)
 add_executable(xd_rt_basicFramegraph ${SRC_FILES})
 target_link_libraries(xd_rt_basicFramegraph xd_rt_appBase)
-
+include_directories(${XD_REALTIME_INCLUDE})
 add_tutorial_app(xd_rt_basicFramegraph "samples/basicFramegraph")

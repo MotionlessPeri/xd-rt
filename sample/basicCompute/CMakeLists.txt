@@ -45,4 +45,5 @@ unset(generated_spvs)
 set_target_properties(compile_shaders_basicCompute PROPERTIES
         FOLDER "samples/basicCompute"
 )
+include_directories(${XD_REALTIME_INCLUDE})
 add_tutorial_app(xd_rt_basicCompute "samples/basicCompute")

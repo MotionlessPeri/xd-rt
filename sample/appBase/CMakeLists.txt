@@ -15,7 +15,6 @@ set(VULKAN_FILES
 set(NON_BUILD_FILES
         ../../.clang-format
 )
-#
 
 set(SRC_FILES
         ${VULKAN_FILES}
@@ -26,6 +25,7 @@ source_group(util FILES ${UTIL_FILES})
 
 add_library(xd_rt_appBase STATIC ${SRC_FILES})
 target_link_libraries(xd_rt_appBase ${GLFW_LIBRARIES})
-target_link_libraries(xd_rt_appBase xd_rt)
+target_link_libraries(xd_rt_appBase xd_realtime)
+include_directories(${XD_REALTIME_INCLUDE})
 
 add_tutorial_app(xd_rt_appBase "samples/appBase")

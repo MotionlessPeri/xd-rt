@@ -3,7 +3,7 @@
 //
 
 #include "LightManager.h"
-#include "ConcurrentUtil.h"
+#include "ConcurrencyUtil.h"
 #include "MaterialInstanceVk.h"
 #include "VulkanBuffer.h"
 #include "VulkanDescriptorSet.h"

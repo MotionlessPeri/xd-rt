@@ -9,8 +9,8 @@ eigen.natvis
 Folder.DotSettings.user
 src/app/vulkan/shader/*.spv
 sample/basicCompute/shader/test.comp.spv
-src/backend/vulkan/shader/lambertian.frag.spv
-src/backend/vulkan/shader/main.vert.spv
+src/realtime/backend/vulkan/shader/lambertian.frag.spv
+src/realtime/backend/vulkan/shader/main.vert.spv
 sample/basicGraphic/shader/test.frag.spv
 sample/basicGraphic/shader/test.vert.spv
-src/backend/vulkan/shader/tonemapping.comp.spv
+src/realtime/backend/vulkan/shader/tonemapping.comp.spv

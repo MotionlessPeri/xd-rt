@@ -6,8 +6,8 @@
 #define XD_RT_LAMBERTIANFRAGMENTSHADER_H
 #include "ShaderBase.h"
 #include "ShaderTraits.h"
-#include "backend/vulkan/FrameGraph.h"
-#include "backend/vulkan/VulkanTypes.h"
+#include "realtime/backend/vulkan/FrameGraph.h"
+#include "realtime/backend/vulkan/VulkanTypes.h"
 namespace xd {
 
 class LambertianFragmentShader : public ShaderBase {

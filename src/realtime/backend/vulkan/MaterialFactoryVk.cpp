@@ -31,11 +31,10 @@ std::shared_ptr<MaterialTemplateVk> MaterialFactoryVk::createLambertianMaterial(
 	// create shaders
 	std::vector<std::shared_ptr<VulkanShader>> shaders;
 	using namespace std::string_literals;
-	shaders.emplace_back(createShader(PROJECT_ROOT + "/src/backend/vulkan/shader/main.vert.spv"s,
+	shaders.emplace_back(createShader(PROJECT_ROOT + "/backend/vulkan/shader/main.vert.spv"s,
 									  VK_SHADER_STAGE_VERTEX_BIT));
-	shaders.emplace_back(
-		createShader(PROJECT_ROOT + "/src/backend/vulkan/shader/lambertian.frag.spv"s,
-					 VK_SHADER_STAGE_FRAGMENT_BIT));
+	shaders.emplace_back(createShader(PROJECT_ROOT + "/backend/vulkan/shader/lambertian.frag.spv"s,
+									  VK_SHADER_STAGE_FRAGMENT_BIT));
 	// declare all desc layouts
 	std::unordered_map<std::string, uint32_t> layoutNameToIndex;
 	std::vector<std::shared_ptr<VulkanDescriptorSetLayout>> layouts;
@@ -211,9 +210,8 @@ std::shared_ptr<MaterialTemplateVk> MaterialFactoryVk::createLambertianMaterial(
 std::shared_ptr<MaterialTemplateVk> MaterialFactoryVk::createTonemappingMaterial() const
 {
 	using namespace std::string_literals;
-	const auto computeShader =
-		createShader(PROJECT_ROOT + "/src/backend/vulkan/shader/tonemapping.comp.spv"s,
-					 VK_SHADER_STAGE_COMPUTE_BIT);
+	const auto computeShader = createShader(
+		PROJECT_ROOT + "/backend/vulkan/shader/tonemapping.comp.spv"s, VK_SHADER_STAGE_COMPUTE_BIT);
 
 	std::vector<std::shared_ptr<VulkanDescriptorSetLayout>> layouts;
 	std::unordered_map<std::string, uint32_t> layoutNameToIndex;

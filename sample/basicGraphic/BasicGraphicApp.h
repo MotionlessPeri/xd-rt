@@ -42,10 +42,6 @@ private:
 	std::vector<FrameSync> syncObjects{};
 	std::vector<std::shared_ptr<VulkanShader>> shaders{};
 	std::shared_ptr<FrameGraph> frameGraph = nullptr;
-	struct FrameGraphHandles {
-		FrameGraphResourceHandle color;
-		FrameGraphResourceHandle depth;
-	} fgHandles;
 	struct FrameBufferResource {
 		std::shared_ptr<VulkanImage> colorAttach;
 		std::shared_ptr<VulkanImageView> colorAttachView;
