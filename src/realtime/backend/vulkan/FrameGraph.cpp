@@ -415,12 +415,14 @@ FGNode::FGNode(FGBuilder* owner,
 			   std::string name,
 			   PassType type,
 			   int index,
+			   int passIndex,
 			   std::shared_ptr<FGPassExecutorBase> executor,
 			   bool externalSync)
 	: owner(owner),
 	  name(std::move(name)),
 	  type(type),
 	  index(index),
+	  passIndex(passIndex),
 	  executor(std::move(executor)),
 	  externalSync(externalSync)
 {
@@ -496,18 +498,32 @@ bool FGNode::isFirstNode() const
 	return check(nameToImageBindings) && check(nameToBufferBindings);
 }
 
+int FGNode::getPassIndex() const
+{
+	return type == PassType::GRAPHICS ? passIndex : -1;
+}
+
+FGGraphicsPassNode::FGGraphicsPassNode(FGBuilder* owner, std::string name, int index)
+	: owner(owner), name(std::move(name)), index(index)
+{
+}
+
 FGBuilder::FGBuilder(std::shared_ptr<VulkanDevice> device) : device(std::move(device)) {}
+
+FGGraphicsPassNode& FGBuilder::addGraphicsPass(const std::string& name)
+{
+	return graphicNodes.emplace_back(this, name, graphicNodes.size());
+}
 
 std::shared_ptr<FrameGraph> FGBuilder::build(std::shared_ptr<VulkanDevice> device)
 {
 	// TODO: cull unused passes and recognize necessary image/buffer copy operations
-
 	// build FGSubpassRef and FGPassRef
 	// create subpass refs
-	auto subpassBuildRes = buildSubpassRefs();
+	auto subpassBuildRes = buildSubpassAndPassRefs();
 	auto& subpassRefs = subpassBuildRes.subpassRefs;
 	auto& nodeIndexToSubpassRefIndex = subpassBuildRes.nodeIndexToSubpassRefIndex;
-
+	auto& passRefs = subpassBuildRes.passRefs;
 	// record resource binding orders
 	std::unordered_map<int, std::vector<const FGImageBinding*>> imageIndexToBindingOrder;
 	std::unordered_map<int, std::vector<const FGBufferBinding*>> bufferIndexToBindingOrder;
@@ -525,8 +541,6 @@ std::shared_ptr<FrameGraph> FGBuilder::build(std::shared_ptr<VulkanDevice> devic
 		loop(node.nameToBufferBindings, bufferIndexToBindingOrder);
 		loop(node.nameToImageBindings, imageIndexToBindingOrder);
 	}
-
-	auto passRefs = buildPassRefs(subpassRefs);
 
 	// build subpass and renderpass
 	std::unordered_map<int, RenderPassDesc> passRefIndexToRenderPassDesc;
@@ -901,79 +915,6 @@ FGDummyImageBinding FGBuilder::importImage(VkImageCreateInfo imageCi,
 	return FGDummyImageBinding{this, static_cast<int>(images.size()) - 1};
 }
 
-std::vector<FGBuilder::FGPassRef> FGBuilder::buildPassRefs(
-	std::vector<FGSubpassRef>& subpassRefs) const
-{
-	// build passRefs
-	std::vector<FGPassRef> passRefs;
-	const auto addPassRef = [&](FGSubpassRef& subpassRef) -> FGPassRef& {
-		auto& ret = passRefs.emplace_back();
-		ret.subpassRefIndexes.emplace(subpassRef.index);
-		ret.type = nodes[subpassRef.nodeIndex].type;
-		ret.index = passRefs.size() - 1;
-		subpassRef.passRefIndex = passRefs.size() - 1;
-		return ret;
-	};
-	for (auto& subpassRef : subpassRefs) {
-		if (subpassRef.ins.empty()) {
-			addPassRef(subpassRef);
-		}
-		else {
-			int prevPassRefIndex = INVALID_INDEX;
-			bool createNewPass = false;
-			const auto& thisNode = nodes[subpassRef.nodeIndex];
-			if (thisNode.type == PassType::GRAPHICS) {
-				for (const auto inRefIndex : subpassRef.ins) {
-					const auto& inRef = subpassRefs[inRefIndex];
-					const auto& inNode = nodes[inRef.nodeIndex];
-					if (inNode.type == PassType::GRAPHICS) {
-						if (prevPassRefIndex == INVALID_INDEX) {
-							prevPassRefIndex = inRef.passRefIndex;
-							continue;
-						}
-						else if (prevPassRefIndex == inRef.passRefIndex) {
-							continue;
-						}
-						else {
-							addPassRef(subpassRef);
-							createNewPass = true;
-							break;
-						}
-					}
-					else {
-						addPassRef(subpassRef);
-						createNewPass = true;
-						break;
-					}
-				}
-			}
-			else {
-				addPassRef(subpassRef);
-				createNewPass = true;
-			}
-			if (!createNewPass) {
-				assert(prevPassRefIndex != INVALID_INDEX);
-				passRefs[prevPassRefIndex].subpassRefIndexes.emplace(subpassRef.index);
-			}
-		}
-	}
-	// set edges to pass refs
-	for (const auto& subpassRef : subpassRefs) {
-		for (const auto toRefIndex : subpassRef.outs) {
-			const auto& toRef = subpassRefs[toRefIndex];
-			if (subpassRef.passRefIndex != toRef.passRefIndex) {
-				auto& fromPass = passRefs[subpassRef.passRefIndex];
-				auto& toPass = passRefs[toRef.passRefIndex];
-				fromPass.outs.emplace(toPass.index);
-				toPass.ins.emplace(fromPass.index);
-			}
-		}
-	}
-	// topological sort
-	topologicalSort(passRefs);
-	return passRefs;
-}
-
 void FGPass::execute(std::shared_ptr<VulkanDevice> device,
 					 FGResourceList& resources,
 					 std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
@@ -1001,12 +942,15 @@ void FGPass::execute(std::shared_ptr<VulkanDevice> device,
 	}
 }
 
-FGBuilder::BuildSubpassRefRetType FGBuilder::buildSubpassRefs() const
+FGBuilder::BuildSubpassRefRetType FGBuilder::buildSubpassAndPassRefs() const
 {
+	// aliasing
 	BuildSubpassRefRetType ret;
-	// create subpass refs
 	auto& subpassRefs = ret.subpassRefs;
 	auto& nodeIndexToSubpassRefIndex = ret.nodeIndexToSubpassRefIndex;
+	auto& passRefs = ret.passRefs;
+	auto& nodeIndexToPassRefIndex = ret.graphicsNodeIndexToPassRefIndex;
+	// build FGSubpassRefs and record first layer FGNodes
 	std::queue<int> nodeIndexQueue;
 	std::unordered_set<int> recordedNodeIndexes;
 	const auto emplaceNodeIndex = [&](int index) {
@@ -1022,20 +966,31 @@ FGBuilder::BuildSubpassRefRetType FGBuilder::buildSubpassRefs() const
 		subpassRef.index = subpassRefs.size() - 1;
 		nodeIndexToSubpassRefIndex[i] = subpassRefs.size() - 1;
 		if (node.isFirstNode()) {
-			emplaceNodeIndex(i);
+			if (!recordedNodeIndexes.contains(i)) {
+				nodeIndexQueue.emplace(i);
+				recordedNodeIndexes.emplace(i);
+			}
 		}
 	}
 
+	const auto addNewPassRef = [&](PassType type) -> int {
+		auto& passRef = passRefs.emplace_back();
+		passRef.index = passRefs.size() - 1;
+		passRef.type = type;
+		return passRef.index;
+	};
 	// add edges to subpass refs
 	while (!nodeIndexQueue.empty()) {
 		const auto nodeIndex = nodeIndexQueue.front();
 		auto& node = nodes[nodeIndex];
 		nodeIndexQueue.pop();
+
 		const auto subpassRefIndex = nodeIndexToSubpassRefIndex[nodeIndex];
 		auto& subpassRef = subpassRefs[subpassRefIndex];
+		// add edges according to read and write bindings
 		const auto loop = [&](const auto& bindingMap) {
-			for (const auto* rb : node.nameToImageBindings | std::views::values) {
-				// rb=>reads to rb=>next needs an edge
+			for (const auto* rb : bindingMap | std::views::values) {
+				// rb=>reads to rb=>next needs an edge(reads before write)
 				if (rb->next != nullptr) {
 					emplaceNodeIndex(rb->next->nodeIndex);
 					const auto nextSubpassRefIndex =
@@ -1055,7 +1010,9 @@ FGBuilder::BuildSubpassRefRetType FGBuilder::buildSubpassRefs() const
 					}
 				}
 				// if rb is a write binding, rb => rb->reads needs an edge if it's not in the same
-				// node(not read and write simultaneously)
+				// node(read after write)
+				// we do support read and write simultaneously in a single pass, like a tonemapping
+				// pass
 				if (rb->write) {
 					for (const auto* read : rb->reads) {
 						emplaceNodeIndex(read->nodeIndex);
@@ -1075,6 +1032,39 @@ FGBuilder::BuildSubpassRefRetType FGBuilder::buildSubpassRefs() const
 	}
 	// topological sort
 	topologicalSort(subpassRefs);
+	// build pass ref relevant to subpass ref
+	for (auto& subpassRef : subpassRefs) {
+		const auto& node = nodes[subpassRef.index];
+		int passRefIndex;
+		if (const auto passIndex = node.getPassIndex(); passIndex != -1) {
+			const auto passRefIt = nodeIndexToPassRefIndex.find(passIndex);
+			if (passRefIt == nodeIndexToPassRefIndex.end()) {
+				passRefIndex = addNewPassRef(PassType::GRAPHICS);
+			}
+			else {
+				passRefIndex = passRefIt->second;
+			}
+		}
+		else {
+			passRefIndex = addNewPassRef(node.type);
+		}
+		passRefs[passRefIndex].subpassRefIndexes.emplace(subpassRef.index);
+		subpassRef.passRefIndex = passRefIndex;
+	}
+	// add edges to pass refs
+	for (const auto& subpassRef : subpassRefs) {
+		for (const auto toRefIndex : subpassRef.outs) {
+			const auto& toRef = subpassRefs[toRefIndex];
+			if (subpassRef.passRefIndex != toRef.passRefIndex) {
+				auto& fromPass = passRefs[subpassRef.passRefIndex];
+				auto& toPass = passRefs[toRef.passRefIndex];
+				fromPass.outs.emplace(toPass.index);
+				toPass.ins.emplace(fromPass.index);
+			}
+		}
+	}
+	// topological sort
+	topologicalSort(passRefs);
 	return ret;
 }
 

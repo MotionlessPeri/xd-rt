@@ -132,8 +132,9 @@ void BasicFramegraphApp::createResources()
 	// create frame graph
 	{
 		auto fgBuilder = FGBuilder{device};
-		auto& colorPass = fgBuilder.addPass(
-			"ColorPass", PassType::GRAPHICS,
+		auto& colorPass = fgBuilder.addGraphicsPass("ColorPass");
+		auto& colorSubpass = colorPass.addSubpass(
+			"ColorSubpass",
 			[&](FGResourceList& resources, std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
 				const std::vector<std::shared_ptr<VulkanSemaphore>>& waitingSemaphores) {
 				const auto swapchainExtent = swapchain->getExtent();
@@ -190,9 +191,9 @@ void BasicFramegraphApp::createResources()
 		imageViewCi.subresourceRange.levelCount = 1;
 		imageViewCi.subresourceRange.baseArrayLayer = 0;
 		imageViewCi.subresourceRange.layerCount = 1;
-		auto colorImageDummy = colorPass.importImage(imageCi, imageViewCi, nullptr);
+		auto colorImageDummy = colorSubpass.importImage(imageCi, imageViewCi, nullptr);
 		auto* colorAttach =
-			colorImageDummy.createColorAttach("color", colorPass, VK_ATTACHMENT_LOAD_OP_CLEAR,
+			colorImageDummy.createColorAttach("color", colorSubpass, VK_ATTACHMENT_LOAD_OP_CLEAR,
 											  VK_ATTACHMENT_STORE_OP_STORE, {0, 0, 0, 0});
 		// create depth attach
 		{
@@ -230,8 +231,8 @@ void BasicFramegraphApp::createResources()
 			viewCi.subresourceRange.levelCount = 1;
 			viewCi.subresourceRange.baseArrayLayer = 0;
 			viewCi.subresourceRange.layerCount = 1;
-			colorPass.createImage(imageCi, viewCi, nullptr)
-				.createDepthAttach("depth", colorPass,
+			colorSubpass.createImage(imageCi, viewCi, nullptr)
+				.createDepthAttach("depth", colorSubpass,
 								   VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
 									   VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
 									   VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
@@ -242,8 +243,8 @@ void BasicFramegraphApp::createResources()
 								   VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 								   VK_ATTACHMENT_STORE_OP_DONT_CARE, {1.f, 0});
 		}
-		auto& tonemappingPass = fgBuilder.addPass(
-			"TonemappingPass", PassType::COMPUTE,
+		auto& tonemappingPass = fgBuilder.addComputePass(
+			"TonemappingPass",
 			[&](FGResourceList& resources, std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
 				const std::vector<std::shared_ptr<VulkanSemaphore>>& waitingSemaphores) {
 				const auto outputTexture = resources.getImage("TonemappingPass", "input");
@@ -268,8 +269,9 @@ void BasicFramegraphApp::createResources()
 		auto* tonemapped = colorAttach->createImageBinding(
 			"output", tonemappingPass, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_ASPECT_COLOR_BIT,
 			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT);
-		auto& imguiPass = fgBuilder.addPass(
-			"ImguiPass", PassType::GRAPHICS,
+		auto& imguiPass = fgBuilder.addGraphicsPass("ImguiPass");
+		auto& imguiSubpass = imguiPass.addSubpass(
+			"ImguiSubpass",
 			[&](FGResourceList& resources, std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
 				const std::vector<std::shared_ptr<VulkanSemaphore>>& waitingSemaphores) {
 				ImGui_ImplVulkan_NewFrame();
@@ -283,7 +285,7 @@ void BasicFramegraphApp::createResources()
 				ImGui_ImplVulkan_RenderDrawData(imguiDrawData, cmdBuffer->cmdBuffer);
 			});
 		auto* withGui = tonemapped->createColorAttach(
-			"color", imguiPass, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE);
+			"color", imguiSubpass, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE);
 		auto& presentPass = fgBuilder.addPass(
 			"PresentPass", PassType::OTHER,
 			[&](FGResourceList& resources, std::shared_ptr<VulkanCommandBuffer> cmdBuffer,
@@ -303,8 +305,8 @@ void BasicFramegraphApp::createResources()
 	// create material resources
 	{
 		auto& mtlFactory = MaterialFactoryVk::get();
-		lambertianMtl.mtlTemplate =
-			mtlFactory.createLambertianMaterial(frameGraph->getSubpass("ColorPass").getSubpass());
+		lambertianMtl.mtlTemplate = mtlFactory.createLambertianMaterial(
+			frameGraph->getSubpass("ColorSubpass").getSubpass());
 		lambertianMtl.mtlInstance = lambertianMtl.mtlTemplate->createInstance();
 
 		tonemappingMtl.mtlTemplate = mtlFactory.createTonemappingMaterial();
@@ -410,7 +412,7 @@ void BasicFramegraphApp::createResources()
 		init_info.Allocator = nullptr;
 		init_info.CheckVkResultFn = check_vk_result;
 		ImGui_ImplVulkan_Init(&init_info,
-							  frameGraph->getSubpass("ImguiPass").getRenderPass()->pass);
+							  frameGraph->getSubpass("ImguiSubpass").getRenderPass()->pass);
 	}
 }
 
@@ -439,7 +441,7 @@ void BasicFramegraphApp::render()
 		semaphoreCi.flags = 0;
 		semaphore = device->createSemaphore(semaphoreCi);
 		resourceList->storeValue("imageAcquireSemaphore", semaphore);
-		resourceList->addExternalWaitingSemaphore("ColorPass", semaphore,
+		resourceList->addExternalWaitingSemaphore("ColorSubpass", semaphore,
 												  VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	}
 

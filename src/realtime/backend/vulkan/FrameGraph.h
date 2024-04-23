@@ -36,6 +36,7 @@ inline VkPipelineBindPoint passTypeToPipelineBindPoint(PassType type)
 			return VK_PIPELINE_BIND_POINT_MAX_ENUM;
 	}
 }
+class FGBuilder;
 class FGNode;
 class FGResource;
 class FGImage;
@@ -544,6 +545,7 @@ public:
 		   std::string name,
 		   PassType type,
 		   int index,
+		   int passIndex,
 		   std::shared_ptr<FGPassExecutorBase> executor,
 		   bool externalSync);
 	FGNode(const FGNode& other) = default;
@@ -568,16 +570,31 @@ private:
 	void addInputAttach(const std::string& name, FGInputAttachment* attach);
 	void addResolveAttach(const std::string& name, FGResolveAttachment* attach);
 	bool isFirstNode() const;
+	int getPassIndex() const;
 	FGBuilder* owner = nullptr;
 	std::string name;
 	PassType type;
 	int index;
+	int passIndex;	// the relevant FGRenderPassNode index. If type is not GRAPHIC, this field is -1
 	std::shared_ptr<FGPassExecutorBase> executor;
 	bool externalSync = false;
 	std::unordered_map<std::string, FGImageBinding*> nameToImageBindings;
 	std::unordered_map<std::string, FGBufferBinding*> nameToBufferBindings;
 	std::vector<FGAttachment*> attachments;
 };
+class FGGraphicsPassNode {
+public:
+	FGGraphicsPassNode(FGBuilder* owner, std::string name, int index);
+	template <typename TLambda>
+	FGNode& addSubpass(const std::string& name, TLambda&& lambda, bool externalSync = false);
+
+private:
+	FGBuilder* owner = nullptr;
+	std::string name;
+	int index;
+	std::unordered_set<int> nodeIndexes;
+};
+
 // TODO: non-memory pass dependency and execution barrier
 // like present pass needs to be in the last
 class FGBuilder {
@@ -597,6 +614,7 @@ public:
 	friend class FGDepthAttachment;
 	friend class FGResolveAttachment;
 	friend class FGInputAttachment;
+	friend class FGGraphicsPassNode;
 	struct NodeHelper {
 		int index;
 		std::unordered_set<int> ins;
@@ -637,19 +655,26 @@ public:
 			return !(lhs < rhs);
 		}
 	};
+
 	explicit FGBuilder(std::shared_ptr<VulkanDevice> device);
+
+	FGGraphicsPassNode& addGraphicsPass(const std::string& name);
 
 	template <typename TLambda>
 	FGNode& addPass(const std::string& name,
-					PassType passType,
+					PassType type,
 					TLambda&& lambda,
 					bool externalSync = false)
 	{
 		return nodes.emplace_back(
-			this, name, passType, nodes.size(),
+			this, name, type, nodes.size(), -1,
 			std::make_shared<FGPassExecutor<TLambda>>(std::forward<TLambda>(lambda)), externalSync);
 	}
-
+	template <typename TLambda>
+	FGNode& addComputePass(const std::string& name, TLambda&& lambda, bool externalSync = false)
+	{
+		return addPass(name, PassType::COMPUTE, std::forward<TLambda>(lambda), externalSync);
+	}
 	std::shared_ptr<FrameGraph> build(std::shared_ptr<VulkanDevice> device);
 	~FGBuilder() = default;
 
@@ -664,12 +689,20 @@ private:
 	struct BuildSubpassRefRetType {
 		std::vector<FGSubpassRef> subpassRefs;
 		std::unordered_map<int, int> nodeIndexToSubpassRefIndex;
+		std::vector<FGBuilder::FGPassRef> passRefs;
+		std::unordered_map<int, int> graphicsNodeIndexToPassRefIndex;
 	};
-	BuildSubpassRefRetType buildSubpassRefs() const;
-	std::vector<FGPassRef> buildPassRefs(std::vector<FGSubpassRef>& subpassRefs) const;
+	class NodeToRefConverter {
+	public:
+		BuildSubpassRefRetType buildSubpassAndPassRefs() const;
+
+	private:
+		const std::vector<FGNode>& nodes;
+	};
+	BuildSubpassRefRetType buildSubpassAndPassRefs() const;
 	template <typename NodeHelperType>
 		requires std::derived_from<NodeHelperType, NodeHelper>
-	void topologicalSort(std::vector<NodeHelperType>& refs) const
+	static void topologicalSort(std::vector<NodeHelperType>& refs)
 	{
 		const int refCount = refs.size();
 		std::queue<int> refIndexQueue;
@@ -713,6 +746,7 @@ private:
 	}
 	std::shared_ptr<VulkanDevice> device;
 	std::vector<FGNode> nodes;
+	std::vector<FGGraphicsPassNode> graphicNodes;
 	std::vector<FGImage> images;
 	std::vector<FGBuffer> buffers;
 };
@@ -908,6 +942,16 @@ private:
 	std::unordered_map<int, std::vector<const FGBufferBinding*>> bufferIndexToBufferBindingOrders;
 };
 
+template <typename TLambda>
+FGNode& FGGraphicsPassNode::addSubpass(const std::string& name, TLambda&& lambda, bool externalSync)
+{
+	const auto nodeIdx = owner->nodes.size();
+	auto& ret = owner->nodes.emplace_back(
+		owner, name, PassType::GRAPHICS, static_cast<int>(owner->nodes.size()), index,
+		std::make_shared<FGPassExecutor<TLambda>>(std::forward<TLambda>(lambda)), externalSync);
+	nodeIndexes.emplace(nodeIdx);
+	return ret;
+}
 }  // namespace xd
 
 #endif	// XD_RT_FRAMEGRAPH_H
