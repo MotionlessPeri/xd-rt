@@ -18,6 +18,7 @@ public:
 	std::shared_ptr<MaterialTemplateVk> createLambertianMaterial(
 		std::shared_ptr<VulkanSubpass> subpass) const;
 	std::shared_ptr<MaterialTemplateVk> createTonemappingMaterial() const;
+	std::shared_ptr<MaterialTemplateVk> createDeferredMetallicPbrMaterial() const;
 
 private:
 	explicit MaterialFactoryVk(std::shared_ptr<VulkanDevice> device);
