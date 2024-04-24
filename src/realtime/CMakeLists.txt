@@ -89,6 +89,8 @@ set(VULKAN_FILES
         backend/vulkan/VulkanComputePipeline.h
         backend/vulkan/VulkanPipelineBase.cpp
         backend/vulkan/VulkanPipelineBase.h
+        backend/vulkan/DeferredRenderer.cpp
+        backend/vulkan/DeferredRenderer.h
 )
 
 set(VULKAN_SHADER_FILES
@@ -126,7 +128,8 @@ target_link_libraries(xd_realtime ${Vulkan_LIBRARIES})
 target_link_libraries(xd_realtime ${GLFW_LIBRARIES})
 target_link_libraries(xd_realtime xd_raytracing)
 
-file(GLOB files "src/realtime/backend/vulkan/shader/*.vert" "src/realtime/backend/vulkan/shader/*.frag" "src/realtime/backend/vulkan/shader/*.comp")
+file(GLOB files "backend/vulkan/shader/*.vert" "backend/vulkan/shader/*.frag" "backend/vulkan/shader/*.comp")
+
 set(generated_spvs)
 foreach (file ${files})
     add_custom_command(
